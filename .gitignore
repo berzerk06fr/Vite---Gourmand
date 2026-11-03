@@ -1,0 +1,43 @@
+# =====================================
+# Environnements & Secrets (CRITIQUE SÉCURITÉ)
+# =====================================
+.env
+.env.*
+!.env.example
+
+# =====================================
+# Dépendances & Paquets
+# =====================================
+node_modules/
+vendor/
+
+# =====================================
+# Builds & Livrables générés
+# =====================================
+dist/
+build/
+out-tsc/
+.angular/cache/
+
+# =====================================
+# Logs & Fichiers temporaires
+# =====================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+.cache/
+
+# =====================================
+# Configurations IDE & Systèmes d'exploitation
+# =====================================
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
