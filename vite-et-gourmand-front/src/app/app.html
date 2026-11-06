@@ -1,0 +1,18 @@
+<!-- Lien d'évitement accessible pour la navigation clavier (Critère RGAA 12.7) -->
+<a 
+  href="#main-content" 
+  class="visually-hidden-focusable p-3 bg-warning text-dark fw-bold position-absolute start-0 top-0 z-3 rounded-bottom shadow">
+  Passer directement au contenu principal
+</a>
+
+<div class="min-h-screen d-flex flex-column flex-grow-1">
+  <app-header></app-header>
+  
+  <main id="main-content" class="flex-grow-1 py-4" tabindex="-1">
+    <div class="container">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>
