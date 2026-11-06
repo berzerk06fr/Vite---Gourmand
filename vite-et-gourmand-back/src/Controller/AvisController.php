@@ -5,12 +5,14 @@ namespace App\Controller;
 use App\Entity\Avis;
 use App\Entity\Utilisateur;
 use App\Repository\AvisRepository;
+use App\Service\MongoAuditService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Security;
 
 #[Route('/api/avis', name: 'api_avis_')]
 class AvisController extends AbstractController
@@ -72,9 +74,15 @@ class AvisController extends AbstractController
     }
 
     #[Route('/{id}/moderation', name: 'moderer', methods: ['PATCH'])]
-    public function moderer(int $id, Request $request, AvisRepository $avisRepository, EntityManagerInterface $em): JsonResponse
-    {
-        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
+    public function moderer(
+        int $id,
+        Request $request,
+        AvisRepository $avisRepository,
+        EntityManagerInterface $em,
+        Security $security,
+        MongoAuditService $mongoAudit
+    ): JsonResponse {
+        $isStaff = $security->isGranted('ROLE_EMPLOYE') || $security->isGranted('ROLE_ADMIN');
         $avis = $avisRepository->find($id);
         $data = json_decode($request->getContent(), true) ?? [];
         $action = trim($data['action'] ?? '');
@@ -87,7 +95,16 @@ class AvisController extends AbstractController
         $avis->setStatut($action === 'valider' ? 'valide' : 'refuse');
         $em->flush();
 
-        return $this->json([
+        // Enregistrement d'audit NoSQL
+        $mongoAudit->log('moderation_logs', [
+            'action'       => $action,
+            'avis_id'      => $avis->getId(),
+            'statut_final' => $avis->getStatut(),
+            'moderateur'   => $security->getUser()?->getUserIdentifier(),
+            'note'         => $avis->getNote(),
+        ]);
+
+        return new JsonResponse([
             'message' => sprintf('Avis %s avec succès.', $avis->getStatut()),
             'statut'  => $avis->getStatut(),
         ], Response::HTTP_OK);
