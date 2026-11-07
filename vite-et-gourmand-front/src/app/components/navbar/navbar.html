@@ -1,0 +1,66 @@
+<header class="border-bottom bg-white sticky-top shadow-sm">
+  <div class="container py-2">
+    <nav class="navbar navbar-expand-lg navbar-light p-0" aria-label="Navigation principale">
+      <!-- Logo et Marque -->
+      <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/" (click)="closeMenu()">
+        <span class="fs-4 text-primary"><i class="bi bi-egg-fried"></i></span>
+        <div class="d-flex flex-column lh-1">
+          <span class="fw-bold fs-5 text-dark">Vite &</span>
+          <span class="fw-bold fs-5 text-dark">Gourmand</span>
+        </div>
+      </a>
+
+      <!-- Boutons mobiles -->
+      <div class="d-flex align-items-center gap-2 d-lg-none">
+        <a routerLink="/connexion" class="btn btn-outline-secondary btn-sm p-1 px-2" aria-label="Mon compte">
+          <i class="bi bi-person fs-5"></i>
+        </a>
+        <button 
+          class="navbar-toggler p-2 border-0" 
+          type="button" 
+          (click)="toggleMenu()"
+          [attr.aria-expanded]="!isMenuCollapsed()" 
+          aria-label="Basculer la navigation">
+          <i class="bi" [ngClass]="isMenuCollapsed() ? 'bi-list fs-3' : 'bi-x-lg fs-3'"></i>
+        </button>
+      </div>
+
+      <!-- Liens de navigation centrés -->
+      <div class="collapse navbar-collapse" [class.show]="!isMenuCollapsed()" id="mainNavbar">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 text-center gap-lg-4 fs-6 py-2 py-lg-0">
+          <li class="nav-item">
+            <a class="nav-link text-dark fw-medium" routerLink="/" routerLinkActive="active-nav" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">
+              Accueil
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-dark fw-medium" routerLink="/menus" routerLinkActive="active-nav" (click)="closeMenu()">
+              Nos Menus
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-dark fw-medium" routerLink="/contact" routerLinkActive="active-nav" (click)="closeMenu()">
+              Contact
+            </a>
+          </li>
+        </ul>
+
+        <!-- Actions Desktop -->
+        <div class="d-none d-lg-flex align-items-center gap-2">
+          <a routerLink="/connexion" class="btn btn-outline-dark-custom btn-sm px-3 py-2 rounded-2">
+            Connexion
+          </a>
+          <a routerLink="/inscription" class="btn btn-terracotta btn-sm px-3 py-2 rounded-2">
+            Créer un compte
+          </a>
+        </div>
+
+        <!-- Actions Mobile -->
+        <div class="d-lg-none d-flex flex-column gap-2 mt-3 pt-3 border-top text-center">
+          <a routerLink="/connexion" class="btn btn-outline-dark-custom w-100" (click)="closeMenu()">Connexion</a>
+          <a routerLink="/inscription" class="btn btn-terracotta w-100" (click)="closeMenu()">Créer un compte</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

@@ -1,54 +1,75 @@
-
 :root {
-  --vg-primary: #d97706;
-  --vg-primary-dark: #b45309;
-  --vg-dark: #1f2937;
-  --vg-light: #f9fafb;
+  /* Charte Graphique Vite & Gourmand */
+  --vg-terracotta: #C85A32;
+  --vg-olive: #7A8B6E;
+  --vg-creme: #FDF5EA;
+  --vg-dark: #2B2623;
+  --vg-red: #AA1414;
+
+  /* Surcharge Bootstrap */
+  --bs-primary: var(--vg-terracotta);
+  --bs-primary-rgb: 200, 90, 50;
+  --bs-body-bg: var(--vg-creme);
+  --bs-body-color: var(--vg-dark);
+  --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: var(--vg-light);
+  font-family: 'Inter', sans-serif;
+  background-color: var(--vg-creme);
   color: var(--vg-dark);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  margin: 0;
 }
 
-/* Indicateur de focus visible pour la navigation au clavier (Conformité RGAA) */
-:focus-visible,
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 3px solid var(--vg-primary);
-  outline-offset: 2px;
+/* Titres en Playfair Display */
+h1, h2, h3, .font-serif, .navbar-brand {
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* Boutons personnalisés aux couleurs de la marque */
-.btn-vg-primary {
-  background-color: var(--vg-primary);
-  border-color: var(--vg-primary);
+main {
+  flex: 1 0 auto;
+}
+
+/* Boutons personnalisés selon la charte */
+.btn-terracotta {
+  background-color: var(--vg-terracotta);
   color: #ffffff;
+  border: 1px solid var(--vg-terracotta);
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+.btn-terracotta:hover, .btn-terracotta:focus {
+  background-color: #b04c27;
+  color: #ffffff;
+  border-color: #b04c27;
+}
+
+.btn-outline-dark-custom {
+  background-color: transparent;
+  color: var(--vg-dark);
+  border: 1px solid var(--vg-dark);
+  font-weight: 500;
+}
+.btn-outline-dark-custom:hover {
+  background-color: var(--vg-dark);
+  color: #ffffff;
+}
+
+/* Badges Régimes et Allergènes */
+.badge-regime {
+  background-color: var(--vg-olive);
+  color: #ffffff;
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  border-radius: 50rem;
+}
+
+.badge-alerte {
+  background-color: #fde8e8;
+  color: var(--vg-red);
+  border: 1px solid #f8b4b4;
   font-weight: 600;
-}
-
-.btn-vg-primary:hover,
-.btn-vg-primary:focus {
-  background-color: var(--vg-primary-dark);
-  border-color: var(--vg-primary-dark);
-  color: #ffffff;
-}
-
-.btn-outline-vg-primary {
-  border-color: var(--vg-primary);
-  color: var(--vg-primary);
-  font-weight: 600;
-}
-
-.btn-outline-vg-primary:hover,
-.btn-outline-vg-primary:focus {
-  background-color: var(--vg-primary);
-  color: #ffffff;
 }

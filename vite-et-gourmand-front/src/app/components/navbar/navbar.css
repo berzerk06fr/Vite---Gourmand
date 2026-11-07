@@ -1,0 +1,5 @@
+.active-nav {
+  color: var(--vg-terracotta) !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid var(--vg-terracotta);
+}
