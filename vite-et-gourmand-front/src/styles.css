@@ -1,3 +1,6 @@
+/* 1. Importation des polices Playfair Display & Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
 :root {
   /* Charte Graphique Vite & Gourmand */
   --vg-terracotta: #C85A32;
@@ -6,16 +9,21 @@
   --vg-dark: #2B2623;
   --vg-red: #AA1414;
 
-  /* Surcharge Bootstrap */
+  /* Surcharge native des variables Bootstrap */
   --bs-primary: var(--vg-terracotta);
   --bs-primary-rgb: 200, 90, 50;
   --bs-body-bg: var(--vg-creme);
   --bs-body-color: var(--vg-dark);
   --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --bs-headings-font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* 2. Typographie globale */
+html, body, button, input, select, textarea, .btn, .nav-link {
+  font-family: var(--bs-body-font-family);
 }
 
 body {
-  font-family: 'Inter', sans-serif;
   background-color: var(--vg-creme);
   color: var(--vg-dark);
   min-height: 100vh;
@@ -24,27 +32,34 @@ body {
   margin: 0;
 }
 
-/* Titres en Playfair Display */
-h1, h2, h3, .font-serif, .navbar-brand {
-  font-family: 'Playfair Display', Georgia, serif;
+/* 3. Titres en Playfair Display */
+h1, h2, h3, h4, h5, h6, 
+.h1, .h2, .h3, .h4, .h5, .h6,
+.font-serif, 
+.navbar-brand,
+.card-title {
+  font-family: var(--bs-headings-font-family);
+  font-feature-settings: 'lnum';
 }
 
 main {
   flex: 1 0 auto;
 }
 
-/* Boutons personnalisés selon la charte */
+/* 4. Boutons personnalisés avec transitions ciblées */
 .btn-terracotta {
   background-color: var(--vg-terracotta);
   color: #ffffff;
   border: 1px solid var(--vg-terracotta);
   font-weight: 500;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
-.btn-terracotta:hover, .btn-terracotta:focus {
+
+.btn-terracotta:hover, 
+.btn-terracotta:focus {
   background-color: #b04c27;
-  color: #ffffff;
   border-color: #b04c27;
+  color: #ffffff;
 }
 
 .btn-outline-dark-custom {
@@ -52,13 +67,16 @@ main {
   color: var(--vg-dark);
   border: 1px solid var(--vg-dark);
   font-weight: 500;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
-.btn-outline-dark-custom:hover {
+
+.btn-outline-dark-custom:hover,
+.btn-outline-dark-custom:focus {
   background-color: var(--vg-dark);
   color: #ffffff;
 }
 
-/* Badges Régimes et Allergènes */
+/* 5. Badges */
 .badge-regime {
   background-color: var(--vg-olive);
   color: #ffffff;
