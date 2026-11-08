@@ -9,7 +9,4 @@ import { RouterModule } from '@angular/router';
   templateUrl: './footer.html',
   styleUrl: './footer.css'
 })
-export class FooterComponent {
-  // Année dynamique pour le copyright
-  readonly currentYear = new Date().getFullYear();
-}
+export class FooterComponent {}

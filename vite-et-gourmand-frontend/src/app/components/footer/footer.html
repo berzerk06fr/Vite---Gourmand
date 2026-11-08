@@ -1,56 +1,66 @@
-<footer class="mt-auto border-top py-5" style="background-color: #FDF5EA;" role="contentinfo">
+<footer class="site-footer mt-auto py-5" role="contentinfo">
   <div class="container">
-    <div class="row g-4 mb-4">
-      <div class="col-12 col-md-3">
+    <div class="row g-4 justify-content-between align-items-start">
+
+      <div class="col-12 col-lg-4">
         <h3 class="fs-5 fw-bold text-dark mb-3">Vite & Gourmand</h3>
-        <p class="text-muted small">
+        <p class="footer-text small mb-3">
           Traiteur gastronomique de saison, créateur de moments conviviaux et de réceptions sur-mesure.
         </p>
-        <div class="d-flex gap-3 text-secondary fs-5 mt-3">
-          <span aria-label="Lien Twitter / X" role="img"><i class="bi bi-twitter-x"></i></span>
-          <span aria-label="Lien Facebook" role="img"><i class="bi bi-facebook"></i></span>
-          <span aria-label="Lien Instagram" role="img"><i class="bi bi-instagram"></i></span>
+        <div class="d-flex gap-3 fs-5">
+          <a href="#" class="footer-social-link" aria-label="Consulter notre page Twitter / X"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="footer-social-link" aria-label="Consulter notre page Facebook"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="footer-social-link" aria-label="Consulter notre page Instagram"><i class="bi bi-instagram"></i></a>
         </div>
       </div>
-
-      <div class="col-12 col-md-3">
+      
+      <div class="col-12 col-sm-6 col-lg-4">
         <h4 class="fs-6 fw-bold text-dark mb-3">Contact & Atelier</h4>
-        <ul class="list-unstyled small text-muted d-flex flex-column gap-2">
-          <li><i class="bi bi-telephone me-2 text-dark"></i> 04 93 XX XX XX</li>
-          <li><i class="bi bi-envelope me-2 text-dark"></i> contact&#64;vite-et-gourmand.fr</li>
-          <li><i class="bi bi-geo-alt me-2 text-dark"></i> Atelier & Cuisines : Bordeaux</li>
-          <li><i class="bi bi-clock me-2 text-dark"></i> <strong>Lundi au dimanche :</strong> 8h00 - 19h00</li>
+        <ul class="list-unstyled small footer-text d-flex flex-column gap-2 mb-0">
+          <li class="d-flex align-items-center">
+            <span class="footer-icon me-2"><i class="bi bi-telephone"></i></span>
+            <a href="tel:0493000000" class="footer-link">04 93 XX XX XX</a>
+          </li>
+          <li class="d-flex align-items-center">
+            <span class="footer-icon me-2"><i class="bi bi-envelope"></i></span>
+            <a href="mailto:contact@vite-et-gourmand.fr" class="footer-link">contact&#64;vite-et-gourmand.fr</a>
+          </li>
+          <li class="d-flex align-items-center">
+            <span class="footer-icon me-2"><i class="bi bi-geo-alt"></i></span>
+            <span>Atelier & Cuisines : Bordeaux</span>
+          </li>
+          <li class="d-flex align-items-center">
+            <span class="footer-icon me-2"><i class="bi bi-truck"></i></span>
+            <span>Livraison Bordeaux & Gironde</span>
+          </li>
         </ul>
       </div>
 
-      <div class="col-12 col-md-3">
-        <h4 class="fs-6 fw-bold text-dark mb-3">Menus & Prestations</h4>
-        <ul class="list-unstyled small text-muted d-flex flex-column gap-2">
-          <li><a routerLink="/menus" class="text-decoration-none text-muted">Menus Terroir & Saveurs</a></li>
-          <li><a routerLink="/menus" class="text-decoration-none text-muted">Prestige & Gastronomie</a></li>
-          <li><a routerLink="/menus" class="text-decoration-none text-muted">Formules Végétariennes</a></li>
-          <li><a routerLink="/menus" class="text-decoration-none text-muted">Buffets d'entreprise</a></li>
-        </ul>
-      </div>
-
-      <div class="col-12 col-md-3">
-        <h4 class="fs-6 fw-bold text-dark mb-3">Informations</h4>
-        <ul class="list-unstyled small text-muted d-flex flex-column gap-2">
-          <li>Zones de livraison (Bordeaux & Gironde)</li>
-          <li>Conditions de commande</li>
-          <li>Questions fréquentes (FAQ)</li>
-          <li>Demande de devis personnalisé</li>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <h4 class="fs-6 fw-bold text-dark mb-3">Horaires d'ouverture</h4>
+        <ul class="list-unstyled small footer-text d-flex flex-column gap-2 mb-0">
+          <li class="d-flex justify-content-between pb-1 border-bottom border-light-subtle">
+            <span class="text-secondary">Lun. – Jeu.</span>
+            <span class="fw-medium text-dark">08h00 – 19h00</span>
+          </li>
+          <li class="d-flex justify-content-between pb-1 border-bottom border-light-subtle">
+            <span class="text-secondary">Ven. – Sam.</span>
+            <span class="fw-medium text-dark">08h00 – 20h00</span>
+          </li>
+          <li class="d-flex justify-content-between pt-1">
+            <span class="text-terracotta fw-semibold">Dimanche</span>
+            <span class="text-terracotta fw-semibold">09h00 – 14h00</span>
+          </li>
         </ul>
       </div>
     </div>
 
-    <div class="border-top pt-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-muted">
-      <div>&copy; 2026 Vite & Gourmand. Tous droits réservés.</div>
+    <div class="footer-bottom border-top pt-4 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small">
+      <div class="footer-text">&copy; 2026 Vite & Gourmand. Tous droits réservés.</div>
       <div class="d-flex flex-wrap justify-content-center gap-3">
-        <a routerLink="/cgv" class="text-decoration-none text-muted">Conditions Générales de Vente (CGV)</a>
-        <a routerLink="/mentions-legales" class="text-decoration-none text-muted">Mentions Légales</a>
-        <a routerLink="/politique-confidentialite" class="text-decoration-none text-muted">Politique de confidentialité</a>
-        <a routerLink="/cookies" class="text-decoration-none text-muted">Gestion des Cookies</a>
+        <a routerLink="/cgv" class="footer-link">Conditions Générales de Vente (CGV)</a>
+        <a routerLink="/mentions-legales" class="footer-link">Mentions Légales</a>
+        <a routerLink="/politique-confidentialite" class="footer-link">Politique de confidentialité</a>
       </div>
     </div>
   </div>
