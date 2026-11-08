@@ -1,0 +1,13 @@
+.btn-terracotta {
+  background-color: var(--vg-terracotta, #C85A32);
+  border: 1px solid var(--vg-terracotta, #C85A32);
+  color: #ffffff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-terracotta:hover,
+.btn-terracotta:focus {
+  background-color: #a84723;
+  border-color: #a84723;
+  color: #ffffff;
+}

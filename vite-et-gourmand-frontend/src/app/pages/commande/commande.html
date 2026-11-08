@@ -1,0 +1,190 @@
+<main class="container py-5" id="main-content">
+  <div class="mb-4">
+    <nav aria-label="Fil d'ariane">
+      <a routerLink="/menus" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Retour aux formules
+      </a>
+    </nav>
+    <h1 class="display-6 fw-bold mt-3 mb-1">Finaliser votre commande traiteur</h1>
+    <p class="text-secondary">Renseignez les détails de la réception pour valider la réservation de votre formule.</p>
+  </div>
+
+  @if (orderSubmitted()) {
+    <div class="card shadow-sm border-0 p-5 text-center my-4 bg-white">
+      <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+      <h2 class="h3 fw-bold text-success mt-3 mb-2">Commande enregistrée avec succès !</h2>
+      <p class="lead text-secondary mb-3">
+        Un email récapitulatif de confirmation a été envoyé à <strong>{{ email() }}</strong>.
+      </p>
+      <p class="text-muted small mb-4">
+        Notre équipe cuisine et logistique va vérifier vos éléments de réception. Vous pouvez suivre l'état d'avancement dans votre espace client.
+      </p>
+      <div class="d-flex justify-content-center gap-3">
+        <a routerLink="/" class="btn btn-terracotta px-4 py-2">Retour à l'accueil</a>
+      </div>
+    </div>
+  } @else {
+    <form #orderForm="ngForm" (ngSubmit)="submitOrder(orderForm)" novalidate>
+      <div class="row g-4 align-items-start">
+        
+        <div class="col-12 col-lg-7">
+          <div class="card shadow-sm border-0 p-4 mb-4 bg-white">
+            <h2 class="h5 fw-bold mb-3 border-bottom pb-2">1. Coordonnées de contact</h2>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label for="nom" class="form-label fw-semibold">Nom</label>
+                <input type="text" id="nom" class="form-control" [ngModel]="nom()" (ngModelChange)="nom.set($event)" name="nom" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="prenom" class="form-label fw-semibold">Prénom</label>
+                <input type="text" id="prenom" class="form-control" [ngModel]="prenom()" (ngModelChange)="prenom.set($event)" name="prenom" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="email" class="form-label fw-semibold">Email de confirmation</label>
+                <input type="email" id="email" class="form-control" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email" required email>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="gsm" class="form-label fw-semibold">Téléphone mobile (GSM)</label>
+                <input type="tel" id="gsm" class="form-control" [ngModel]="gsm()" (ngModelChange)="gsm.set($event)" name="gsm" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm border-0 p-4 mb-4 bg-white">
+            <h2 class="h5 fw-bold mb-3 border-bottom pb-2">2. Lieu & Date de la prestation</h2>
+            <div class="row g-3">
+              <div class="col-12 col-md-8">
+                <label for="adresse" class="form-label fw-semibold">Adresse de livraison</label>
+                <input type="text" id="adresse" class="form-control" [ngModel]="adresse()" (ngModelChange)="adresse.set($event)" name="adresse" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label for="ville" class="form-label fw-semibold">Ville</label>
+                <input type="text" id="ville" class="form-control" [ngModel]="ville()" (ngModelChange)="ville.set($event)" name="ville" required>
+              </div>
+
+              <div class="col-12 mt-2">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="horsBordeaux" 
+                    [ngModel]="isHorsBordeaux()" 
+                    (ngModelChange)="isHorsBordeaux.set($event)" 
+                    name="horsBordeaux">
+                  <label class="form-check-label" for="horsBordeaux">
+                    La livraison a lieu <strong>en dehors de Bordeaux</strong> (frais de 5 € + 0,59 €/km)
+                  </label>
+                </div>
+              </div>
+
+              @if (isHorsBordeaux()) {
+                <div class="col-12 col-md-6 bg-light p-3 rounded-2">
+                  <label for="distanceKm" class="form-label fw-semibold">Distance depuis Bordeaux (en km)</label>
+                  <input 
+                    type="number" 
+                    id="distanceKm" 
+                    class="form-control" 
+                    min="1" 
+                    [ngModel]="distanceKm()" 
+                    (ngModelChange)="distanceKm.set(+$event)" 
+                    name="distanceKm">
+                  <div class="form-text small">Frais calculés : {{ deliveryCost() }} €</div>
+                </div>
+              }
+
+              <div class="col-12 col-md-6">
+                <label for="datePrestation" class="form-label fw-semibold">Date de réception</label>
+                <input type="date" id="datePrestation" class="form-control" [ngModel]="datePrestation()" (ngModelChange)="datePrestation.set($event)" name="datePrestation" required>
+              </div>
+              <div class="col-12 col-md-6">
+                <label for="heurePrestation" class="form-label fw-semibold">Heure souhaitée</label>
+                <input type="time" id="heurePrestation" class="form-control" [ngModel]="heurePrestation()" (ngModelChange)="heurePrestation.set($event)" name="heurePrestation" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="col-12 col-lg-5">
+          <div class="card shadow-sm border-0 p-4 sticky-top bg-white" style="top: 5rem;">
+            <h2 class="h5 fw-bold mb-3 border-bottom pb-2">3. Formule & Tarification</h2>
+
+            <div class="mb-3">
+              <label for="menuSelect" class="form-label fw-semibold">Formule choisie</label>
+              <select 
+                id="menuSelect" 
+                class="form-select" 
+                [ngModel]="selectedMenu()?.id" 
+                (ngModelChange)="onMenuChange($event)" 
+                name="menuSelect">
+                @for (m of allMenus(); track m.id) {
+                  <option [value]="m.id">{{ m.titre }} ({{ m.prixParPersonne }} €/pers.)</option>
+                }
+              </select>
+            </div>
+
+            @if (selectedMenu(); as menuActif) {
+              <div class="mb-3">
+                <label for="guestInput" class="form-label fw-semibold">Nombre de personnes</label>
+                <input 
+                  type="number" 
+                  id="guestInput" 
+                  class="form-control" 
+                  [min]="menuActif.nombrePersonneMin" 
+                  [ngModel]="guestCount()" 
+                  (ngModelChange)="guestCount.set(+$event)" 
+                  name="guestInput" 
+                  required>
+                
+                <div class="form-text small" [class.text-danger]="!isGuestsValid()">
+                  Minimum imposé : {{ menuActif.nombrePersonneMin }} convives.
+                </div>
+
+                @if (hasDiscount()) {
+                  <div class="alert alert-success py-1 px-2 mt-2 small">
+                    <i class="bi bi-tag-fill me-1"></i> <strong>10% de remise appliquée</strong> (commande &ge; {{ menuActif.nombrePersonneMin + 5 }} personnes).
+                  </div>
+                }
+              </div>
+
+              <div class="alert alert-warning border-0 small py-2 px-3 mb-3">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>Conditions :</strong> {{ menuActif.conditions }}
+              </div>
+
+              <div class="bg-light p-3 rounded-2 mb-3">
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                  <span>Menu ({{ guestCount() }} &times; {{ menuActif.prixParPersonne }} €)</span>
+                  <span>{{ baseMenuTotal() }} €</span>
+                </div>
+
+                @if (hasDiscount()) {
+                  <div class="d-flex justify-content-between small text-success fw-semibold mb-1">
+                    <span>Remise volume (-10%)</span>
+                    <span>- {{ discountAmount() }} €</span>
+                  </div>
+                }
+
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                  <span>Frais de livraison</span>
+                  <span>{{ deliveryCost() > 0 ? (deliveryCost() + ' €') : 'Gratuit (Bordeaux intramuros)' }}</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <span class="fw-bold">Total TTC</span>
+                  <span class="fs-4 fw-bold text-dark">{{ grandTotal() }} €</span>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                class="btn btn-terracotta w-100 py-3 fw-semibold shadow-sm"
+                [disabled]="orderForm.invalid || !isGuestsValid()">
+                <i class="bi bi-lock-fill me-1"></i> Confirmer la réservation
+              </button>
+            }
+          </div>
+        </aside>
+      </div>
+    </form>
+  }
+</main>
