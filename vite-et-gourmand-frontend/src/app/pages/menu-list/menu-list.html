@@ -1,16 +1,16 @@
 <section class="py-4 py-md-5">
   <div class="container">
     
-    <!-- Titre bandeau Terracotta conforme maquette -->
+    
     <div class="banner-title text-center text-white py-3 px-4 rounded-3 shadow-sm mb-4">
       <h1 class="h3 fw-bold mb-0">Nos Menus Traiteur Gastronomiques.</h1>
     </div>
 
-    <!-- Barre de filtres dynamiques (RGAA : labels explicites) -->
+    
     <div class="card border-0 shadow-sm p-3 mb-5 filter-bar bg-white rounded-3">
       <div class="row g-3 align-items-end">
         
-        <!-- Filtre Régime -->
+        
         <div class="col-6 col-md-3">
           <label for="filterRegime" class="form-label small fw-semibold text-muted mb-1">Régime</label>
           <select 
@@ -26,7 +26,7 @@
           </select>
         </div>
 
-        <!-- Filtre Thème -->
+        
         <div class="col-6 col-md-3">
           <label for="filterTheme" class="form-label small fw-semibold text-muted mb-1">Thème</label>
           <select 
@@ -42,7 +42,7 @@
           </select>
         </div>
 
-        <!-- Filtre Prix Max -->
+        
         <div class="col-6 col-md-2">
           <label for="filterPrice" class="form-label small fw-semibold text-muted mb-1">Prix max (€)</label>
           <input 
@@ -54,7 +54,7 @@
             (ngModelChange)="maxPrice.set($event ? +$event : null)">
         </div>
 
-        <!-- Filtre Min Personnes -->
+        
         <div class="col-6 col-md-2">
           <label for="filterPersons" class="form-label small fw-semibold text-muted mb-1">Min personnes</label>
           <input 
@@ -66,7 +66,7 @@
             (ngModelChange)="minPersons.set($event ? +$event : null)">
         </div>
 
-        <!-- Bouton Réinitialiser -->
+        
         <div class="col-12 col-md-2 text-md-end">
           <button class="btn btn-outline-secondary btn-sm w-100" (click)="resetFilters()">
             <i class="bi bi-arrow-counterclockwise me-1"></i> Réinitialiser
@@ -76,13 +76,13 @@
       </div>
     </div>
 
-    <!-- Grille responsive des cartes Menus -->
+    
     <div class="row g-4">
       @for (menu of filteredMenus(); track menu.id) {
         <div class="col-12 col-md-6 col-lg-4 d-flex align-items-stretch">
           <article class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden d-flex flex-column menu-card w-100 bg-white">
             
-            <!-- Image & Badge Régime -->
+            
             <div class="position-relative menu-image-container">
               <img [src]="menu.images[0]" [alt]="menu.titre" class="card-img-top menu-image" loading="lazy">
               <span class="position-absolute top-0 start-0 m-3 badge rounded-pill badge-regime small shadow-sm">
@@ -90,12 +90,12 @@
               </span>
             </div>
 
-            <!-- Contenu texte -->
+            
             <div class="card-body d-flex flex-column p-4">
               <h2 class="card-title h5 fw-bold text-dark mb-2">{{ menu.titre }}</h2>
               <p class="card-text text-muted small flex-grow-1">{{ menu.description }}</p>
 
-              <!-- Tarifs & Stock -->
+              
               <div class="d-flex justify-content-between align-items-baseline mt-3 pt-3 border-top">
                 <div>
                   <span class="fs-4 fw-bold text-primary">{{ menu.prixParPersonne }} €</span>
@@ -109,10 +109,10 @@
                 </div>
               </div>
 
-              <!-- Bouton Détail -->
+              
               <div class="mt-3">
-                <a [routerLink]="['/menus', menu.id]" class="btn btn-outline-terracotta w-100 rounded-2 py-2">
-                  Voir le détail du menu
+                <a [routerLink]="['/menu', menu.id]" class="btn btn-primary w-100" [attr.aria-label]="'Voir les détails du ' + menu.titre">
+                  Voir le menu
                 </a>
               </div>
             </div>
@@ -120,7 +120,7 @@
           </article>
         </div>
       } @empty {
-        <!-- Affichage si aucun filtre ne correspond -->
+        
         <div class="col-12 text-center py-5">
           <i class="bi bi-search fs-1 text-muted"></i>
           <h3 class="h5 mt-3 text-dark">Aucun menu ne correspond à vos filtres</h3>

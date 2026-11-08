@@ -1,15 +1,21 @@
-/* 1. Importation des polices Playfair Display & Inter */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
 
+header, 
+nav, 
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030 !important; 
+}
+
 :root {
-  /* Charte Graphique Vite & Gourmand */
+  
   --vg-terracotta: #C85A32;
   --vg-olive: #7A8B6E;
   --vg-creme: #FDF5EA;
   --vg-dark: #2B2623;
   --vg-red: #AA1414;
 
-  /* Surcharge native des variables Bootstrap */
   --bs-primary: var(--vg-terracotta);
   --bs-primary-rgb: 200, 90, 50;
   --bs-body-bg: var(--vg-creme);
@@ -18,7 +24,7 @@
   --bs-headings-font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* 2. Typographie globale */
+
 html, body, button, input, select, textarea, .btn, .nav-link {
   font-family: var(--bs-body-font-family);
 }
@@ -32,7 +38,7 @@ body {
   margin: 0;
 }
 
-/* 3. Titres en Playfair Display */
+/* Playfair Display */
 h1, h2, h3, h4, h5, h6, 
 .h1, .h2, .h3, .h4, .h5, .h6,
 .font-serif, 
@@ -46,7 +52,6 @@ main {
   flex: 1 0 auto;
 }
 
-/* 4. Boutons personnalisés avec transitions ciblées */
 .btn-terracotta {
   background-color: var(--vg-terracotta);
   color: #ffffff;
@@ -76,7 +81,7 @@ main {
   color: #ffffff;
 }
 
-/* 5. Badges */
+
 .badge-regime {
   background-color: var(--vg-olive);
   color: #ffffff;

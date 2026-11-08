@@ -11,11 +11,9 @@ import { RouterModule } from '@angular/router';
 })
 export class NavbarComponent {
   readonly isMenuCollapsed = signal(true);
-
   toggleMenu(): void {
     this.isMenuCollapsed.update(c => !c);
   }
-
   closeMenu(): void {
     this.isMenuCollapsed.set(true);
   }

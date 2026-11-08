@@ -1,16 +1,12 @@
-<header class="sticky-top shadow-sm">
+<header class="sticky-top shadow-sm custom-navbar-bg">
   <div class="container py-2">
     <nav class="navbar navbar-expand-lg navbar-light p-0" aria-label="Navigation principale">
-      <!-- Logo et Marque -->
       <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/" (click)="closeMenu()">
-        <img 
-          src="/logo.png" 
-          alt="Logo Vite et Gourmand" 
-          class="img-fluid"
-          style="height: 70px; width: auto; object-fit: contain;">
-        </a>
-
-      <!-- Boutons mobiles -->
+  <img 
+    src="/logo.png" 
+    alt="Vite et Gourmand" 
+    class="navbar-logo">
+</a>
       <div class="d-flex align-items-center gap-2 d-lg-none">
         <a routerLink="/connexion" class="btn btn-outline-secondary btn-sm p-1 px-2" aria-label="Mon compte">
           <i class="bi bi-person fs-5"></i>
@@ -25,7 +21,6 @@
         </button>
       </div>
 
-      <!-- Liens de navigation centrés -->
       <div class="collapse navbar-collapse" [class.show]="!isMenuCollapsed()" id="mainNavbar">
         <ul class="navbar-nav mx-auto mb-2 mb-lg-0 text-center gap-lg-4 fs-6 py-2 py-lg-0">
           <li class="nav-item">
@@ -44,9 +39,7 @@
             </a>
           </li>
         </ul>
-
-        <!-- Actions Desktop -->
-        <div class="d-none d-lg-flex align-items-center gap-2">
+          <div class="d-none d-lg-flex align-items-center gap-2">
           <a routerLink="/connexion" class="btn btn-outline-dark-custom btn-sm px-3 py-2 rounded-2">
             Connexion
           </a>
@@ -54,8 +47,7 @@
             Créer un compte
           </a>
         </div>
-
-        <!-- Actions Mobile -->
+        
         <div class="d-lg-none d-flex flex-column gap-2 mt-3 pt-3 border-top text-center">
           <a routerLink="/connexion" class="btn btn-outline-dark-custom w-100" (click)="closeMenu()">Connexion</a>
           <a routerLink="/inscription" class="btn btn-terracotta w-100" (click)="closeMenu()">Créer un compte</a>

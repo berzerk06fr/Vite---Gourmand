@@ -1,21 +1,22 @@
 export interface Plat {
   id: number;
   nom: string;
+  type: 'entree' | 'plat' | 'dessert' | 'Entrée' | 'Plat' | 'Dessert';
   description?: string;
-  type: 'entree' | 'plat' | 'dessert';
-  allergenes: string[];
+  allergenes?: string[];
+
 }
 
 export interface Menu {
   id: number;
   titre: string;
   description: string;
-  theme: string;           // ex: Noël, Pâques, Classique, Évènement
-  regime: string;          // ex: Végétarien, Vegan, Carnivore, Poisson, Classique
+  theme: string;           
+  regime: string;          
   nombrePersonneMin: number;
   prixParPersonne: number;
   stockDisponible: number;
-  conditions: string;      // Délais, stockage
+  conditions: string;      
   images: string[];
   plats: Plat[];
 }
