@@ -1,0 +1,114 @@
+<main class="container py-5" id="main-content">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      
+      <div class="text-center mb-4">
+        <h1 class="display-6 fw-bold text-dark mb-2">Contactez-nous</h1>
+        <p class="text-secondary">
+          Une question sur nos formules, une demande de prestation sur-mesure ou un devis particulier ? Laissez-nous un message.
+        </p>
+      </div>
+
+      <div class="card shadow-sm border-0 p-4 p-md-5 bg-white">
+        
+        @if (isSuccess()) {
+          <div class="alert alert-success text-center py-4" role="alert">
+            <i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i>
+            <h2 class="h5 fw-bold text-success mb-2">Message envoyé avec succès !</h2>
+            <p class="small text-muted mb-4">
+              Julie & José ont bien reçu votre demande et vous répondront dans les plus brefs délais.
+            </p>
+            <button type="button" class="btn btn-outline-success btn-sm" (click)="isSuccess.set(false)">
+              Envoyer un autre message
+            </button>
+          </div>
+        } @else {
+          <form #contactForm="ngForm" (ngSubmit)="onSubmit(contactForm)" novalidate>
+            
+            <div class="mb-3">
+              <label for="contact-email" class="form-label fw-semibold">
+                Votre adresse email <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="contact-email" 
+                name="email" 
+                class="form-control" 
+                placeholder="nom@exemple.fr"
+                [(ngModel)]="formData.email" 
+                required 
+                email
+                #emailInput="ngModel"
+                [class.is-invalid]="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
+              
+              @if (emailInput.invalid && (emailInput.dirty || emailInput.touched)) {
+                <div class="invalid-feedback">
+                  Veuillez renseigner une adresse email valide pour recevoir une réponse.
+                </div>
+              }
+            </div>
+           
+            <div class="mb-3">
+              <label for="contact-titre" class="form-label fw-semibold">
+                Objet de votre demande <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="contact-titre" 
+                name="titre" 
+                class="form-control" 
+                placeholder="Ex. : Devis buffet mariage 50 personnes"
+                [(ngModel)]="formData.titre" 
+                required 
+                minlength="4"
+                #titreInput="ngModel"
+                [class.is-invalid]="titreInput.invalid && (titreInput.dirty || titreInput.touched)">
+              
+              @if (titreInput.invalid && (titreInput.dirty || titreInput.touched)) {
+                <div class="invalid-feedback">
+                  L'objet doit comporter au moins 4 caractères.
+                </div>
+              }
+            </div>
+            
+            <div class="mb-4">
+              <label for="contact-description" class="form-label fw-semibold">
+                Votre message <span class="text-danger" aria-hidden="true">*</span>
+              </label>
+              <textarea 
+                id="contact-description" 
+                name="description" 
+                rows="5" 
+                class="form-control" 
+                placeholder="Précisez votre demande, date souhaitée, nombre d'invités estimé..."
+                [(ngModel)]="formData.description" 
+                required 
+                minlength="10"
+                #descInput="ngModel"
+                [class.is-invalid]="descInput.invalid && (descInput.dirty || descInput.touched)"></textarea>
+              
+              @if (descInput.invalid && (descInput.dirty || descInput.touched)) {
+                <div class="invalid-feedback">
+                  Votre message doit comporter au moins 10 caractères.
+                </div>
+              }
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-terracotta w-100 py-3 fw-semibold shadow-sm"
+              [disabled]="contactForm.invalid || isSubmitting()">
+              @if (isSubmitting()) {
+                <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>
+                Envoi en cours...
+              } @else {
+                <i class="bi bi-send me-2"></i> Envoyer le message
+              }
+            </button>
+          </form>
+        }
+
+      </div>
+    </div>
+  </div>
+</main>
