@@ -1,0 +1,141 @@
+<main class="container py-4" id="main-content">
+
+  <nav aria-label="Fil d'ariane" class="mb-4">
+    <a routerLink="/menus" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Retour aux menus
+    </a>
+  </nav>
+
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center my-5">
+      <output class="spinner-border text-primary">
+        <span class="visually-hidden">Chargement des détails du menu...</span>
+      </output>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="alert alert-danger text-center my-5" role="alert">
+      {{ error }}
+      <div class="mt-3">
+        <a routerLink="/menus" class="btn btn-secondary">Consulter le catalogue</a>
+      </div>
+    </div>
+  }
+
+  @if (!isLoading() && menu(); as item) {
+    <div class="row g-4 align-items-start">
+      <article class="col-12 col-md-7 col-lg-7">
+        <div class="card border-0 shadow-sm overflow-hidden mb-4">
+          @if (item.images && item.images.length > 0) {
+            <img [src]="item.images[0]" [alt]="item.titre" class="img-fluid w-100" style="max-height: 420px; object-fit: cover;">
+          }
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <span class="badge bg-primary px-3 py-2 fs-6">{{ item.theme }}</span>
+          <span class="badge bg-success px-3 py-2 fs-6">{{ item.regime }}</span>
+          <span class="badge bg-light text-dark border px-3 py-2 fs-6">Stock restant : {{ item.stockDisponible }} formules</span>
+        </div>
+
+        <h1 class="display-6 fw-bold mb-3">{{ item.titre }}</h1>
+        <p class="lead text-secondary mb-4">{{ item.description }}</p>
+
+        <section class="card border-start border-4 border-warning bg-light p-3 mb-4 shadow-sm" aria-labelledby="conditions-heading">
+          <h2 id="conditions-heading" class="h6 fw-bold text-uppercase text-dark mb-1 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+            Conditions spécifiques de cette prestation
+          </h2>
+          <p class="small text-muted mb-0">{{ item.conditions }}</p>
+        </section>
+
+        <section class="mt-4" aria-labelledby="composition-heading">
+          <h2 id="composition-heading" class="h4 fw-bold mb-3 pb-2 border-bottom">
+            Composition de la formule
+          </h2>
+
+          @if (item.plats && item.plats.length > 0) {
+            <div class="d-flex flex-column gap-3">
+              @for (plat of item.plats; track plat.id) {
+                <div class="card border-0 bg-light p-3 shadow-none">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-secondary text-uppercase fw-semibold">{{ plat.type }}</span>
+                  </div>
+                  <h3 class="h6 fw-bold mb-1 text-dark">{{ plat.nom }}</h3>
+                  @if (plat.description) {
+                    <p class="small text-muted mb-2">{{ plat.description }}</p>
+                  }
+
+                  @if (plat.allergenes && plat.allergenes.length > 0) {
+                    <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                      <span class="small fw-semibold text-danger"><i class="bi bi-shield-exclamation me-1"></i>Allergènes :</span>
+                      @for (allergene of plat.allergenes; track allergene) {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small">
+                          {{ allergene }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-muted small fst-italic">
+              La sélection détaillée des plats est en cours d'élaboration par Julie et José pour cette formule.
+            </p>
+          }
+        </section>
+      </article>
+
+      <aside class="col-12 col-md-5 col-lg-5">
+        <div class="card shadow-sm border-0 p-4 sticky-top" style="top: 5rem;">
+          <h2 class="h5 fw-bold mb-3">Réserver ce menu</h2>
+
+          <div class="d-flex justify-content-between align-items-baseline mb-3 pb-3 border-bottom">
+            <span class="text-muted">Prix unitaire</span>
+            <span class="fs-4 fw-bold text-dark">{{ item.prixParPersonne }} € <small class="fs-6 text-muted fw-normal">/ pers.</small></span>
+          </div>
+
+          <div class="mb-3">
+            <label for="guests" class="form-label fw-semibold">
+              Nombre de convives <span class="text-danger">*</span>
+            </label>
+            <input 
+              type="number" 
+              id="guests" 
+              class="form-control" 
+              [min]="item.nombrePersonneMin" 
+              [ngModel]="guestCount()" 
+              (ngModelChange)="guestCount.set(+$event)" 
+              name="guests" 
+              required>
+            <div class="form-text small" [class.text-danger]="!isGuestCountValid()">
+              Minimum imposé pour cette formule : {{ item.nombrePersonneMin }} personnes.
+            </div>
+          </div>
+
+          <div class="card bg-light border-0 p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">Total estimé</span>
+              <span class="fs-3 fw-bold text-dark">{{ totalPrice() }} €</span>
+            </div>
+            <div class="small text-muted text-end mt-1">Vaisselle incluse &bull; Hors frais de livraison éventuels</div>
+          </div>
+
+          <div class="alert alert-warning border-0 small py-2 px-3 mb-3">
+            <i class="bi bi-info-circle-fill me-1"></i>
+            {{ item.conditions }}
+          </div>
+
+          <button 
+            type="button" 
+            class="btn btn-primary w-100 py-3 fs-5 fw-semibold shadow-sm" 
+            [disabled]="!isGuestCountValid()"
+            (click)="goToOrder()">
+            <i class="bi bi-cart-check me-2"></i> Commander ce menu
+          </button>
+        </div>
+      </aside>
+    </div>
+  }
+</main>

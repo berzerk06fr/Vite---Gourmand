@@ -1,0 +1,20 @@
+.btn-primary {
+  background-color: var(--vg-primary, #b25e29);
+  border-color: var(--vg-primary, #b25e29);
+  color: #ffffff;
+  font-weight: 600;
+  transition: opacity 200ms;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--vg-primary-dark, #8f461b);
+  border-color: var(--vg-primary-dark, #8f461b);
+  color: #ffffff;
+}
+
+.btn-primary:disabled {
+  background-color: #cccccc;
+  border-color: #cccccc;
+  cursor: not-allowed;
+}
