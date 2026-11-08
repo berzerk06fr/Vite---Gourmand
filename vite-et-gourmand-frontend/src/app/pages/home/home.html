@@ -1,0 +1,119 @@
+<main id="main-content" class="home-page">
+  <section class="container py-5">
+    <div class="row align-items-center g-5">
+      <div class="col-12 col-lg-6">
+        <span class="service-tag text-uppercase fw-semibold mb-4 d-inline-block">
+          Service traiteur haut de gamme
+        </span>
+        <h1 class="hero-title fw-bold text-dark mb-4">
+          L'art de recevoir avec élégance et gourmandise.
+        </h1>
+        <p class="hero-desc text-secondary mb-5">
+          De la réception intime au grand banquet d’entreprise, découvrez une cuisine raffinée élaborée à partir de produits frais et de saison.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a routerLink="/menus" class="btn btn-terracotta px-4 py-2 fw-medium">
+            Découvrir la carte
+          </a>
+          <a routerLink="/contact" class="btn btn-outline-custom px-4 py-2 fw-medium">
+            Nous contacter
+          </a>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="hero-image-wrapper">
+          <img 
+            src="https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80" 
+            alt="Plats gastronomiques dressés par le traiteur Vite et Gourmand" 
+            class="img-fluid hero-img shadow-sm">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container py-5 my-3">
+    <div class="row g-4 text-center">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="engagement-circle mx-auto mb-3"></div>
+        <h2 class="h6 fw-bold text-dark mb-1">100 % Frais & Artisanal</h2>
+        <p class="engagement-text text-secondary mb-0">Produits locaux bruts cuisinés le jour même.</p>
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="engagement-circle mx-auto mb-3"></div>
+        <h2 class="h6 fw-bold text-dark mb-1">Livraison Réfrigérée</h2>
+        <p class="engagement-text text-secondary mb-0">Respect strict de la chaîne du froid et ponctualité garantie.</p>
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="engagement-circle mx-auto mb-3"></div>
+        <h2 class="h6 fw-bold text-dark mb-1">Régimes & Allergies</h2>
+        <p class="engagement-text text-secondary mb-0">Alternatives végétariennes et options adaptées sans surcoût.</p>
+      </div>
+
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="engagement-circle mx-auto mb-3"></div>
+        <h2 class="h6 fw-bold text-dark mb-1">Prestations Sur Mesure</h2>
+        <p class="engagement-text text-secondary mb-0">Formules personnalisées pour réceptions privées et pros.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container py-5">
+    <div class="text-center mb-5">
+      <h2 class="section-title fw-bold text-dark mb-2">Nos suggestions du moment</h2>
+      <p class="text-secondary small">Une sélection de nos créations les plus appréciées, préparées à la commande.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      @for (item of suggestions; track item.id) {
+        <div class="col-12 col-md-4">
+          <div class="card h-100 border-0 bg-transparent suggestion-card">
+            <div class="suggestion-img-box mb-3 position-relative overflow-hidden">
+              <span class="badge position-absolute top-0 start-0 m-3 fw-normal" [ngClass]="item.badgeClass">
+                {{ item.badge }}
+              </span>
+              <img [src]="item.image" [alt]="item.titre" class="w-100 h-100 object-fit-cover">
+            </div>
+            <h3 class="h6 fw-bold text-dark mb-2">{{ item.titre }}</h3>
+            <p class="small text-secondary mb-0 suggestion-desc">{{ item.descriptionPlats }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="text-center mt-5">
+      <a routerLink="/menus" class="btn btn-terracotta px-4 py-2 fw-medium">
+        Découvrir tous nos menus
+      </a>
+    </div>
+  </section>
+
+  <section class="container py-5 my-4">
+    <div class="row g-5 align-items-start">
+      <div class="col-12 col-lg-5">
+        <h2 class="section-title fw-bold text-dark mb-2">Ils nous ont fait confiance.</h2>
+        <p class="text-secondary small">Quand l'émotion culinaire se prolonge en mots.</p>
+      </div>
+
+      <div class="col-12 col-lg-7">
+        <div class="card border border-light-subtle rounded-3 p-4 bg-white shadow-sm">
+          @for (temoignage of temoignages; track temoignage.id; let last = $last) {
+            <div [class.mb-4]="!last" [class.pb-3]="!last" [class.border-bottom]="!last">
+              <div class="d-flex text-warning mb-2" aria-label="5 étoiles sur 5">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill ms-1"></i>
+                <i class="bi bi-star-fill ms-1"></i>
+                <i class="bi bi-star-fill ms-1"></i>
+                <i class="bi bi-star-fill ms-1"></i>
+              </div>
+              <h3 class="fw-bold small text-dark mb-1">{{ temoignage.titre }}</h3>
+              <p class="very-small text-secondary mb-0 leading-relaxed">{{ temoignage.texte }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

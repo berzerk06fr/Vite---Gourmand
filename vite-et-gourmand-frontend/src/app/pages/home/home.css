@@ -1,0 +1,122 @@
+.home-page {
+  background-color: #FDF5EA; /* Fond crème identique à la maquette */
+}
+
+/* Service tag */
+.service-tag {
+  color: #C85A32;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(200, 90, 50, 0.4);
+  padding-bottom: 2px;
+}
+
+/* Titres */
+.hero-title {
+  font-size: 2.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+.section-title {
+  font-size: 1.85rem;
+}
+
+/* Boutons */
+.btn-terracotta {
+  background-color: #C85A32;
+  border: 1px solid #C85A32;
+  color: #ffffff;
+  border-radius: 4px;
+}
+
+.btn-terracotta:hover,
+.btn-terracotta:focus {
+  background-color: #ad4823;
+  border-color: #ad4823;
+  color: #ffffff;
+}
+
+.btn-outline-custom {
+  background-color: transparent;
+  border: 1px solid #2b2b2b;
+  color: #2b2b2b;
+  border-radius: 4px;
+}
+
+.btn-outline-custom:hover,
+.btn-outline-custom:focus {
+  background-color: #2b2b2b;
+  color: #ffffff;
+}
+
+/* Image Hero */
+.hero-img {
+  border-radius: 14px;
+  max-height: 440px;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Cercles Engagements */
+.engagement-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #FAF4EB;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.engagement-text {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+/* Suggestions */
+.suggestion-img-box {
+  height: 190px;
+  border-radius: 12px;
+}
+
+.suggestion-desc {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* Badges */
+.badge-vegan {
+  background-color: #7A8E72;
+  color: #ffffff;
+}
+
+.badge-vege {
+  background-color: #D4843A;
+  color: #ffffff;
+}
+
+.badge-carni {
+  background-color: #727D71;
+  color: #ffffff;
+}
+
+.very-small {
+  font-size: 0.78rem;
+}
+
+.leading-relaxed {
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+}
