@@ -1,0 +1,103 @@
+<main class="container py-5" id="main-content">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5">
+      <div class="card shadow-sm border-0 p-4 p-md-5 bg-white rounded-3">
+        
+        @if (isForgotMode()) {
+          <div class="text-center mb-4">
+            <h1 class="h3 fw-bold text-dark">Mot de passe oublié</h1>
+            <p class="small text-muted">Indiquez votre email pour recevoir le lien de réinitialisation.</p>
+          </div>
+
+          @if (forgotSuccess()) {
+            <div class="alert alert-success text-center small mb-4" role="alert">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Un email contenant le lien de réinitialisation vous a été envoyé.
+            </div>
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="isForgotMode.set(false); forgotSuccess.set(false)">
+              Retour à la connexion
+            </button>
+          } @else {
+            <form (ngSubmit)="sendResetLink()">
+              <div class="mb-3">
+                <label for="resetEmail" class="form-label fw-semibold">Adresse email</label>
+                <input 
+                  type="email" 
+                  id="resetEmail" 
+                  [(ngModel)]="email" 
+                  name="resetEmail" 
+                  class="form-control" 
+                  placeholder="nom@exemple.fr" 
+                  required 
+                  email>
+              </div>
+              <button type="submit" class="btn btn-terracotta w-100 py-2 mb-3 fw-semibold">
+                Envoyer le lien
+              </button>
+              <button type="button" class="btn btn-link text-decoration-none text-muted small w-100 text-center" (click)="isForgotMode.set(false)">
+                Annuler
+              </button>
+            </form>
+          }
+        } @else {
+          <div class="text-center mb-4">
+            <h1 class="h3 fw-bold text-dark">Connexion</h1>
+            <p class="small text-muted">Accédez à votre espace Vite & Gourmand</p>
+          </div>
+
+          <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" novalidate>
+            <div class="mb-3 bg-light p-3 rounded-2 border">
+              <label for="roleChoice" class="form-label fw-semibold small mb-1">Rôle pour le test d'examen :</label>
+              <select id="roleChoice" class="form-select form-select-sm" [(ngModel)]="roleChoice" name="roleChoice">
+                <option value="utilisateur">Client (Utilisateur)</option>
+                <option value="employe">Employé</option>
+                <option value="administrateur">Administrateur</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold">Email (Identifiant)</label>
+              <input 
+                type="email" 
+                id="email" 
+                [(ngModel)]="email" 
+                name="email" 
+                class="form-control" 
+                placeholder="nom@exemple.fr" 
+                required 
+                email>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="password" class="form-label fw-semibold mb-0">Mot de passe</label>
+                <button type="button" class="btn btn-link p-0 small text-decoration-none text-muted" (click)="isForgotMode.set(true)">
+                  Mot de passe oublié ?
+                </button>
+              </div>
+              <input 
+                type="password" 
+                id="password" 
+                [(ngModel)]="password" 
+                name="password" 
+                class="form-control" 
+                required>
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-terracotta w-100 py-2 fw-semibold shadow-sm mb-3" 
+              [disabled]="loginForm.invalid">
+              Se connecter
+            </button>
+
+            <div class="text-center small text-muted">
+              Nouveau client ? <a routerLink="/inscription" class="text-terracotta fw-semibold text-decoration-none">Créer un compte</a>
+            </div>
+          </form>
+        }
+
+      </div>
+    </div>
+  </div>
+</main>

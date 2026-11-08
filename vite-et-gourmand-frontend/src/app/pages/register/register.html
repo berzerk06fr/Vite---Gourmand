@@ -1,0 +1,76 @@
+<main class="container py-5" id="main-content">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0 p-4 p-md-5 bg-white rounded-3">
+        
+        <div class="text-center mb-4">
+          <h1 class="h3 fw-bold text-dark">Créer un compte</h1>
+          <p class="small text-muted">Rejoignez Vite & Gourmand pour commander en toute simplicité</p>
+        </div>
+
+        @if (isRegistered()) {
+          <div class="alert alert-success text-center py-4" role="alert">
+            <i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i>
+            <h2 class="h5 fw-bold mb-1">Bienvenue chez Vite & Gourmand !</h2>
+            <p class="small mb-0">Un email de confirmation vient de vous être envoyé. Redirection en cours...</p>
+          </div>
+        } @else {
+          <form #regForm="ngForm" (ngSubmit)="onSubmit(regForm)" novalidate>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label for="nom" class="form-label fw-semibold small">Nom *</label>
+                <input type="text" id="nom" class="form-control" [(ngModel)]="nom" name="nom" required>
+              </div>
+              <div class="col-6">
+                <label for="prenom" class="form-label fw-semibold small">Prénom *</label>
+                <input type="text" id="prenom" class="form-control" [(ngModel)]="prenom" name="prenom" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold small">Adresse email *</label>
+              <input type="email" id="email" class="form-control" [(ngModel)]="email" name="email" required email>
+            </div>
+
+            <div class="mb-3">
+              <label for="gsm" class="form-label fw-semibold small">Numéro de GSM *</label>
+              <input type="tel" id="gsm" class="form-control" [(ngModel)]="gsm" name="gsm" placeholder="06 XX XX XX XX" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="adresse" class="form-label fw-semibold small">Adresse postale *</label>
+              <input type="text" id="adresse" class="form-control" [(ngModel)]="adressePostale" name="adressePostale" placeholder="12 rue de la Paix, 33000 Bordeaux" required>
+            </div>
+
+            <div class="mb-4">
+              <label for="pwd" class="form-label fw-semibold small">Mot de passe sécurisé *</label>
+              <input 
+                type="password" 
+                id="pwd" 
+                class="form-control" 
+                [(ngModel)]="password" 
+                name="password" 
+                required
+                [class.is-invalid]="password.length > 0 && !isPasswordValid">
+              <div class="form-text small" [class.text-danger]="password.length > 0 && !isPasswordValid">
+                10 caractères minimum : au moins 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial (&#64;$!%*?&amp;_#-).
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              class="btn btn-terracotta w-100 py-3 fw-semibold shadow-sm mb-3"
+              [disabled]="regForm.invalid || !isPasswordValid">
+              Créer mon compte
+            </button>
+
+            <div class="text-center small text-muted">
+              Déjà inscrit ? <a routerLink="/connexion" class="text-terracotta fw-semibold text-decoration-none">Se connecter</a>
+            </div>
+          </form>
+        }
+
+      </div>
+    </div>
+  </div>
+</main>
