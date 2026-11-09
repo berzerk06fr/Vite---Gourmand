@@ -1,9 +1,10 @@
 # =====================================
 # Environnements & Secrets (CRITIQUE SÉCURITÉ)
 # =====================================
-.env
-.env.*
-!.env.example
+# Conserve .env (valeurs par défaut Symfony) mais ignore les surcharges locales et secrets
+.env.local
+.env.local.php
+.env.*.local
 
 # =====================================
 # Dépendances & Paquets
@@ -12,12 +13,14 @@ node_modules/
 vendor/
 
 # =====================================
-# Builds & Livrables générés
+# Builds & Caches Applicatifs
 # =====================================
 dist/
 build/
 out-tsc/
-.angular/cache/
+.angular/
+var/cache/
+var/log/
 
 # =====================================
 # Logs & Fichiers temporaires
