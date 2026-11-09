@@ -10,15 +10,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+//use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-/**
- * @Route("/api", name="api_auth_")
- */
 class AuthController extends AbstractController
 {
-    /**
-     * @Route("/register", name="register", methods={"POST"})
-     */
+    #[Route('/api/register', name: 'api_register', methods: ['POST'])]
     public function register(
         Request $request,
         UserPasswordHasherInterface $passwordHasher,
@@ -40,7 +36,7 @@ class AuthController extends AbstractController
         $user->setNom($data['nom']);
         $user->setPrenom($data['prenom']);
         $user->setTelephone($data['telephone'] ?? null);
-        $user->setAdresse($data['adresse'] ?? null);
+        $user->setAdresse($data['adresse'] ?? $data['adressePostale'] ?? null);
         $user->setRoles(['ROLE_USER']);
 
         $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
@@ -53,5 +49,26 @@ class AuthController extends AbstractController
             'message' => 'Utilisateur créé avec succès.',
             'userId' => $user->getId()
         ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/api/me', name: 'api_me', methods: ['GET'])]
+    public function me(): JsonResponse
+    {
+        /** @var \App\Entity\Utilisateur|null $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['error' => 'Non authentifié.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->json([
+            'id' => $user->getId(),
+            'email' => $user->getUserIdentifier(),
+            'nom' => $user->getNom(),
+            'prenom' => $user->getPrenom(),
+            'telephone' => $user->getTelephone(),
+            'adresse' => $user->getAdresse(),
+            'roles' => $user->getRoles(),
+        ]);
     }
 }

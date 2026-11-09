@@ -45,6 +45,7 @@ class CommandeController extends AbstractController
         }
 
         // Si employé ou admin, il peut voir toutes les commandes, sinon seulement les siennes
+        
         $roles = $user->getRoles();
         $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
         $commandes = $isStaff

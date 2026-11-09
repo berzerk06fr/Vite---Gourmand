@@ -95,7 +95,7 @@ class AvisController extends AbstractController
         $avis->setStatut($action === 'valider' ? 'valide' : 'refuse');
         $em->flush();
 
-        // Enregistrement d'audit NoSQL
+        
         $mongoAudit->log('moderation_logs', [
             'action'       => $action,
             'avis_id'      => $avis->getId(),

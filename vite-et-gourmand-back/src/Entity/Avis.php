@@ -21,8 +21,8 @@ class Avis
     private ?string $commentaire = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $statut = 'en_attente'; // 'en_attente', 'valide', 'refuse'
-
+    private ?string $statut = 'en_attente';
+    
     #[ORM\Column]
     private ?\DateTimeImmutable $dateCreation = null;
 
