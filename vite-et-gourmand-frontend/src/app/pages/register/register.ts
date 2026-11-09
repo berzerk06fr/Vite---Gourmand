@@ -22,8 +22,10 @@ export class RegisterComponent {
   adressePostale = '';
   password = '';
 
-  readonly passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-#])[A-Za-z\d@$!%*?&_\-#]{10,}$/;
+  readonly passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#_-])[A-Za-z\d@$!%*?&#_-]{10,}$/;
 
+  readonly isLoading = signal<boolean>(false);
+  readonly errorMessage = signal<string | null>(null);
   readonly isRegistered = signal<boolean>(false);
 
   get isPasswordValid(): boolean {
@@ -31,13 +33,41 @@ export class RegisterComponent {
   }
 
   onSubmit(form: NgForm): void {
-    if (form.invalid || !this.isPasswordValid) return;
+    if (form.invalid || !this.isPasswordValid || this.isLoading()) return;
 
-    this.isRegistered.set(true);
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
 
-    setTimeout(() => {
-      this.authService.login(this.email, 'utilisateur');
-      void this.router.navigate(['/menus']);
-    }, 1200);
+    const payload = {
+      nom: this.nom,
+      prenom: this.prenom,
+      email: this.email,
+      password: this.password,
+      telephone: this.gsm,
+      adresse: this.adressePostale
+    };
+
+    this.authService.register(payload).subscribe({
+      next: () => {
+        this.isRegistered.set(true);
+
+        this.authService.login({ email: this.email, password: this.password }).subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            void this.router.navigate(['/menus']);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            void this.router.navigate(['/login']);
+          }
+        });
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(
+          err.error?.error || 'Une erreur est survenue lors de la création de votre compte.'
+        );
+      }
+    });
   }
 }

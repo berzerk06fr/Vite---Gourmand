@@ -6,6 +6,7 @@ import { ContactComponent } from './pages/contact/contact';
 import { CommandeComponent } from './pages/commande/commande';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -13,7 +14,7 @@ export const routes: Routes = [
   { path: 'menus/:id', component: MenuDetail },
   { path: 'menu/:id', redirectTo: 'menus/:id' },
   { path: 'contact', component: ContactComponent },
-  { path: 'commande', component: CommandeComponent },
+  { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
   { path: 'connexion', component: LoginComponent },
   { path: 'inscription', component: RegisterComponent },
   { path: '**', redirectTo: '' }

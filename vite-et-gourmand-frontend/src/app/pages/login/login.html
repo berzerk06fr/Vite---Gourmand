@@ -45,16 +45,15 @@
             <p class="small text-muted">Accédez à votre espace Vite & Gourmand</p>
           </div>
 
-          <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" novalidate>
-            <div class="mb-3 bg-light p-3 rounded-2 border">
-              <label for="roleChoice" class="form-label fw-semibold small mb-1">Rôle pour le test d'examen :</label>
-              <select id="roleChoice" class="form-select form-select-sm" [(ngModel)]="roleChoice" name="roleChoice">
-                <option value="utilisateur">Client (Utilisateur)</option>
-                <option value="employe">Employé</option>
-                <option value="administrateur">Administrateur</option>
-              </select>
+          <!-- Alerte d'erreur de connexion -->
+          @if (errorMessage()) {
+            <div class="alert alert-danger small py-2 text-center mb-3" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              {{ errorMessage() }}
             </div>
+          }
 
+          <form #loginForm="ngForm" (ngSubmit)="onSubmit(loginForm)" novalidate>
             <div class="mb-3">
               <label for="email" class="form-label fw-semibold">Email (Identifiant)</label>
               <input 
@@ -81,18 +80,19 @@
                 [(ngModel)]="password" 
                 name="password" 
                 class="form-control" 
+                placeholder="Votre mot de passe"
                 required>
             </div>
 
             <button 
               type="submit" 
               class="btn btn-terracotta w-100 py-2 fw-semibold shadow-sm mb-3" 
-              [disabled]="loginForm.invalid">
-              Se connecter
+              [disabled]="loginForm.invalid || isLoading()">
+              {{ isLoading() ? 'Connexion en cours...' : 'Se connecter' }}
             </button>
 
             <div class="text-center small text-muted">
-              Nouveau client ? <a routerLink="/inscription" class="text-terracotta fw-semibold text-decoration-none">Créer un compte</a>
+              Nouveau client ? <a routerLink="/register" class="text-terracotta fw-semibold text-decoration-none">Créer un compte</a>
             </div>
           </form>
         }
