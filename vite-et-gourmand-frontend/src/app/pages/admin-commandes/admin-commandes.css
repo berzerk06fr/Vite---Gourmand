@@ -1,35 +1,354 @@
-.spin-icon {
+:host {
+  --vg-terracotta: #c25e38;
+  --vg-terracotta-hover: #a84e2d;
+  --vg-gold: #e5a329;
+  --vg-sand: #fdfbf7;
+  --vg-border: #e7e5e4;
+  --vg-dark: #292524;
+}
+
+/* Bouton actualiser */
+.vg-btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--vg-terracotta);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(194, 94, 56, 0.25);
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-btn-refresh:hover:not(:disabled) {
+  background-color: var(--vg-terracotta-hover);
+}
+
+.vg-btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vg-icon-14 {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes vgSpinAnimation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vg-spin {
+  animation-name: vgSpinAnimation;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Onglets */
+.vg-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--vg-border);
+  background-color: #ffffff;
+  color: #57534e;
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-tab-btn:hover {
+  background-color: #f5f5f4;
+  color: var(--vg-dark);
+}
+
+.vg-tab-btn.active {
+  background-color: var(--vg-terracotta);
+  border-color: var(--vg-terracotta);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(194, 94, 56, 0.25);
+}
+
+.vg-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  background-color: #dc2626;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Filtres par statut */
+.vg-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--vg-border);
+  background-color: #ffffff;
+  color: #78716c;
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-filter-btn:hover {
+  background-color: #f5f5f4;
+  color: var(--vg-dark);
+}
+
+.vg-filter-btn.active {
+  background-color: var(--vg-dark);
+  border-color: var(--vg-dark);
+  color: #ffffff;
+}
+
+/* CADRE DU TABLEAU PRINCIPAL */
+.vg-card-table {
+  background-color: #ffffff;
+  border: 1px solid var(--vg-border);
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.vg-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.vg-table thead {
+  background-color: #fbf9f6;
+  border-bottom: 1px solid var(--vg-border);
+}
+
+.vg-table th {
+  padding: 0.875rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #57534e;
+}
+
+.vg-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f5f5f4;
+  vertical-align: middle;
+}
+
+.vg-table tbody tr:hover {
+  background-color: rgba(194, 94, 56, 0.03);
+}
+
+.vg-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* PASTILLES DE STATUTS (Couleurs directes) */
+.vg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.vg-pill-livre,
+.vg-pill-succes {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.vg-pill-prepa,
+.vg-pill-info {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.vg-pill-annule,
+.vg-pill-danger {
+  background-color: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.vg-pill-attente {
+  background-color: #f5f5f4;
+  color: #57534e;
+  border-color: #e7e5e4;
+}
+
+/* Sélecteur de statut */
+.vg-status-select {
+  background-color: #ffffff;
+  border: 1px solid var(--vg-border);
+  color: #44403c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  outline: none;
+  transition-property: border-color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-status-select:focus {
+  border-color: var(--vg-terracotta);
+  box-shadow: 0 0 0 2px rgba(194, 94, 56, 0.15);
+}
+
+.vg-action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--vg-border);
+  background-color: #ffffff;
+  color: #57534e;
+  cursor: pointer;
+  transition-property: background-color, color, border-color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-action-icon-btn:hover {
+  background-color: #f5f5f4;
+  color: var(--vg-terracotta);
+  border-color: #d6d3d1;
+}
+
+/* Cartes Avis */
+.vg-avis-card {
+  background: #ffffff;
+  border: 1px solid var(--vg-border);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .vg-avis-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.vg-star-small {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  max-width: 18px;
+  max-height: 18px;
   display: inline-block;
-  animation: spin 1s linear infinite;
+  vertical-align: middle;
 }
 
+.vg-star-gold {
+  fill: var(--vg-gold);
+}
+
+.vg-star-empty {
+  fill: #e7e5e4;
+}
+
+.vg-btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.vg-btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vg-btn-valider {
+  background-color: #15803d;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(21, 128, 61, 0.2);
+}
+
+.vg-btn-valider:hover:not(:disabled) {
+  background-color: #166534;
+}
+
+.vg-btn-refuser {
+  background-color: #fff1f2;
+  color: #be123c;
+  border-color: #fecdd3;
+}
+
+.vg-btn-refuser:hover:not(:disabled) {
+  background-color: #ffe4e6;
+}
+
+/* Accessibilité SonarQube */
 @media (prefers-reduced-motion: reduce) {
-  .spin-icon {
-    animation: none;
+  .vg-spin {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
   }
-}
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-  .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    border: none;
-    box-shadow: none;
-  }
-  .no-print {
-    display: none;
+  .vg-btn-refresh,
+  .vg-tab-btn,
+  .vg-filter-btn,
+  .vg-status-select,
+  .vg-action-icon-btn,
+  .vg-btn-action {
+    transition-duration: 0.01ms;
   }
 }

@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CommandeService, CommandeItem } from '../../services/commande.service';
+import { AvisService } from '../../services/avis.service';
+import { Avis } from '../../models/avis.model';
 
 @Component({
   selector: 'app-admin-commandes',
@@ -12,18 +14,24 @@ import { CommandeService, CommandeItem } from '../../services/commande.service';
 })
 export class AdminCommandesComponent implements OnInit {
   private readonly commandeService = inject(CommandeService);
+  private readonly avisService = inject(AvisService);
 
+  // Navigation par onglets
+  readonly ongletActif = signal<'commandes' | 'avis'>('commandes');
+
+  // Signaux Commandes
   readonly commandes = signal<CommandeItem[]>([]);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
-
-  // Signaux pour recherche et filtrage
   readonly rechercheTexte = signal<string>('');
   readonly filtreStatut = signal<string>('tous');
-
-  // Commande sélectionnée pour le modal de détails (Chantier 2)
   readonly commandeSelectionnee = signal<CommandeItem | null>(null);
+
+  // Signaux Modération Avis
+  readonly avisEnAttente = signal<Avis[]>([]);
+  readonly isLoadingAvis = signal<boolean>(false);
+  readonly actionEnCoursId = signal<number | null>(null);
 
   readonly statutsPossibles = [
     'en_attente',
@@ -36,7 +44,6 @@ export class AdminCommandesComponent implements OnInit {
     'annulée'
   ];
 
-  // Liste filtrée dynamiquement via computed
   readonly commandesFiltrees = computed(() => {
     const texte = this.rechercheTexte().toLowerCase().trim();
     const statut = this.filtreStatut();
@@ -56,8 +63,18 @@ export class AdminCommandesComponent implements OnInit {
 
   ngOnInit(): void {
     this.chargerCommandes();
+    this.chargerAvisEnAttente();
   }
 
+  // --- Gestion des onglets ---
+  changerOnglet(onglet: 'commandes' | 'avis'): void {
+    this.ongletActif.set(onglet);
+    if (onglet === 'avis') {
+      this.chargerAvisEnAttente();
+    }
+  }
+
+  // --- Flux Commandes ---
   chargerCommandes(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -138,6 +155,39 @@ export class AdminCommandesComponent implements OnInit {
     });
   }
 
+  // --- Flux Modération Avis (US-13) ---
+  chargerAvisEnAttente(): void {
+    this.isLoadingAvis.set(true);
+    this.avisService.getAvisEnAttente().subscribe({
+      next: (data) => {
+        this.avisEnAttente.set(data);
+        this.isLoadingAvis.set(false);
+      },
+      error: () => {
+        this.isLoadingAvis.set(false);
+      }
+    });
+  }
+
+  traiterAvis(avisId: number, action: 'valider' | 'refuser'): void {
+    this.actionEnCoursId.set(avisId);
+
+    this.avisService.modererAvis(avisId, action).subscribe({
+      next: (res) => {
+        this.successMessage.set(res.message);
+        // Retrait immédiat de l'avis modéré de la liste
+        this.avisEnAttente.update((liste) => liste.filter((a) => a.id !== avisId));
+        this.actionEnCoursId.set(null);
+        setTimeout(() => this.successMessage.set(null), 4000);
+      },
+      error: (err) => {
+        this.errorMessage.set(err.error?.error || 'Erreur lors de la modération de l\'avis.');
+        this.actionEnCoursId.set(null);
+        setTimeout(() => this.errorMessage.set(null), 4000);
+      }
+    });
+  }
+
   formaterLibelleStatut(statut: string): string {
     switch (statut) {
       case 'en_attente': return 'En attente';
@@ -154,13 +204,19 @@ export class AdminCommandesComponent implements OnInit {
 
   getStatusClass(statut: string): string {
     const s = (statut || '').toLowerCase().trim();
-    if (s.startsWith('annul')) return 'bg-danger-subtle text-danger border-danger';
+
+    if (s.startsWith('annul')) {
+      return 'vg-pill-annule';
+    }
+
     if (['accepté', 'accepte', 'livré', 'livre', 'terminée', 'terminee'].includes(s)) {
-      return 'bg-success-subtle text-success border-success';
+      return 'vg-pill-livre';
     }
+
     if (s.includes('préparation') || s.includes('preparation') || s.includes('livraison')) {
-      return 'bg-info-subtle text-info border-info';
+      return 'vg-pill-prepa';
     }
-    return 'bg-warning-subtle text-warning border-warning';
+
+    return 'vg-pill-attente';
   }
 }

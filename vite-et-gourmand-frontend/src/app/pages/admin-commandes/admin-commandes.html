@@ -1,210 +1,359 @@
 <section class="max-w-7xl mx-auto px-4 py-8">
   <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-amber-900/10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-stone-200">
     <div>
-      <h1 class="text-3xl font-serif font-bold text-gray-900">Gestion des Commandes</h1>
-      <p class="text-gray-600 mt-1 text-sm">Espace réservé au personnel — Suivi et flux traiteur</p>
+      <span class="inline-block text-xs font-semibold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 mb-1.5">
+        Espace Collaborateur
+      </span>
+      <h1 class="text-3xl font-serif font-bold text-stone-900">Opérations & Gestion</h1>
+      <p class="text-stone-500 mt-1 text-sm">Suivi des commandes traiteur et modération des retours d'expérience</p>
     </div>
     <div>
-      <button 
-        type="button"
-        (click)="chargerCommandes()" 
-        [disabled]="isLoading()"
-        class="btn btn-terracotta d-inline-flex align-items-center gap-2 px-3 py-2 rounded-2 shadow-sm">
-        <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoading()"></i>
-        <span>{{ isLoading() ? 'Chargement...' : 'Rafraîchir' }}</span>
-      </button>
+      @if (ongletActif() === 'commandes') {
+        <button 
+          type="button"
+          (click)="chargerCommandes()" 
+          [disabled]="isLoading()"
+          class="vg-btn-refresh">
+          <svg class="vg-icon-14" [class.vg-spin]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>{{ isLoading() ? 'Actualisation...' : 'Actualiser commandes' }}</span>
+        </button>
+      } @else {
+        <button 
+          type="button"
+          (click)="chargerAvisEnAttente()" 
+          [disabled]="isLoadingAvis()"
+          class="vg-btn-refresh">
+          <svg class="vg-icon-14" [class.vg-spin]="isLoadingAvis()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>{{ isLoadingAvis() ? 'Actualisation...' : 'Actualiser avis' }}</span>
+        </button>
+      }
     </div>
   </div>
 
   <!-- Messages Flash -->
   @if (successMessage()) {
-    <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm flex items-center gap-2">
-      <i class="bi bi-check-circle-fill"></i>
+    <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex items-center gap-2.5 shadow-sm">
+      <i class="bi bi-check-circle-fill text-emerald-600"></i>
       <span>{{ successMessage() }}</span>
     </div>
   }
 
   @if (errorMessage()) {
-    <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
-      <i class="bi bi-exclamation-triangle-fill"></i>
+    <div class="mb-4 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center gap-2.5 shadow-sm">
+      <i class="bi bi-exclamation-triangle-fill text-rose-600"></i>
       <span>{{ errorMessage() }}</span>
     </div>
   }
 
-  <!-- Barre de Recherche et Filtres par Statut -->
-  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-    <!-- Champ recherche -->
-    <div class="relative flex-1">
-      <i class="bi bi-search absolute left-3 top-2.5 text-gray-400"></i>
-      <input 
-        type="search" 
-        [value]="rechercheTexte()" 
-        (input)="rechercheTexte.set($any($event.target).value)"
-        placeholder="Rechercher par référence CMD, email client ou formule..."
-        aria-label="Rechercher une commande"
-        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-amber-600" />
-    </div>
+  <!-- Navigation par Onglets -->
+  <div class="flex items-center gap-3 mb-6 border-b border-stone-200 pb-4">
+    <button
+      type="button"
+      (click)="changerOnglet('commandes')"
+      class="vg-tab-btn"
+      [class.active]="ongletActif() === 'commandes'">
+      <i class="bi bi-receipt"></i>
+      <span>Commandes clients ({{ commandes().length }})</span>
+    </button>
 
-    <!-- Filtres par pilules de statut -->
-    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-      <button 
-        type="button" 
-        (click)="filtreStatut.set('tous')"
-        [class]="filtreStatut() === 'tous' ? 'btn btn-dark btn-sm' : 'btn btn-outline-secondary btn-sm'">
-        Tous ({{ commandes().length }})
-      </button>
-      <button 
-        type="button" 
-        (click)="filtreStatut.set('en_attente')"
-        [class]="filtreStatut() === 'en_attente' ? 'btn btn-warning btn-sm' : 'btn btn-outline-warning btn-sm'">
-        En attente
-      </button>
-      <button 
-        type="button" 
-        (click)="filtreStatut.set('en préparation')"
-        [class]="filtreStatut() === 'en préparation' ? 'btn btn-info btn-sm' : 'btn btn-outline-info btn-sm'">
-        En prépa
-      </button>
-      <button 
-        type="button" 
-        (click)="filtreStatut.set('livré')"
-        [class]="filtreStatut() === 'livré' ? 'btn btn-success btn-sm' : 'btn btn-outline-success btn-sm'">
-        Livrées
-      </button>
-      <button 
-        type="button" 
-        (click)="filtreStatut.set('annulée')"
-        [class]="filtreStatut() === 'annulée' ? 'btn btn-danger btn-sm' : 'btn btn-outline-danger btn-sm'">
-        Annulées
-      </button>
-    </div>
+    <button
+      type="button"
+      (click)="changerOnglet('avis')"
+      class="vg-tab-btn"
+      [class.active]="ongletActif() === 'avis'">
+      <i class="bi bi-chat-square-quote"></i>
+      <span>Modération des avis</span>
+      @if (avisEnAttente().length > 0) {
+        <span class="vg-counter-badge">{{ avisEnAttente().length }}</span>
+      }
+    </button>
   </div>
 
-  <!-- État de chargement -->
-  @if (isLoading()) {
-    <div class="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
-      <output class="spinner-border text-amber-700">
-        <span class="visually-hidden">Chargement en cours...</span>
-      </output>
-      <p class="text-sm font-medium">Chargement des commandes...</p>
-    </div>
-  } @else if (commandesFiltrees().length === 0) {
-    <div class="text-center py-16 bg-white border border-gray-200 rounded-2xl shadow-sm">
-      <i class="bi bi-inbox text-4xl text-gray-400"></i>
-      <p class="text-gray-600 mt-2 font-medium">Aucune commande ne correspond à vos critères.</p>
-    </div>
-  } @else {
-    <!-- Tableau des commandes -->
-    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-amber-50/50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-700">
-              <th class="py-3.5 px-4">Réf.</th>
-              <th class="py-3.5 px-4">Client</th>
-              <th class="py-3.5 px-4">Formule</th>
-              <th class="py-3.5 px-4">Convives</th>
-              <th class="py-3.5 px-4">Montant TTC</th>
-              <th class="py-3.5 px-4">Statut Actuel</th>
-              <th class="py-3.5 px-4 text-center">Mise à jour</th>
-              <th class="py-3.5 px-4 text-center">Fiche</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 text-sm">
-            @for (cmd of commandesFiltrees(); track cmd.id) {
-              <tr class="hover:bg-amber-50/30 transition">
-                <td class="py-4 px-4 font-mono font-semibold text-gray-900">
-                  {{ cmd.numeroCommande }}
-                </td>
-                <td class="py-4 px-4 text-gray-700 font-medium">
-                  {{ cmd.client?.email || 'N/A' }}
-                </td>
-                <td class="py-4 px-4 text-gray-800">
-                  {{ cmd.menu?.titre || 'Menu traiteur' }}
-                </td>
-                <td class="py-4 px-4 text-gray-600">
-                  {{ cmd.nbPersonnes }} pers.
-                </td>
-                <td class="py-4 px-4 font-bold text-gray-900">
-                  {{ cmd.prixTotal | number:'1.2-2' }} €
-                </td>
-                <td class="py-4 px-4">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border {{ getStatusClass(cmd.statut) }}">
-                    {{ formaterLibelleStatut(cmd.statut) }}
-                  </span>
-                </td>
-                <td class="py-4 px-4 text-center">
-                  <select 
-                    [value]="cmd.statut" 
-                    (change)="onChangementStatut(cmd, $event)"
-                    [attr.aria-label]="'Modifier le statut de la commande ' + cmd.numeroCommande"
-                    class="bg-white border border-gray-300 text-gray-800 text-xs font-medium rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-600 cursor-pointer">
-                    @for (st of statutsPossibles; track st) {
-                      <option [value]="st">{{ formaterLibelleStatut(st) }}</option>
-                    }
-                  </select>
-                </td>
-                <td class="py-4 px-4 text-center">
-                  <button 
-                    type="button" 
-                    (click)="ouvrirDetails(cmd)"
-                    class="btn btn-outline-secondary btn-sm px-2 py-1"
-                    title="Voir le bon de commande">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+  <!-- VUE 1 : GESTION DES COMMANDES HARMONISÉE -->
+  @if (ongletActif() === 'commandes') {
+    <!-- Barre de Recherche et Filtres par Statut -->
+    <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+      <!-- Champ recherche -->
+      <div class="relative flex-1">
+        <i class="bi bi-search absolute left-3.5 top-3 text-stone-400"></i>
+        <input 
+          type="search" 
+          [value]="rechercheTexte()" 
+          (input)="rechercheTexte.set($any($event.target).value)"
+          placeholder="Rechercher par référence, email ou intitulé de formule..."
+          aria-label="Rechercher une commande"
+          class="w-full pl-10 pr-4 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition" />
+      </div>
+
+      <!-- Filtres par boutons de statut -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <button 
+          type="button" 
+          (click)="filtreStatut.set('tous')"
+          class="vg-filter-btn"
+          [class.active]="filtreStatut() === 'tous'">
+          Tous ({{ commandes().length }})
+        </button>
+        <button 
+          type="button" 
+          (click)="filtreStatut.set('en_attente')"
+          class="vg-filter-btn"
+          [class.active]="filtreStatut() === 'en_attente'">
+          En attente
+        </button>
+        <button 
+          type="button" 
+          (click)="filtreStatut.set('en préparation')"
+          class="vg-filter-btn"
+          [class.active]="filtreStatut() === 'en préparation'">
+          En prépa
+        </button>
+        <button 
+          type="button" 
+          (click)="filtreStatut.set('livré')"
+          class="vg-filter-btn"
+          [class.active]="filtreStatut() === 'livré'">
+          Livrées
+        </button>
+        <button 
+          type="button" 
+          (click)="filtreStatut.set('annulée')"
+          class="vg-filter-btn"
+          [class.active]="filtreStatut() === 'annulée'">
+          Annulées
+        </button>
       </div>
     </div>
+
+    <!-- Chargement / Vide / Tableau -->
+    @if (isLoading()) {
+      <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm gap-3">
+        <div class="w-10 h-10 rounded-full border-4 border-stone-200 border-t-amber-800 animate-spin"></div>
+        <p class="text-sm font-medium text-stone-600">Chargement des commandes en cours...</p>
+      </div>
+    } @else if (commandesFiltrees().length === 0) {
+      <div class="text-center py-16 bg-white border border-stone-200 rounded-2xl shadow-sm">
+        <div class="w-14 h-14 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+          <i class="bi bi-inbox"></i>
+        </div>
+        <h3 class="text-base font-serif font-bold text-stone-900">Aucune commande trouvée</h3>
+        <p class="text-stone-500 text-xs mt-1">Aucune commande ne correspond aux filtres actifs.</p>
+      </div>
+    } @else {
+      <!-- Tableau moderne avec cadre blanc arrondi -->
+      <div class="vg-card-table">
+        <div class="overflow-x-auto">
+          <table class="vg-table">
+            <thead>
+              <tr>
+                <th style="padding-left: 1.5rem;">Réf.</th>
+                <th>Client</th>
+                <th>Prestation</th>
+                <th>Convives</th>
+                <th>Total</th>
+                <th>Statut</th>
+                <th style="text-align: center;">Gestion Flux</th>
+                <th style="text-align: center; padding-right: 1.5rem;">Fiche</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (cmd of commandesFiltrees(); track cmd.id) {
+                <tr>
+                  <td style="padding-left: 1.5rem;">
+                    <span style="font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #44403c; background: #f5f5f4; border: 1px solid #e7e5e4; padding: 0.2rem 0.5rem; border-radius: 0.375rem;">
+                      {{ cmd.numeroCommande }}
+                    </span>
+                  </td>
+                  <td style="font-weight: 500; color: #292524;">
+                    {{ cmd.client?.email || 'N/A' }}
+                  </td>
+                  <td style="font-family: Georgia, serif; font-weight: 700; color: #1c1917; font-size: 0.95rem;">
+                    {{ cmd.menu?.titre || 'Menu traiteur' }}
+                  </td>
+                  <td style="font-size: 0.8125rem; color: #78716c;">
+                    <i class="bi bi-people" style="margin-right: 0.25rem;"></i>{{ cmd.nbPersonnes }} pers.
+                  </td>
+                  <td style="font-family: Georgia, serif; font-weight: 700; color: #292524; font-size: 1rem;">
+                    {{ cmd.prixTotal | number:'1.2-2' }} €
+                  </td>
+                  <td>
+                    <span class="vg-pill" [ngClass]="getStatusClass(cmd.statut)">
+                      {{ formaterLibelleStatut(cmd.statut) }}
+                    </span>
+                  </td>
+                  <td style="text-align: center;">
+                    <select 
+                      [value]="cmd.statut" 
+                      (change)="onChangementStatut(cmd, $event)"
+                      [attr.aria-label]="'Modifier le statut de la commande ' + cmd.numeroCommande"
+                      class="vg-status-select">
+                      @for (st of statutsPossibles; track st) {
+                        <option [value]="st">{{ formaterLibelleStatut(st) }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td style="text-align: center; padding-right: 1.5rem;">
+                    <button 
+                      type="button" 
+                      (click)="ouvrirDetails(cmd)"
+                      class="vg-action-icon-btn"
+                      title="Ouvrir le bon de préparation">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
   }
 
-  <!-- MODAL / BON DE COMMANDE TRAITEUR -->
-  @if (commandeSelectionnee(); as detail) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden print-area">
-        <div class="bg-amber-900/5 px-6 py-4 border-b flex justify-between items-center">
-          <div>
-            <h2 class="text-lg font-bold text-gray-900">Bon de Préparation Traiteur</h2>
-            <p class="text-xs text-gray-500 font-mono">{{ detail.numeroCommande }}</p>
+  <!-- VUE 2 : MODÉRATION DES AVIS CLIENTS -->
+  @if (ongletActif() === 'avis') {
+    @if (isLoadingAvis()) {
+      <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm gap-3">
+        <div class="w-10 h-10 rounded-full border-4 border-stone-200 border-t-amber-800 animate-spin"></div>
+        <p class="text-sm font-medium text-stone-600">Récupération des avis en attente...</p>
+      </div>
+    } @else if (avisEnAttente().length === 0) {
+      <div class="text-center py-16 bg-white border border-stone-200 rounded-2xl shadow-sm">
+        <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
+          <i class="bi bi-check2-all"></i>
+        </div>
+        <h3 class="text-base font-serif font-bold text-stone-900">Tout est à jour !</h3>
+        <p class="text-stone-500 text-xs mt-1">Aucun avis client n'est actuellement en attente de modération.</p>
+      </div>
+    } @else {
+      <div class="space-y-4">
+        @for (avis of avisEnAttente(); track avis.id) {
+          <div class="vg-avis-card">
+            <div class="space-y-2.5 flex-1">
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-1">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <svg class="vg-star-small" [class.vg-star-gold]="star <= avis.note" [class.vg-star-empty]="star > avis.note" viewBox="0 0 24 24" width="18" height="18">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                    </svg>
+                  }
+                  <span class="text-xs font-bold text-stone-800 ml-1.5">{{ avis.note }}/5</span>
+                </div>
+
+                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                  En attente
+                </span>
+
+                <span class="text-xs text-stone-400">
+                  Déposé le {{ avis.dateCreation }}
+                </span>
+              </div>
+
+              <p class="text-stone-800 text-sm italic bg-stone-50 p-3.5 rounded-xl border border-stone-200/60 leading-relaxed">
+                « {{ avis.commentaire }} »
+              </p>
+
+              <div class="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
+                <span>
+                  Client : <strong class="text-stone-800">{{ avis.auteur?.pseudo || 'Client' }}</strong>
+                </span>
+                <span>•</span>
+                <span>
+                  Menu : <strong class="text-stone-800">{{ avis.menuTitre }}</strong>
+                </span>
+                @if (avis.commande?.numeroCommande) {
+                  <span>•</span>
+                  <span class="font-mono bg-stone-100 px-2 py-0.5 rounded text-stone-700 border border-stone-200">
+                    {{ avis.commande?.numeroCommande }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100">
+              <button
+                type="button"
+                (click)="traiterAvis(avis.id, 'refuser')"
+                [disabled]="actionEnCoursId() === avis.id"
+                class="vg-btn-action vg-btn-refuser">
+                <i class="bi bi-x-circle"></i>
+                <span>Refuser</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="traiterAvis(avis.id, 'valider')"
+                [disabled]="actionEnCoursId() === avis.id"
+                class="vg-btn-action vg-btn-valider">
+                @if (actionEnCoursId() === avis.id) {
+                  <span>En cours...</span>
+                } @else {
+                  <i class="bi bi-check-circle"></i>
+                  <span>Valider & Publier</span>
+                }
+              </button>
+            </div>
           </div>
-          <button (click)="fermerDetails()" type="button" class="btn-close no-print" aria-label="Fermer"></button>
+        }
+      </div>
+    }
+  }
+
+  <!-- MODAL : BON DE COMMANDE TRAITEUR -->
+  @if (commandeSelectionnee(); as detail) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-stone-100 print-area animate-scale-up">
+        
+        <div class="bg-gradient-to-br from-stone-50 to-amber-50/40 px-6 py-5 border-b border-stone-200 flex justify-between items-center">
+          <div>
+            <span class="text-xs uppercase font-semibold tracking-wider text-amber-800">Cuisine & Logistique</span>
+            <h2 class="text-xl font-serif font-bold text-stone-900 mt-0.5">Bon de Préparation</h2>
+            <p class="text-xs text-stone-500 font-mono mt-0.5">{{ detail.numeroCommande }}</p>
+          </div>
+          <button (click)="fermerDetails()" type="button" class="text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-200/50 transition no-print" aria-label="Fermer">
+            <i class="bi bi-x-lg text-sm"></i>
+          </button>
         </div>
 
-        <div class="p-6 space-y-4 text-sm">
-          <div class="grid grid-cols-2 gap-4 pb-4 border-b">
+        <div class="p-6 space-y-5 text-sm">
+          <div class="grid grid-cols-2 gap-4 pb-4 border-b border-stone-100">
             <div>
-              <p class="text-xs text-gray-500 uppercase font-semibold">Client</p>
-              <p class="font-medium text-gray-800">{{ detail.client?.email }}</p>
+              <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider">Client</p>
+              <p class="font-medium text-stone-800 mt-1">{{ detail.client?.email }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500 uppercase font-semibold">Statut actuel</p>
-              <span class="inline-flex px-2 py-0.5 rounded text-xs font-semibold border {{ getStatusClass(detail.statut) }}">
+              <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider">Statut actuel</p>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border mt-1" [ngClass]="getStatusClass(detail.statut)">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
                 {{ formaterLibelleStatut(detail.statut) }}
               </span>
             </div>
           </div>
 
-          <div class="pb-4 border-b">
-            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Prestation commandée</p>
-            <p class="text-base font-bold text-gray-900">{{ detail.menu?.titre || 'Menu traiteur' }}</p>
-            <p class="text-gray-600 mt-1">Nombre de convives : <strong class="text-gray-900">{{ detail.nbPersonnes }} personnes</strong></p>
+          <div class="pb-4 border-b border-stone-100">
+            <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider mb-1">Prestation traiteur</p>
+            <p class="text-lg font-serif font-bold text-stone-900">{{ detail.menu?.titre || 'Menu traiteur' }}</p>
+            <p class="text-stone-600 mt-1 text-xs">Convives prévus : <strong class="text-stone-900 font-semibold">{{ detail.nbPersonnes }} personnes</strong></p>
           </div>
 
-          <div class="flex justify-between items-center pt-2">
-            <span class="text-gray-600 font-medium">Total facturé</span>
-            <span class="text-xl font-extrabold text-amber-900">{{ detail.prixTotal | number:'1.2-2' }} €</span>
+          <div class="flex justify-between items-center pt-1 bg-stone-50 p-4 rounded-xl border border-stone-200/60">
+            <span class="text-stone-600 font-medium text-xs uppercase tracking-wider">Montant facturé</span>
+            <span class="text-2xl font-serif font-bold text-amber-900">{{ detail.prixTotal | number:'1.2-2' }} €</span>
           </div>
         </div>
 
-        <div class="bg-gray-50 px-6 py-3 border-t flex justify-end gap-2 no-print">
-          <button (click)="imprimerBonCommande()" type="button" class="btn btn-outline-dark btn-sm">
-            <i class="bi bi-printer me-1"></i> Imprimer le bon
+        <div class="bg-stone-50/80 px-6 py-4 border-t border-stone-200 flex justify-end gap-3 no-print">
+          <button (click)="imprimerBonCommande()" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-stone-700 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition shadow-sm">
+            <i class="bi bi-printer"></i> Imprimer le bon
           </button>
-          <button (click)="fermerDetails()" type="button" class="btn btn-secondary btn-sm">
+          <button (click)="fermerDetails()" type="button" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-200/80 hover:bg-stone-200 rounded-xl transition">
             Fermer
           </button>
         </div>

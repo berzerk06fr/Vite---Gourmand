@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AvisService } from '../../services/avis.service';
+import { Avis } from '../../models/avis.model';
 
 interface SuggestionMenu {
   id: number;
@@ -11,13 +13,6 @@ interface SuggestionMenu {
   image: string;
 }
 
-interface Temoignage {
-  id: number;
-  note: number;
-  titre: string;
-  texte: string;
-}
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -25,7 +20,9 @@ interface Temoignage {
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
+  private readonly avisService = inject(AvisService);
+
   readonly suggestions: SuggestionMenu[] = [
     {
       id: 1,
@@ -53,24 +50,48 @@ export class HomeComponent {
     }
   ];
 
-  readonly temoignages: Temoignage[] = [
+  // Témoignages par défaut si la base est encore vide
+  readonly temoignagesParDefaut = [
     {
       id: 1,
       note: 5,
-      titre: 'Une fusion parfaite !',
-      texte: 'La cuisine de ce traiteur est une vraie déferlante d\'énergie. Les saveurs m\'ont fait dresser les cheveux sur la tête (dans le bon sens) et l\'équipe qui encadrait cela téléportait l\'élégance !'
+      commentaire: 'La cuisine de ce traiteur est une vraie déferlante de saveurs. Une prestation et une équipe d\'une élégance rare !',
+      auteur: { pseudo: 'Sophie L.' },
+      menuTitre: 'Prestation d\'entreprise'
     },
     {
       id: 2,
       note: 5,
-      titre: 'Une expérience transcendante.',
-      texte: 'Les plats atteignent un niveau au-delà de toutes les limites. Les accords sont si parfaits que les ingrédients ne font plus qu\'un seul être parfait. Une table digne d\'un dieu de la destruction !'
+      commentaire: 'Les plats atteignent un niveau au-delà de nos attentes. Les cuissons et accords étaient simplement parfaits.',
+      auteur: { pseudo: 'Marc D.' },
+      menuTitre: 'Buffet Champêtre & Gourmand'
     },
     {
       id: 3,
       note: 5,
-      titre: 'En deux mots.',
-      texte: 'Juste parfait.'
+      commentaire: 'Ponctualité, fraîcheur des produits et présentation soignée. Juste parfait pour notre mariage.',
+      auteur: { pseudo: 'Camille & Julien' },
+      menuTitre: 'Menu Prestige Océan'
     }
   ];
+
+  readonly avisValides = signal<Avis[]>([]);
+  readonly isLoadingAvis = signal<boolean>(true);
+
+  ngOnInit(): void {
+    this.chargerAvisValides();
+  }
+
+  chargerAvisValides(): void {
+    this.avisService.getAvisValides().subscribe({
+      next: (data) => {
+        // Prend au maximum les 4 avis les plus récents
+        this.avisValides.set(data.slice(0, 4));
+        this.isLoadingAvis.set(false);
+      },
+      error: () => {
+        this.isLoadingAvis.set(false);
+      }
+    });
+  }
 }
