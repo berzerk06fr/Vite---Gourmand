@@ -134,6 +134,8 @@ export class CommandeComponent implements OnInit {
         this.isSubmitting.set(false);
         this.orderResult.set(res);
         this.orderSubmitted.set(true);
+        // Redirection directe vers l'espace client avec la liste des commandes
+        void this.router.navigate(['/mes-commandes']);
       },
       error: (err) => {
         this.isSubmitting.set(false);

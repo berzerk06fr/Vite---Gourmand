@@ -28,6 +28,16 @@ export interface CommandeResponse {
   stockRestant: number;
 }
 
+export interface CommandeItem {
+  id: number;
+  numeroCommande: string;
+  nbPersonnes: number;
+  prixTotal: number;
+  statut: string;
+  client?: { id: number; email: string };
+  menu?: { id: number; titre: string };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,5 +47,9 @@ export class CommandeService {
 
   createCommande(payload: CreateCommandePayload): Observable<CommandeResponse> {
     return this.http.post<CommandeResponse>(this.apiUrl, payload);
+  }
+
+  getMyCommandes(): Observable<CommandeItem[]> {
+    return this.http.get<CommandeItem[]>(this.apiUrl);
   }
 }
