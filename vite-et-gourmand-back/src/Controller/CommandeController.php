@@ -12,11 +12,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/commandes', name: 'api_commandes_')]
 class CommandeController extends AbstractController
 {
+    private const STATUT_ANNULEE = 'annulée';
+
     private const STATUTS_AUTORISES = [
         'en_attente',
         'accepté',
@@ -25,13 +29,14 @@ class CommandeController extends AbstractController
         'livré',
         'en attente du retour de matériel',
         'terminée',
-        'annulée',
+        self::STATUT_ANNULEE,
     ];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CommandeRepository $commandeRepository,
-        private readonly MenuRepository $menuRepository
+        private readonly MenuRepository $menuRepository,
+        private readonly MailerInterface $mailer
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -105,9 +110,15 @@ class CommandeController extends AbstractController
             return $checkResponse;
         }
 
+        $ancienStatut = $commande->getStatut();
         $nouveauStatut = trim($data['statut']);
         $commande->setStatut($nouveauStatut);
         $this->em->flush();
+
+        // Envoi de la notification uniquement si le statut a réellement changé
+        if ($ancienStatut !== $nouveauStatut) {
+            $this->envoyerNotificationStatutClient($commande, $nouveauStatut, $data);
+        }
 
         return $this->json([
             'message'        => sprintf('Statut de la commande mis à jour vers "%s".', $nouveauStatut),
@@ -143,7 +154,7 @@ class CommandeController extends AbstractController
 
         if (!in_array($statut, self::STATUTS_AUTORISES, true)) {
             $error = sprintf('Statut invalide. Statuts acceptés : %s.', implode(', ', self::STATUTS_AUTORISES));
-        } elseif ($statut === 'annulée') {
+        } elseif ($statut === self::STATUT_ANNULEE) {
             $motif = trim($data['motifAnnulation'] ?? '');
             $contact = strtolower(trim($data['modeContact'] ?? ''));
 
@@ -228,4 +239,48 @@ class CommandeController extends AbstractController
             'stockRestant'        => $menu->getQuantiteStock(),
         ];
     }
+
+    private function envoyerNotificationStatutClient(Commande $commande, string $statut, array $data): void
+    {
+        $client = $commande->getUtilisateur();
+        if (!$client || empty($client->getEmail())) {
+            return;
+        }
+
+        $numero = $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId());
+        $sujet = sprintf('Vite & Gourmand : Suivi de votre commande %s', $numero);
+
+        $motifHtml = '';
+        if ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation'])) {
+            $motifHtml = sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']));
+        }
+
+        $corps = sprintf(
+            '<h2>Bonjour,</h2>
+            <p>Le statut de votre commande <strong>%s</strong> a évolué.</p>
+            <p>Nouveau statut : <strong style="color: #c25e38;">%s</strong></p>
+            %s
+            <p>Retrouvez tous les détails de votre commande dans votre espace personnel :
+                <a href="http://localhost:4200/mes-commandes">Mes Commandes</a>.
+            </p>
+            <br>
+            <p>L\'équipe Vite & Gourmand</p>',
+            htmlspecialchars($numero),
+            htmlspecialchars($statut),
+            $motifHtml
+        );
+
+        try {
+            $email = (new Email())
+                ->from('contact@vite-et-gourmand.fr')
+                ->to($client->getEmail())
+                ->subject($sujet)
+                ->html($corps);
+
+            $this->mailer->send($email);
+        } catch (\Throwable) {
+            // Évite de bloquer la réponse API si le serveur mail local n'est pas actif
+        }
+    }
+
 }
