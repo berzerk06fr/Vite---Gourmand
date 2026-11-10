@@ -31,8 +31,14 @@ security:
             jwt: ~
 
     access_control:
+        # 1. Autoriser systématiquement le preflight CORS (OPTIONS)
+        - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
+
+        # 2. Endpoints publics
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/menus, roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # 3. Endpoints sécurisés
         - { path: ^/api/commandes, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/me, roles: IS_AUTHENTICATED_FULLY }

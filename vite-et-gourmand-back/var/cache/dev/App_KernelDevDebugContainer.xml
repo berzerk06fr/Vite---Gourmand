@@ -179,15 +179,16 @@
     </parameter>
     <parameter key="lexik_jwt_authentication.authenticator_manager_enabled">true</parameter>
     <parameter key="nelmio_cors.map" type="collection">
-      <parameter key="^/api" type="collection">
-        <parameter key="allow_origin">true</parameter>
+      <parameter key="^/api/" type="collection">
+        <parameter key="allow_origin" type="collection">
+          <parameter>^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$</parameter>
+        </parameter>
         <parameter key="allow_headers">true</parameter>
         <parameter key="allow_methods" type="collection">
           <parameter>POST</parameter>
           <parameter>PUT</parameter>
           <parameter>GET</parameter>
           <parameter>DELETE</parameter>
-          <parameter>PATCH</parameter>
           <parameter>OPTIONS</parameter>
         </parameter>
         <parameter key="max_age">3600</parameter>
@@ -195,8 +196,7 @@
     </parameter>
     <parameter key="nelmio_cors.defaults" type="collection">
       <parameter key="allow_origin" type="collection">
-        <parameter>^https?://localhost(:[0-9]+)?$</parameter>
-        <parameter>^https?://127\.0\.0\.1(:[0-9]+)?$</parameter>
+        <parameter>^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$</parameter>
       </parameter>
       <parameter key="allow_credentials">false</parameter>
       <parameter key="allow_headers" type="collection">
@@ -210,11 +210,11 @@
       </parameter>
       <parameter key="allow_methods" type="collection">
         <parameter>GET</parameter>
+        <parameter>OPTIONS</parameter>
         <parameter>POST</parameter>
         <parameter>PUT</parameter>
         <parameter>PATCH</parameter>
         <parameter>DELETE</parameter>
-        <parameter>OPTIONS</parameter>
       </parameter>
       <parameter key="max_age">3600</parameter>
       <parameter key="hosts" type="collection"/>
@@ -3018,6 +3018,13 @@
     </service>
     <service id="security.access_map" class="Symfony\Component\Security\Http\AccessMap">
       <call method="add">
+        <argument type="service" id=".security.request_matcher.68FQuQd"/>
+        <argument type="collection">
+          <argument>PUBLIC_ACCESS</argument>
+        </argument>
+        <argument>null</argument>
+      </call>
+      <call method="add">
         <argument type="service" id=".security.request_matcher.iDtJtRX"/>
         <argument type="collection">
           <argument>PUBLIC_ACCESS</argument>
@@ -3684,6 +3691,13 @@
         <argument key="security.firewall.map.context.api" type="service_closure" id="security.firewall.map.context.api"/>
         <argument key="security.firewall.map.context.dev" type="service_closure" id="security.firewall.map.context.dev"/>
         <argument key="security.firewall.map.context.login" type="service_closure" id="security.firewall.map.context.login"/>
+      </argument>
+    </service>
+    <service id=".security.request_matcher.68FQuQd" class="Symfony\Component\HttpFoundation\RequestMatcher">
+      <argument>^/api</argument>
+      <argument>null</argument>
+      <argument type="collection">
+        <argument>OPTIONS</argument>
       </argument>
     </service>
     <service id=".security.request_matcher.iDtJtRX" class="Symfony\Component\HttpFoundation\RequestMatcher">

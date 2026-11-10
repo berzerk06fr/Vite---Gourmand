@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Entity\Menu;
 
 #[Route('/api/menus', name: 'api_menus_')]
 class MenuController extends AbstractController
@@ -22,16 +23,7 @@ class MenuController extends AbstractController
 
         $data = [];
         foreach ($menus as $menu) {
-            $data[] = [
-                'id'              => $menu->getId(),
-                'titre'           => $menu->getTitre(),
-                'description'     => $menu->getDescription(),
-                'conditionsMenu'  => $menu->getConditionsMenu(),
-                'prixParPersonne' => $menu->getPrixParPersonne(),
-                'nbPersonnesMin'  => $menu->getNbPersonnesMin(),
-                'quantiteStock'   => $menu->getQuantiteStock(),
-                'isActif'         => $menu->isIsActif(),
-            ];
+            $data[] = $this->formatMenu($menu);
         }
 
         return $this->json($data, Response::HTTP_OK);
@@ -46,15 +38,55 @@ class MenuController extends AbstractController
             return $this->json(['error' => 'Menu introuvable.'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id'              => $menu->getId(),
-            'titre'           => $menu->getTitre(),
-            'description'     => $menu->getDescription(),
-            'conditionsMenu'  => $menu->getConditionsMenu(),
-            'prixParPersonne' => $menu->getPrixParPersonne(),
-            'nbPersonnesMin'  => $menu->getNbPersonnesMin(),
-            'quantiteStock'   => $menu->getQuantiteStock(),
-            'isActif'         => $menu->isIsActif(),
-        ], Response::HTTP_OK);
+        return $this->json($this->formatMenu($menu), Response::HTTP_OK);
+    }
+
+    private function formatMenu(Menu $menu): array
+    {
+        $platsData = [];
+        $allergenesSet = [];
+
+        foreach ($menu->getPlats() as $plat) {
+            // Découpage de la chaîne en tableau si des allergènes existent
+            $rawAllergenes = $plat->getAllergenes();
+            $allergenesList = [];
+
+            if ($rawAllergenes) {
+                // Découpe par virgule et supprime les espaces superflus
+                $allergenesList = array_values(array_filter(array_map('trim', explode(',', $rawAllergenes))));
+            }
+
+            $platsData[] = [
+                'id'          => $plat->getId(),
+                'nom'         => $plat->getNom(),
+                'description' => $plat->getDescription(),
+                'type'        => $plat->getType(),
+                'allergenes'  => $allergenesList, // <-- Un vrai tableau PHP / JSON
+            ];
+
+            foreach ($allergenesList as $alg) {
+                $allergenesSet[] = $alg;
+            }
+        }
+
+        return [
+            'id'                => $menu->getId(),
+            'titre'             => $menu->getTitre(),
+            'description'       => $menu->getDescription(),
+            'conditions'        => $menu->getConditionsMenu(),
+            'conditionsMenu'    => $menu->getConditionsMenu(),
+            'prixParPersonne'   => (float) $menu->getPrixParPersonne(),
+            'nombrePersonneMin' => $menu->getNbPersonnesMin(),
+            'nbPersonnesMin'    => $menu->getNbPersonnesMin(),
+            'quantiteStock'     => $menu->getQuantiteStock(),
+            'isActif'           => $menu->isIsActif(),
+            'theme'             => 'Classique',
+            'regime'            => 'Gourmand',
+            'images'            => [
+                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+            ],
+            'plats'             => $platsData,
+            'allergenes'        => array_values(array_unique($allergenesSet)),
+        ];
     }
 }
