@@ -1,82 +1,204 @@
-<div class="max-w-5xl mx-auto px-4 py-10">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 border-b pb-4">
-    <div>
-      <h1 class="text-3xl font-serif font-bold text-gray-900">Mon Espace Client</h1>
-      <p class="text-gray-600 mt-1 text-sm">Consultez l'historique et le suivi de vos commandes</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <button 
-        type="button"
-        (click)="chargerCommandes()" 
-        [disabled]="isLoading()"
-        class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-2 rounded-2">
-        <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoading()"></i>
-        <span>Actualiser</span>
-      </button>
-      <a routerLink="/menus" class="btn btn-terracotta btn-sm d-inline-flex align-items-center px-3 py-2 rounded-2">
-        Commander à nouveau
-      </a>
+<div class="vg-page-wrapper">
+  <div class="vg-container">
+
+    <!-- En-tête -->
+    <header class="vg-header">
+      <div>
+        <span class="vg-badge">Espace Personnel</span>
+        <h1 class="vg-title">Mes Commandes</h1>
+        <p class="vg-subtitle">Suivez l'état de préparation, vos livraisons et partagez votre expérience.</p>
+      </div>
+
+      <div class="vg-btn-group">
+        <button 
+          type="button"
+          (click)="chargerCommandes()" 
+          [disabled]="isLoading()"
+          class="vg-btn vg-btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>Actualiser</span>
+        </button>
+
+        <a routerLink="/menus" class="vg-btn vg-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Commander à nouveau</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Chargement / Erreur / Liste -->
+    @if (isLoading()) {
+      <div class="vg-card" style="text-align: center; justify-content: center; padding: 4rem 1rem;">
+        <p style="color: #78716c; font-size: 0.875rem;">Chargement de votre historique...</p>
+      </div>
+    } @else if (errorMessage()) {
+      <div style="background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 0.75rem; font-size: 0.875rem; margin-bottom: 1.5rem;">
+        {{ errorMessage() }}
+      </div>
+    } @else if (commandes().length === 0) {
+      <div class="vg-card" style="text-align: center; justify-content: center; padding: 4rem 1rem;">
+        <h2 style="font-size: 1.25rem; font-family: serif; color: var(--vg-stone-dark);">Aucune commande enregistrée</h2>
+        <p style="color: #78716c; font-size: 0.875rem; margin-top: 0.5rem;">Vous n'avez pas encore passé de commande chez Vite & Gourmand.</p>
+        <div style="margin-top: 1.25rem;">
+          <a routerLink="/menus" class="vg-btn vg-btn-primary">Découvrir la carte</a>
+        </div>
+      </div>
+    } @else {
+      @for (cmd of commandes(); track cmd.id) {
+        <div class="vg-card">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <span style="font-family: monospace; font-size: 0.75rem; background: #f5f5f4; border: 1px solid #e7e5e4; padding: 0.2rem 0.5rem; border-radius: 0.375rem; color: #57534e;">
+                {{ cmd.numeroCommande }}
+              </span>
+              <span class="vg-status-pill" [class.vg-status-success]="canReview(cmd.statut)" [class.vg-status-warning]="!canReview(cmd.statut)">
+                {{ formaterLibelleStatut(cmd.statut) }}
+              </span>
+            </div>
+            <h2 style="font-family: serif; font-size: 1.25rem; font-weight: 700; color: var(--vg-stone-dark); margin: 0 0 0.25rem 0;">
+              {{ cmd.menu?.titre || 'Menu traiteur' }}
+            </h2>
+            <p style="font-size: 0.8125rem; color: #78716c; margin: 0;">
+              {{ cmd.nbPersonnes }} personnes • Total : <strong style="color: var(--vg-stone-dark);">{{ cmd.prixTotal | number:'1.2-2' }} €</strong>
+            </p>
+          </div>
+
+          <div>
+            @if (canReview(cmd.statut)) {
+              <button
+                type="button"
+                (click)="ouvrirModaleAvis(cmd)"
+                class="vg-btn vg-btn-primary"
+                style="background-color: var(--vg-gold); color: #fff;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span>Donner mon avis</span>
+              </button>
+            } @else {
+              <span style="font-size: 0.75rem; color: #a8a29e; font-style: italic;">
+                Avis disponible après livraison
+              </span>
+            }
+          </div>
+        </div>
+      }
+    }
+
+  </div>
+</div>
+
+<!-- Boîte de dialogue flottante d'Avis -->
+@if (selectedCommandeForReview(); as currentCmd) {
+  <div class="vg-modal-backdrop">
+    <div class="vg-modal-dialog">
+      
+      <!-- Entête -->
+      <div class="vg-modal-header">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--vg-terracotta);">Retour d'expérience</span>
+          <h2 style="font-family: serif; font-size: 1.25rem; font-weight: 700; color: var(--vg-stone-dark); margin: 0.25rem 0 0 0;">
+            Votre avis sur la prestation
+          </h2>
+          <p style="font-size: 0.75rem; color: #78716c; margin: 0.25rem 0 0 0; font-family: monospace;">
+            {{ currentCmd.numeroCommande }} • {{ currentCmd.menu?.titre }}
+          </p>
+        </div>
+        <button 
+          type="button" 
+          (click)="fermerModaleAvis()" 
+          [disabled]="isSubmittingReview()"
+          class="vg-modal-close"
+          aria-label="Fermer la fenêtre">
+          ✕
+        </button>
+      </div>
+
+      <!-- Formulaire -->
+      <form (ngSubmit)="envoyerAvis()" class="vg-modal-body">
+        
+        <!-- Étoiles SVG de notation -->
+        <div class="vg-stars-box">
+          <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e;">
+            Note globale
+          </span>
+          <div class="vg-stars-row">
+            @for (etoile of [1, 2, 3, 4, 5]; track etoile) {
+              <button
+                type="button"
+                (click)="reviewNote.set(etoile)"
+                class="vg-star-btn"
+                [attr.aria-label]="'Attribuer ' + etoile + ' étoile(s)'">
+                <svg class="vg-star-icon" [class.active]="etoile <= reviewNote()" viewBox="0 0 24 24">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+              </button>
+            }
+          </div>
+          <span style="display: inline-block; margin-top: 0.5rem; font-size: 0.75rem; font-weight: 700; color: #44403c; background: #fff; border: 1px solid var(--vg-border); padding: 0.125rem 0.625rem; border-radius: 9999px;">
+            {{ reviewNote() }} / 5
+          </span>
+        </div>
+
+        <!-- Commentaire -->
+        <div>
+          <label for="reviewCommentText" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.5rem;">
+            Votre retour d'expérience
+          </label>
+          <textarea
+            id="reviewCommentText"
+            rows="4"
+            [ngModel]="reviewCommentaire()"
+            (ngModelChange)="reviewCommentaire.set($event)"
+            name="commentaire"
+            placeholder="Qualité des mets, ponctualité, présentation soignée..."
+            required
+            minlength="5"
+            class="vg-textarea"></textarea>
+          <p style="font-size: 0.6875rem; color: #a8a29e; margin-top: 0.375rem;">
+            Avis soumis à validation par notre équipe avant parution.
+          </p>
+        </div>
+
+        <!-- Feedback alert -->
+        @if (reviewFeedback(); as feedback) {
+          <div 
+            style="padding: 0.75rem 1rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 500;"
+            [style.background-color]="feedback.isError ? '#fef2f2' : '#f0fdf4'"
+            [style.color]="feedback.isError ? '#991b1b' : '#166534'"
+            [style.border]="feedback.isError ? '1px solid #fecaca' : '1px solid #bbf7d0'">
+            {{ feedback.message }}
+          </div>
+        }
+
+        <!-- Actions -->
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding-top: 0.5rem;">
+          <button
+            type="button"
+            (click)="fermerModaleAvis()"
+            [disabled]="isSubmittingReview()"
+            class="vg-btn vg-btn-secondary">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmittingReview() || reviewCommentaire().trim().length < 5"
+            class="vg-btn vg-btn-primary">
+            @if (isSubmittingReview()) {
+              <span>Envoi en cours...</span>
+            } @else {
+              <span>Publier mon avis</span>
+            }
+          </button>
+        </div>
+
+      </form>
     </div>
   </div>
-
-  @if (isLoading()) {
-    <div class="flex flex-col justify-center items-center py-20 text-gray-500 gap-3">
-      <output class="spinner-border text-amber-700">
-        <span class="visually-hidden">Chargement de vos commandes...</span>
-      </output>
-      <p class="text-sm font-medium">Chargement de vos commandes...</p>
-    </div>
-  } @else if (errorMessage()) {
-    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>{{ errorMessage() }}</span>
-    </div>
-  } @else if (commandes().length === 0) {
-    <div class="text-center py-16 bg-white border border-gray-200 rounded-xl shadow-sm">
-      <i class="bi bi-inbox text-4xl text-gray-400"></i>
-      <p class="text-lg text-gray-600 mt-2">Vous n'avez pas encore passé de commande.</p>
-      <a routerLink="/menus" class="mt-4 inline-block text-terracotta hover:underline font-medium">
-        Découvrir nos menus traiteur
-      </a>
-    </div>
-  } @else {
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-50 border-b text-xs font-semibold uppercase tracking-wider text-gray-500">
-              <th class="py-3.5 px-4">N° Commande</th>
-              <th class="py-3.5 px-4">Menu</th>
-              <th class="py-3.5 px-4">Convives</th>
-              <th class="py-3.5 px-4">Total TTC</th>
-              <th class="py-3.5 px-4">Statut</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 text-sm">
-            @for (cmd of commandes(); track cmd.id) {
-              <tr class="hover:bg-gray-50/50 transition">
-                <td class="py-4 px-4 font-mono font-medium text-gray-900">
-                  {{ cmd.numeroCommande }}
-                </td>
-                <td class="py-4 px-4 font-medium text-gray-800">
-                  {{ cmd.menu?.titre || 'Menu traiteur' }}
-                </td>
-                <td class="py-4 px-4 text-gray-600">
-                  {{ cmd.nbPersonnes }} pers.
-                </td>
-                <td class="py-4 px-4 font-bold text-gray-900">
-                  {{ cmd.prixTotal | number:'1.2-2' }} €
-                </td>
-                <td class="py-4 px-4">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ getStatusClass(cmd.statut) }}">
-                    {{ formaterLibelleStatut(cmd.statut) }}
-                  </span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  }
-</div>
+}

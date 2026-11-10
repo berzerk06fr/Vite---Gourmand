@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Avis;
 use App\Entity\Utilisateur;
 use App\Repository\AvisRepository;
+use App\Repository\CommandeRepository;
 use App\Service\MongoAuditService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,8 +42,11 @@ class AvisController extends AbstractController
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): JsonResponse
-    {
+    public function create(
+        Request $request,
+        EntityManagerInterface $em,
+        CommandeRepository $commandeRepository
+    ): JsonResponse {
         /** @var Utilisateur|null $user */
         $user = $this->getUser();
         if (!$user) {
@@ -62,6 +66,15 @@ class AvisController extends AbstractController
         $avis->setCommentaire($commentaire);
         $avis->setUtilisateur($user);
         $avis->setStatut('en_attente');
+        $avis->setDateCreation(new \DateTimeImmutable());
+
+        // Rattachement optionnel à la commande du client
+        if (!empty($data['commandeId'])) {
+            $commande = $commandeRepository->find($data['commandeId']);
+            if ($commande && $commande->getUtilisateur()?->getId() === $user->getId()) {
+                $avis->setCommande($commande);
+            }
+        }
 
         $em->persist($avis);
         $em->flush();
@@ -95,14 +108,18 @@ class AvisController extends AbstractController
         $avis->setStatut($action === 'valider' ? 'valide' : 'refuse');
         $em->flush();
 
-        
-        $mongoAudit->log('moderation_logs', [
-            'action'       => $action,
-            'avis_id'      => $avis->getId(),
-            'statut_final' => $avis->getStatut(),
-            'moderateur'   => $security->getUser()?->getUserIdentifier(),
-            'note'         => $avis->getNote(),
-        ]);
+        try {
+            $mongoAudit->log('moderation_logs', [
+                'action'       => $action,
+                'avis_id'      => $avis->getId(),
+                'statut_final' => $avis->getStatut(),
+                'moderateur'   => $security->getUser()?->getUserIdentifier(),
+                'note'         => $avis->getNote(),
+            ]);
+        } catch (\Throwable $e) {
+            // Évite de bloquer la modération si l'audit Mongo est indisponible localement
+            unset($e);
+        }
 
         return new JsonResponse([
             'message' => sprintf('Avis %s avec succès.', $avis->getStatut()),
@@ -128,16 +145,31 @@ class AvisController extends AbstractController
     private function formaterAvis(Avis $a): array
     {
         $user = $a->getUtilisateur();
+        $commande = $a->getCommande();
+        $menu = $commande?->getMenu();
+
+        // Affichage public convivial du prénom / pseudo
+        $pseudo = 'Client anonyme';
+        if ($user && $user->getUserIdentifier()) {
+            $parts = explode('@', $user->getUserIdentifier());
+            $pseudo = ucfirst($parts[0]);
+        }
+
         return [
             'id'           => $a->getId(),
             'note'         => $a->getNote(),
             'commentaire'  => $a->getCommentaire(),
             'statut'       => $a->getStatut(),
-            'dateCreation' => $a->getDateCreation()?->format('Y-m-d H:i:s'),
-            'auteur'       => $user ? [
-                'id'     => $user->getId(),
-                'email'  => $user->getUserIdentifier(),
+            'dateCreation' => $a->getDateCreation()?->format('d/m/Y'),
+            'auteur'       => [
+                'id'     => $user?->getId(),
+                'pseudo' => $pseudo,
+            ],
+            'commande'     => $commande ? [
+                'id'             => $commande->getId(),
+                'numeroCommande' => $commande->getNumeroCommande(),
             ] : null,
+            'menuTitre'    => $menu?->getTitre() ?? 'Prestation traiteur',
         ];
     }
 }

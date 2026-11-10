@@ -51,6 +51,7 @@ class CommandeController extends AbstractController
 
         $roles = $user->getRoles();
         $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
+        
         $commandes = $isStaff
             ? $this->commandeRepository->findBy([], ['id' => 'DESC'])
             : $this->commandeRepository->findBy(['utilisateur' => $user], ['id' => 'DESC']);
@@ -58,20 +59,30 @@ class CommandeController extends AbstractController
         $data = array_map(function (Commande $cmd) {
             $menu = $cmd->getMenu();
             $client = $cmd->getUtilisateur();
+
+            $clientEmail = null;
+            if ($client) {
+                $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
+            }
+
             return [
                 'id'             => $cmd->getId(),
                 'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
-                'nbPersonnes'    => $cmd->getNbPersonnes(),
-                'prixTotal'      => (float) $cmd->getPrixTotal(),
+                'nbPersonnes'    => $cmd->getNbPersonnes() ?? 1,
+                'prixTotal'      => (float) ($cmd->getPrixTotal() ?? 0),
                 'statut'         => $cmd->getStatut() ?? 'en_attente',
+                'dateCommande'   => $cmd->getDateCommande()?->format('d/m/Y H:i'),
                 'client'         => $client ? [
                     'id'    => $client->getId(),
-                    'email' => $client->getEmail(),
+                    'email' => $clientEmail,
                 ] : null,
                 'menu'           => $menu ? [
                     'id'    => $menu->getId(),
-                    'titre' => $menu->getTitre(),
-                ] : null,
+                    'titre' => $menu->getTitre() ?? 'Menu sans titre',
+                ] : [
+                    'id'    => 0,
+                    'titre' => 'Menu traiteur',
+                ],
             ];
         }, $commandes);
 
