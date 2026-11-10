@@ -1,0 +1,67 @@
+<div class="max-w-5xl mx-auto px-4 py-10">
+  <div class="flex items-center justify-between mb-8 border-b pb-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Mon Espace Client</h1>
+      <p class="text-gray-600 mt-1">Consultez l'historique et le suivi de vos commandes</p>
+    </div>
+    <a routerLink="/menus" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition">
+      Commander à nouveau
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-20 text-gray-500">
+      <span class="animate-pulse">Chargement de vos commandes...</span>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+      {{ errorMessage() }}
+    </div>
+  } @else if (commandes().length === 0) {
+    <div class="text-center py-16 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <p class="text-lg text-gray-600">Vous n'avez pas encore passé de commande.</p>
+      <a routerLink="/menus" class="mt-4 inline-block text-amber-600 hover:underline font-medium">
+        Découvrir nos menus traiteur
+      </a>
+    </div>
+  } @else {
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th class="py-3.5 px-4">N° Commande</th>
+              <th class="py-3.5 px-4">Menu</th>
+              <th class="py-3.5 px-4">Convives</th>
+              <th class="py-3.5 px-4">Total TTC</th>
+              <th class="py-3.5 px-4">Statut</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-sm">
+            @for (cmd of commandes(); track cmd.id) {
+              <tr class="hover:bg-gray-50/50 transition">
+                <td class="py-4 px-4 font-mono font-medium text-gray-900">
+                  {{ cmd.numeroCommande }}
+                </td>
+                <td class="py-4 px-4 font-medium text-gray-800">
+                  {{ cmd.menu?.titre || 'Menu traiteur' }}
+                </td>
+                <td class="py-4 px-4 text-gray-600">
+                  {{ cmd.nbPersonnes }} pers.
+                </td>
+                <td class="py-4 px-4 font-bold text-gray-900">
+                  {{ cmd.prixTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                </td>
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ getStatusClass(cmd.statut) }}">
+                    {{ cmd.statut }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

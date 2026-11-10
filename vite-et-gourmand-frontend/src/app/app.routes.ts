@@ -6,6 +6,7 @@ import { ContactComponent } from './pages/contact/contact';
 import { CommandeComponent } from './pages/commande/commande';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
+import { MesCommandesComponent } from './pages/mes-commandes/mes-commandes';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -15,6 +16,7 @@ export const routes: Routes = [
   { path: 'menu/:id', redirectTo: 'menus/:id' },
   { path: 'contact', component: ContactComponent },
   { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
+  { path: 'mes-commandes', component: MesCommandesComponent, canActivate: [authGuard] },
   { path: 'connexion', component: LoginComponent },
   { path: 'inscription', component: RegisterComponent },
   { path: '**', redirectTo: '' }
