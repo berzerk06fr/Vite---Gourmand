@@ -44,8 +44,6 @@ class CommandeController extends AbstractController
             return $this->json(['error' => 'Non authentifié.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Si employé ou admin, il peut voir toutes les commandes, sinon seulement les siennes
-        
         $roles = $user->getRoles();
         $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
         $commandes = $isStaff
@@ -57,10 +55,10 @@ class CommandeController extends AbstractController
             $client = $cmd->getUtilisateur();
             return [
                 'id'             => $cmd->getId(),
-                'numeroCommande' => method_exists($cmd, 'getNumeroCommande') ? $cmd->getNumeroCommande() : 'CMD-' . $cmd->getId(),
-                'nbPersonnes'    => method_exists($cmd, 'getNbPersonnes') ? $cmd->getNbPersonnes() : null,
-                'prixTotal'      => method_exists($cmd, 'getPrixTotal') ? (float) $cmd->getPrixTotal() : null,
-                'statut'         => method_exists($cmd, 'getStatut') ? $cmd->getStatut() : 'en_attente',
+                'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
+                'nbPersonnes'    => $cmd->getNbPersonnes(),
+                'prixTotal'      => (float) $cmd->getPrixTotal(),
+                'statut'         => $cmd->getStatut() ?? 'en_attente',
                 'client'         => $client ? [
                     'id'    => $client->getId(),
                     'email' => $client->getEmail(),
@@ -96,7 +94,6 @@ class CommandeController extends AbstractController
         return $this->json($result, Response::HTTP_CREATED);
     }
 
-    #[Route('/{id}/statut', name: 'update_statut', methods: ['PATCH', 'PUT'])]
     #[Route('/{id}/statut', name: 'update_statut', methods: ['PATCH', 'PUT'])]
     public function updateStatut(int $id, Request $request): JsonResponse
     {
@@ -211,6 +208,8 @@ class CommandeController extends AbstractController
 
         if (!empty($data['datePrevueLivraison'])) {
             $commande->setDatePrevueLivraison(new \DateTime($data['datePrevueLivraison']));
+        } else {
+            $commande->setDatePrevueLivraison(new \DateTime('+7 days'));
         }
 
         $this->em->persist($commande);
