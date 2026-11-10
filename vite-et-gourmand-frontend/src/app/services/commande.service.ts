@@ -38,6 +38,12 @@ export interface CommandeItem {
   menu?: { id: number; titre: string };
 }
 
+export interface UpdateStatutPayload {
+  statut: string;
+  motifAnnulation?: string;
+  modeContact?: 'gsm' | 'mail';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,5 +57,12 @@ export class CommandeService {
 
   getMyCommandes(): Observable<CommandeItem[]> {
     return this.http.get<CommandeItem[]>(this.apiUrl);
+  }
+
+  updateStatut(id: number, payload: UpdateStatutPayload): Observable<{ message: string; numeroCommande: string; statut: string }> {
+    return this.http.patch<{ message: string; numeroCommande: string; statut: string }>(
+      `${this.apiUrl}/${id}/statut`,
+      payload
+    );
   }
 }
