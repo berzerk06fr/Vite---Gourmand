@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { Menu } from '../models/menu.model';
 
 const MOCK_MENUS: Menu[] = [
@@ -125,18 +125,42 @@ const MOCK_MENUS: Menu[] = [
 @Injectable({
   providedIn: 'root'
 })
-
 export class MenuService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/menus'; /*URL port API*/
+  // Aligné sur le port 8000 de Symfony (et non 8080 qui est phpMyAdmin)
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/menus';
 
   getMenus(): Observable<Menu[]> {
-    return this.http.get<Menu[]>(this.apiUrl).pipe(
+    return this.http.get<any>(this.apiUrl).pipe(
+      map((res) => (Array.isArray(res) ? res : res?.menus || res?.data || [])),
       catchError(() => of(MOCK_MENUS))
     );
   }
+
   getMenuById(id: number): Observable<Menu | null> {
-    return this.http.get<Menu>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map((res) => {
+        const item = res?.menu || res?.data || res;
+        if (!item) return null;
+
+        // Normalisation des noms de propriétés base SQL -> modèle Angular
+        if (item.conditions_menu && !item.conditions) {
+          item.conditions = item.conditions_menu;
+        }
+        if (item.nb_personnes_min && !item.nombrePersonneMin) {
+          item.nombrePersonneMin = Number(item.nb_personnes_min);
+        }
+        if (item.prix_par_personne && !item.prixParPersonne) {
+          item.prixParPersonne = Number(item.prix_par_personne);
+        }
+
+        // Image de secours
+        if (!item.images || item.images.length === 0) {
+          item.images = ['https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'];
+        }
+
+        return item as Menu;
+      }),
       catchError(() => {
         const found = MOCK_MENUS.find(m => m.id === id) || null;
         return of(found);

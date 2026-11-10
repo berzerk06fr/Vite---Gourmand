@@ -41,6 +41,30 @@
               <label for="adresse" class="form-label fw-semibold small">Adresse postale *</label>
               <input type="text" id="adresse" class="form-control" [(ngModel)]="adressePostale" name="adressePostale" placeholder="12 rue de la Paix, 33000 Bordeaux" required>
             </div>
+            <div class="row g-2 mb-3">
+              <div class="col-md-4">
+                <label for="codePostal" class="form-label">Code postal</label>
+                <input 
+                  type="text" 
+                  id="codePostal" 
+                  name="codePostal" 
+                  [(ngModel)]="codePostal" 
+                  required 
+                  class="form-control" 
+                  placeholder="06000">
+              </div>
+              <div class="col-md-8">
+                <label for="ville" class="form-label">Ville</label>
+                <input 
+                  type="text" 
+                  id="ville" 
+                  name="ville" 
+                  [(ngModel)]="ville" 
+                  required 
+                  class="form-control" 
+                  placeholder="Nice">
+              </div>
+            </div>
 
             <div class="mb-4">
               <label for="pwd" class="form-label fw-semibold small">Mot de passe sécurisé *</label>

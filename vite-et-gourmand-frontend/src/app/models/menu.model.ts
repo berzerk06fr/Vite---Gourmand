@@ -12,13 +12,13 @@ export interface Menu {
   titre: string;
   description: string;
   theme: string;           
-  regime: string;          
+  regime?: string;          
   nombrePersonneMin: number;
   prixParPersonne: number;
   stockDisponible: number;
-  conditions: string;      
-  images: string[];
-  plats: Plat[];
+  conditions?: string;      
+  images?: string[];
+  plats?: Plat[];
 }
 
 export interface MenuFilter {

@@ -6,7 +6,6 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, of } from 'rxjs';
 import { Menu } from '../../models/menu.model';
 
-
 const MOCK_MENUS: Menu[] = [
   {
     id: 1,
@@ -97,20 +96,18 @@ const MOCK_MENUS: Menu[] = [
 })
 export class MenuList implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8000/api/menus';
+  // Aligné sur 127.0.0.1 pour la cohérence avec le reste du front
+  private readonly apiUrl = 'http://127.0.0.1:8000/api/menus';
 
-  
-  readonly menus = signal<Menu[]>(MOCK_MENUS);
+  readonly menus = signal<Menu[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly apiError = signal<string | null>(null);
 
-  
   readonly selectedRegime = signal<string>('tous');
   readonly selectedTheme = signal<string>('tous');
   readonly maxPrice = signal<number | null>(null);
   readonly minPersons = signal<number | null>(null);
 
-  
   readonly filteredMenus = computed(() => {
     const regime = this.selectedRegime().toLowerCase();
     const theme = this.selectedTheme().toLowerCase();
@@ -118,10 +115,14 @@ export class MenuList implements OnInit {
     const minP = this.minPersons();
 
     return this.menus().filter((menu) => {
-      if (regime !== 'tous' && menu.regime.toLowerCase() !== regime) {
+      // Sécurisation avec fallback au cas où regime ou theme est null ou un objet
+      const menuRegime = (typeof menu.regime === 'string' ? menu.regime : (menu.regime as any)?.nom || '').toLowerCase();
+      const menuTheme = (typeof menu.theme === 'string' ? menu.theme : (menu.theme as any)?.nom || '').toLowerCase();
+
+      if (regime !== 'tous' && menuRegime !== regime) {
         return false;
       }
-      if (theme !== 'tous' && menu.theme.toLowerCase() !== theme) {
+      if (theme !== 'tous' && menuTheme !== theme) {
         return false;
       }
       if (maxP !== null && menu.prixParPersonne > maxP) {
@@ -140,15 +141,30 @@ export class MenuList implements OnInit {
 
   fetchMenus(): void {
     this.isLoading.set(true);
-    this.http.get<Menu[]>(this.apiUrl).pipe(
-      catchError(() => {
-        
+    this.http.get<any>(this.apiUrl).pipe(
+      catchError((err) => {
+        console.warn('API indisponible ou erreur, bascule sur les mocks :', err);
         this.apiError.set('Mode démonstration : données locales');
         return of(MOCK_MENUS);
       })
-    ).subscribe((data) => {
-      this.menus.set(data);
-      this.isLoading.set(false);
+    ).subscribe({
+      next: (data) => {
+        console.log('--- DONNÉES MENUS REÇUES ---', data);
+        // Normalisation au cas où le backend renvoie { menus: [...] } ou un tableau brut
+        const list = Array.isArray(data) ? data : (data?.menus || data?.data || []);
+        
+        // Si l'API retourne un tableau vide (base vide), on bascule sur les mocks pour l'affichage
+        if (list.length === 0) {
+          console.info('Aucun menu en base, affichage du mock de secours.');
+          this.menus.set(MOCK_MENUS);
+        } else {
+          this.menus.set(list);
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
     });
   }
 
