@@ -35,7 +35,15 @@
         <div class="d-flex flex-wrap gap-2 mb-3">
           <span class="badge bg-primary px-3 py-2 fs-6">{{ item.theme }}</span>
           <span class="badge bg-success px-3 py-2 fs-6">{{ item.regime }}</span>
-          <span class="badge bg-light text-dark border px-3 py-2 fs-6">Stock restant : {{ item.stockDisponible }} formules</span>
+          
+          <!-- Badge stock formule -->
+          @if (item.quantiteStock !== undefined && item.quantiteStock <= 0) {
+            <span class="badge bg-danger px-3 py-2 fs-6">Formule épuisée</span>
+          } @else {
+            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
+              Stock restant : {{ item.quantiteStock ?? item.stockDisponible ?? 0 }} formules
+            </span>
+          }
         </div>
 
         <h1 class="display-6 fw-bold mb-3">{{ item.titre }}</h1>
@@ -60,7 +68,19 @@
                 <div class="card border-0 bg-light p-3 shadow-none">
                   <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="badge bg-secondary text-uppercase fw-semibold">{{ plat.type }}</span>
+
+                    <!-- US-12 : Badges de stock par plat -->
+                    @if (plat.isEnRupture || (plat.stock !== undefined && plat.stock <= 0)) {
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">
+                        <i class="bi bi-x-circle-fill me-1"></i> Rupture de stock
+                      </span>
+                    } @else if (plat.isStockFaible || (plat.stock !== undefined && plat.seuilAlerte !== undefined && plat.stock <= plat.seuilAlerte)) {
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i> Plus que {{ plat.stock }} portions
+                      </span>
+                    }
                   </div>
+
                   <h3 class="h6 fw-bold mb-1 text-dark">{{ plat.nom }}</h3>
                   @if (plat.description) {
                     <p class="small text-muted mb-2">{{ plat.description }}</p>
@@ -127,12 +147,21 @@
             {{ item.conditions }}
           </div>
 
+          <!-- US-12 : Message d'avertissement si commande impossible due aux stocks -->
+          @if (isStockEpuise()) {
+            <div class="alert alert-danger border-0 small py-2 px-3 mb-3" role="alert">
+              <i class="bi bi-slash-circle-fill me-1"></i>
+              Ce menu ne peut pas être réservé car un ou plusieurs plats sont en rupture de stock.
+            </div>
+          }
+
           <button 
             type="button" 
             class="btn btn-primary w-100 py-3 fs-5 fw-semibold shadow-sm" 
-            [disabled]="!isGuestCountValid()"
+            [disabled]="!isGuestCountValid() || isStockEpuise()"
             (click)="goToOrder()">
-            <i class="bi bi-cart-check me-2"></i> Commander ce menu
+            <i class="bi bi-cart-check me-2"></i>
+            {{ isStockEpuise() ? 'Formule indisponible' : 'Commander ce menu' }}
           </button>
         </div>
       </aside>

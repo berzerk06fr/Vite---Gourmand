@@ -28,6 +28,12 @@ class Plat
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $allergenes = null;
 
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $stock = 0;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 5])]
+    private int $seuilAlerte = 5;
+
     #[ORM\ManyToMany(targetEntity: Menu::class, mappedBy: 'plats')]
     private Collection $menus;
 
@@ -49,7 +55,6 @@ class Plat
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -61,7 +66,6 @@ class Plat
     public function setDescription(?string $description): static
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -73,7 +77,6 @@ class Plat
     public function setType(string $type): static
     {
         $this->type = $type;
-
         return $this;
     }
 
@@ -85,8 +88,39 @@ class Plat
     public function setAllergenes(?string $allergenes): static
     {
         $this->allergenes = $allergenes;
-
         return $this;
+    }
+
+    public function getStock(): int
+    {
+        return $this->stock;
+    }
+
+    public function setStock(int $stock): static
+    {
+        $this->stock = max(0, $stock);
+        return $this;
+    }
+
+    public function getSeuilAlerte(): int
+    {
+        return $this->seuilAlerte;
+    }
+
+    public function setSeuilAlerte(int $seuilAlerte): static
+    {
+        $this->seuilAlerte = $seuilAlerte;
+        return $this;
+    }
+
+    public function isEnRupture(): bool
+    {
+        return $this->stock <= 0;
+    }
+
+    public function isStockFaible(): bool
+    {
+        return $this->stock > 0 && $this->stock <= $this->seuilAlerte;
     }
 
     /**

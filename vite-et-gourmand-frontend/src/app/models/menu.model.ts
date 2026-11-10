@@ -1,31 +1,30 @@
 export interface Plat {
   id: number;
   nom: string;
-  type: 'entree' | 'plat' | 'dessert' | 'Entrée' | 'Plat' | 'Dessert';
-  description?: string;
+  description?: string | null;
+  type: string;
   allergenes?: string[];
-
+  stock?: number;
+  seuilAlerte?: number;
+  isEnRupture?: boolean;
+  isStockFaible?: boolean;
 }
 
 export interface Menu {
   id: number;
   titre: string;
   description: string;
-  theme: string;           
-  regime?: string;          
-  nombrePersonneMin: number;
+  conditions?: string;
+  conditionsMenu?: string;
   prixParPersonne: number;
-  stockDisponible: number;
-  conditions?: string;      
+  nombrePersonneMin: number;
+  nbPersonnesMin?: number;
+  quantiteStock?: number;
+  stockDisponible?: number;
+  isActif?: boolean;
+  theme: string;
+  regime?: string;
   images?: string[];
   plats?: Plat[];
-}
-
-export interface MenuFilter {
-  prixMax?: number | null;
-  prixMin?: number | null;
-  theme?: string;
-  regime?: string;
-  minPersonnes?: number | null;
-  searchTerm?: string;
+  allergenes?: string[];
 }

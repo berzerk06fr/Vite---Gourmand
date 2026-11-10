@@ -115,7 +115,6 @@ class CommandeController extends AbstractController
         $commande->setStatut($nouveauStatut);
         $this->em->flush();
 
-        // Envoi de la notification uniquement si le statut a réellement changé
         if ($ancienStatut !== $nouveauStatut) {
             $this->envoyerNotificationStatutClient($commande, $nouveauStatut, $data);
         }
@@ -183,10 +182,23 @@ class CommandeController extends AbstractController
                 $error = sprintf('Le nombre minimum de personnes pour ce menu est de %d.', $nbMin);
             } elseif (($menu->getQuantiteStock() ?? 0) <= 0) {
                 $error = 'Ce menu est en rupture de stock.';
+            } else {
+                $error = $this->verifierDisponibilitePlats($menu);
             }
         }
 
         return $error;
+    }
+
+    private function verifierDisponibilitePlats(Menu $menu): ?string
+    {
+        foreach ($menu->getPlats() as $plat) {
+            if ($plat->isEnRupture()) {
+                return sprintf('Le plat "%s" de ce menu est actuellement en rupture de stock.', $plat->getNom());
+            }
+        }
+
+        return null;
     }
 
     private function enregistrerCommande(Utilisateur $user, Menu $menu, array $data): array
@@ -206,7 +218,13 @@ class CommandeController extends AbstractController
         $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0) ? (5.0 + (0.59 * $distanceKm)) : 0.0;
         $totalFinal = round($sousTotalMenu + $fraisLivraison, 2);
 
-        $menu->setQuantiteStock($menu->getQuantiteStock() - 1);
+        // Décrémentation du stock du menu
+        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 1) - 1));
+
+        // US-12 : Décrémentation du stock de chaque plat constitutif
+        foreach ($menu->getPlats() as $plat) {
+            $plat->setStock($plat->getStock() - 1);
+        }
 
         $commande = new Commande();
         $commande->setMenu($menu);
@@ -278,9 +296,9 @@ class CommandeController extends AbstractController
                 ->html($corps);
 
             $this->mailer->send($email);
-        } catch (\Throwable) {
-            // Évite de bloquer la réponse API si le serveur mail local n'est pas actif
+        } catch (\Throwable $exception) {
+            // Ignorer l'échec de distribution d'e-mail pour ne pas bloquer l'API
+            error_log('Erreur envoi notification e-mail : ' . $exception->getMessage());
         }
     }
-
 }

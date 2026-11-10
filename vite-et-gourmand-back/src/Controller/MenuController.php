@@ -47,21 +47,23 @@ class MenuController extends AbstractController
         $allergenesSet = [];
 
         foreach ($menu->getPlats() as $plat) {
-            // Découpage de la chaîne en tableau si des allergènes existent
             $rawAllergenes = $plat->getAllergenes();
             $allergenesList = [];
 
             if ($rawAllergenes) {
-                // Découpe par virgule et supprime les espaces superflus
                 $allergenesList = array_values(array_filter(array_map('trim', explode(',', $rawAllergenes))));
             }
 
             $platsData[] = [
-                'id'          => $plat->getId(),
-                'nom'         => $plat->getNom(),
-                'description' => $plat->getDescription(),
-                'type'        => $plat->getType(),
-                'allergenes'  => $allergenesList, // <-- Un vrai tableau PHP / JSON
+                'id'            => $plat->getId(),
+                'nom'           => $plat->getNom(),
+                'description'   => $plat->getDescription(),
+                'type'          => $plat->getType(),
+                'allergenes'    => $allergenesList,
+                'stock'         => $plat->getStock(),
+                'seuilAlerte'   => $plat->getSeuilAlerte(),
+                'isEnRupture'   => $plat->isEnRupture(),
+                'isStockFaible' => $plat->isStockFaible(),
             ];
 
             foreach ($allergenesList as $alg) {

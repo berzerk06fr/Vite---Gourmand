@@ -143,7 +143,7 @@ export class MenuService {
         const item = res?.menu || res?.data || res;
         if (!item) return null;
 
-        // Normalisation des noms de propriétés base SQL -> modèle Angular
+        // Normalisation des noms de propriétés base SQL / API -> modèle Angular
         if (item.conditions_menu && !item.conditions) {
           item.conditions = item.conditions_menu;
         }
@@ -153,6 +153,11 @@ export class MenuService {
         if (item.prix_par_personne && !item.prixParPersonne) {
           item.prixParPersonne = Number(item.prix_par_personne);
         }
+
+        // US-12 : Normalisation du stock (API Symfony renvoie 'quantiteStock')
+        const stockReel = item.quantiteStock ?? item.stockDisponible ?? item.quantite_stock ?? 0;
+        item.quantiteStock = Number(stockReel);
+        item.stockDisponible = Number(stockReel);
 
         // Image de secours
         if (!item.images || item.images.length === 0) {
