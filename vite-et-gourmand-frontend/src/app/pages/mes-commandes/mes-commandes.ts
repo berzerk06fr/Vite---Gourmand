@@ -18,6 +18,13 @@ export class MesCommandesComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.chargerCommandes();
+  }
+
+  chargerCommandes(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
     this.commandeService.getMyCommandes().subscribe({
       next: (data) => {
         this.commandes.set(data);
@@ -30,18 +37,50 @@ export class MesCommandesComponent implements OnInit {
     });
   }
 
-  getStatusClass(statut: string): string {
-    switch (statut) {
+  formaterLibelleStatut(statut: string): string {
+    const s = (statut || '').toLowerCase().trim();
+    switch (s) {
+      case 'en_attente':
+        return 'En attente de validation';
       case 'accepté':
-      case 'terminée':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+      case 'accepte':
+        return 'Commande validée';
       case 'en préparation':
+      case 'en preparation':
+        return 'En cours de préparation';
       case 'en cours de livraison':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'annulée':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'En cours de livraison';
+      case 'livré':
+      case 'livre':
+        return 'Commande livrée';
+      case 'en attente du retour de matériel':
+        return 'Retour matériel attendu';
+      case 'terminée':
+      case 'terminee':
+        return 'Commande clôturée';
       default:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        if (s.startsWith('annul')) {
+          return 'Commande annulée';
+        }
+        return statut;
     }
+  }
+
+  getStatusClass(statut: string): string {
+    const s = (statut || '').toLowerCase().trim();
+
+    if (s.startsWith('annul')) {
+      return 'bg-danger-subtle text-danger border-danger';
+    }
+
+    if (['accepté', 'accepte', 'livré', 'livre', 'terminée', 'terminee'].includes(s)) {
+      return 'bg-success-subtle text-success border-success';
+    }
+
+    if (s.includes('préparation') || s.includes('preparation') || s.includes('livraison')) {
+      return 'bg-info-subtle text-info border-info';
+    }
+
+    return 'bg-warning-subtle text-warning border-warning';
   }
 }

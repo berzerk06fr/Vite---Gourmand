@@ -1,0 +1,214 @@
+<section class="max-w-7xl mx-auto px-4 py-8">
+  <!-- En-tête -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-amber-900/10">
+    <div>
+      <h1 class="text-3xl font-serif font-bold text-gray-900">Gestion des Commandes</h1>
+      <p class="text-gray-600 mt-1 text-sm">Espace réservé au personnel — Suivi et flux traiteur</p>
+    </div>
+    <div>
+      <button 
+        type="button"
+        (click)="chargerCommandes()" 
+        [disabled]="isLoading()"
+        class="btn btn-terracotta d-inline-flex align-items-center gap-2 px-3 py-2 rounded-2 shadow-sm">
+        <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoading()"></i>
+        <span>{{ isLoading() ? 'Chargement...' : 'Rafraîchir' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Flash -->
+  @if (successMessage()) {
+    <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm flex items-center gap-2">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Barre de Recherche et Filtres par Statut -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+    <!-- Champ recherche -->
+    <div class="relative flex-1">
+      <i class="bi bi-search absolute left-3 top-2.5 text-gray-400"></i>
+      <input 
+        type="search" 
+        [value]="rechercheTexte()" 
+        (input)="rechercheTexte.set($any($event.target).value)"
+        placeholder="Rechercher par référence CMD, email client ou formule..."
+        aria-label="Rechercher une commande"
+        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-amber-600" />
+    </div>
+
+    <!-- Filtres par pilules de statut -->
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+      <button 
+        type="button" 
+        (click)="filtreStatut.set('tous')"
+        [class]="filtreStatut() === 'tous' ? 'btn btn-dark btn-sm' : 'btn btn-outline-secondary btn-sm'">
+        Tous ({{ commandes().length }})
+      </button>
+      <button 
+        type="button" 
+        (click)="filtreStatut.set('en_attente')"
+        [class]="filtreStatut() === 'en_attente' ? 'btn btn-warning btn-sm' : 'btn btn-outline-warning btn-sm'">
+        En attente
+      </button>
+      <button 
+        type="button" 
+        (click)="filtreStatut.set('en préparation')"
+        [class]="filtreStatut() === 'en préparation' ? 'btn btn-info btn-sm' : 'btn btn-outline-info btn-sm'">
+        En prépa
+      </button>
+      <button 
+        type="button" 
+        (click)="filtreStatut.set('livré')"
+        [class]="filtreStatut() === 'livré' ? 'btn btn-success btn-sm' : 'btn btn-outline-success btn-sm'">
+        Livrées
+      </button>
+      <button 
+        type="button" 
+        (click)="filtreStatut.set('annulée')"
+        [class]="filtreStatut() === 'annulée' ? 'btn btn-danger btn-sm' : 'btn btn-outline-danger btn-sm'">
+        Annulées
+      </button>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  @if (isLoading()) {
+    <div class="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
+      <output class="spinner-border text-amber-700">
+        <span class="visually-hidden">Chargement en cours...</span>
+      </output>
+      <p class="text-sm font-medium">Chargement des commandes...</p>
+    </div>
+  } @else if (commandesFiltrees().length === 0) {
+    <div class="text-center py-16 bg-white border border-gray-200 rounded-2xl shadow-sm">
+      <i class="bi bi-inbox text-4xl text-gray-400"></i>
+      <p class="text-gray-600 mt-2 font-medium">Aucune commande ne correspond à vos critères.</p>
+    </div>
+  } @else {
+    <!-- Tableau des commandes -->
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-amber-50/50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-700">
+              <th class="py-3.5 px-4">Réf.</th>
+              <th class="py-3.5 px-4">Client</th>
+              <th class="py-3.5 px-4">Formule</th>
+              <th class="py-3.5 px-4">Convives</th>
+              <th class="py-3.5 px-4">Montant TTC</th>
+              <th class="py-3.5 px-4">Statut Actuel</th>
+              <th class="py-3.5 px-4 text-center">Mise à jour</th>
+              <th class="py-3.5 px-4 text-center">Fiche</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-sm">
+            @for (cmd of commandesFiltrees(); track cmd.id) {
+              <tr class="hover:bg-amber-50/30 transition">
+                <td class="py-4 px-4 font-mono font-semibold text-gray-900">
+                  {{ cmd.numeroCommande }}
+                </td>
+                <td class="py-4 px-4 text-gray-700 font-medium">
+                  {{ cmd.client?.email || 'N/A' }}
+                </td>
+                <td class="py-4 px-4 text-gray-800">
+                  {{ cmd.menu?.titre || 'Menu traiteur' }}
+                </td>
+                <td class="py-4 px-4 text-gray-600">
+                  {{ cmd.nbPersonnes }} pers.
+                </td>
+                <td class="py-4 px-4 font-bold text-gray-900">
+                  {{ cmd.prixTotal | number:'1.2-2' }} €
+                </td>
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border {{ getStatusClass(cmd.statut) }}">
+                    {{ formaterLibelleStatut(cmd.statut) }}
+                  </span>
+                </td>
+                <td class="py-4 px-4 text-center">
+                  <select 
+                    [value]="cmd.statut" 
+                    (change)="onChangementStatut(cmd, $event)"
+                    [attr.aria-label]="'Modifier le statut de la commande ' + cmd.numeroCommande"
+                    class="bg-white border border-gray-300 text-gray-800 text-xs font-medium rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-600 cursor-pointer">
+                    @for (st of statutsPossibles; track st) {
+                      <option [value]="st">{{ formaterLibelleStatut(st) }}</option>
+                    }
+                  </select>
+                </td>
+                <td class="py-4 px-4 text-center">
+                  <button 
+                    type="button" 
+                    (click)="ouvrirDetails(cmd)"
+                    class="btn btn-outline-secondary btn-sm px-2 py-1"
+                    title="Voir le bon de commande">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL / BON DE COMMANDE TRAITEUR -->
+  @if (commandeSelectionnee(); as detail) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden print-area">
+        <div class="bg-amber-900/5 px-6 py-4 border-b flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900">Bon de Préparation Traiteur</h2>
+            <p class="text-xs text-gray-500 font-mono">{{ detail.numeroCommande }}</p>
+          </div>
+          <button (click)="fermerDetails()" type="button" class="btn-close no-print" aria-label="Fermer"></button>
+        </div>
+
+        <div class="p-6 space-y-4 text-sm">
+          <div class="grid grid-cols-2 gap-4 pb-4 border-b">
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Client</p>
+              <p class="font-medium text-gray-800">{{ detail.client?.email }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-semibold">Statut actuel</p>
+              <span class="inline-flex px-2 py-0.5 rounded text-xs font-semibold border {{ getStatusClass(detail.statut) }}">
+                {{ formaterLibelleStatut(detail.statut) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="pb-4 border-b">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Prestation commandée</p>
+            <p class="text-base font-bold text-gray-900">{{ detail.menu?.titre || 'Menu traiteur' }}</p>
+            <p class="text-gray-600 mt-1">Nombre de convives : <strong class="text-gray-900">{{ detail.nbPersonnes }} personnes</strong></p>
+          </div>
+
+          <div class="flex justify-between items-center pt-2">
+            <span class="text-gray-600 font-medium">Total facturé</span>
+            <span class="text-xl font-extrabold text-amber-900">{{ detail.prixTotal | number:'1.2-2' }} €</span>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 px-6 py-3 border-t flex justify-end gap-2 no-print">
+          <button (click)="imprimerBonCommande()" type="button" class="btn btn-outline-dark btn-sm">
+            <i class="bi bi-printer me-1"></i> Imprimer le bon
+          </button>
+          <button (click)="fermerDetails()" type="button" class="btn btn-secondary btn-sm">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

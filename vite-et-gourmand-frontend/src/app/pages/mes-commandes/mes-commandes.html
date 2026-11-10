@@ -1,26 +1,41 @@
 <div class="max-w-5xl mx-auto px-4 py-10">
-  <div class="flex items-center justify-between mb-8 border-b pb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 border-b pb-4">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Mon Espace Client</h1>
-      <p class="text-gray-600 mt-1">Consultez l'historique et le suivi de vos commandes</p>
+      <h1 class="text-3xl font-serif font-bold text-gray-900">Mon Espace Client</h1>
+      <p class="text-gray-600 mt-1 text-sm">Consultez l'historique et le suivi de vos commandes</p>
     </div>
-    <a routerLink="/menus" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition">
-      Commander à nouveau
-    </a>
+    <div class="flex items-center gap-2">
+      <button 
+        type="button"
+        (click)="chargerCommandes()" 
+        [disabled]="isLoading()"
+        class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-2 rounded-2">
+        <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoading()"></i>
+        <span>Actualiser</span>
+      </button>
+      <a routerLink="/menus" class="btn btn-terracotta btn-sm d-inline-flex align-items-center px-3 py-2 rounded-2">
+        Commander à nouveau
+      </a>
+    </div>
   </div>
 
   @if (isLoading()) {
-    <div class="flex justify-center items-center py-20 text-gray-500">
-      <span class="animate-pulse">Chargement de vos commandes...</span>
+    <div class="flex flex-col justify-center items-center py-20 text-gray-500 gap-3">
+      <output class="spinner-border text-amber-700">
+        <span class="visually-hidden">Chargement de vos commandes...</span>
+      </output>
+      <p class="text-sm font-medium">Chargement de vos commandes...</p>
     </div>
   } @else if (errorMessage()) {
-    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-      {{ errorMessage() }}
+    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ errorMessage() }}</span>
     </div>
   } @else if (commandes().length === 0) {
     <div class="text-center py-16 bg-white border border-gray-200 rounded-xl shadow-sm">
-      <p class="text-lg text-gray-600">Vous n'avez pas encore passé de commande.</p>
-      <a routerLink="/menus" class="mt-4 inline-block text-amber-600 hover:underline font-medium">
+      <i class="bi bi-inbox text-4xl text-gray-400"></i>
+      <p class="text-lg text-gray-600 mt-2">Vous n'avez pas encore passé de commande.</p>
+      <a routerLink="/menus" class="mt-4 inline-block text-terracotta hover:underline font-medium">
         Découvrir nos menus traiteur
       </a>
     </div>
@@ -50,11 +65,11 @@
                   {{ cmd.nbPersonnes }} pers.
                 </td>
                 <td class="py-4 px-4 font-bold text-gray-900">
-                  {{ cmd.prixTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                  {{ cmd.prixTotal | number:'1.2-2' }} €
                 </td>
                 <td class="py-4 px-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ getStatusClass(cmd.statut) }}">
-                    {{ cmd.statut }}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border {{ getStatusClass(cmd.statut) }}">
+                    {{ formaterLibelleStatut(cmd.statut) }}
                   </span>
                 </td>
               </tr>
