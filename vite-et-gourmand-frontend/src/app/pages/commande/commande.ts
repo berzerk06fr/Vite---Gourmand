@@ -1,9 +1,10 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Menu } from '../../models/menu.model';
 import { MenuService } from '../../services/menu.services';
+import { CommandeService, CommandeResponse } from '../../services/commande.service';
 
 @Component({
   selector: 'app-commande',
@@ -14,7 +15,9 @@ import { MenuService } from '../../services/menu.services';
 })
 export class CommandeComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  private readonly commandeService = inject(CommandeService);
 
   readonly allMenus = signal<Menu[]>([]);
   readonly selectedMenu = signal<Menu | null>(null);
@@ -31,7 +34,12 @@ export class CommandeComponent implements OnInit {
   heurePrestation = signal<string>('12:00');
 
   guestCount = signal<number>(10);
+  
+  // États de soumission
+  isSubmitting = signal<boolean>(false);
   orderSubmitted = signal<boolean>(false);
+  errorMessage = signal<string | null>(null);
+  orderResult = signal<CommandeResponse | null>(null);
 
   readonly isGuestsValid = computed(() => {
     const m = this.selectedMenu();
@@ -100,7 +108,42 @@ export class CommandeComponent implements OnInit {
   }
 
   submitOrder(form: NgForm): void {
-    if (form.invalid || !this.isGuestsValid()) return;
-    this.orderSubmitted.set(true);
+    const menu = this.selectedMenu();
+    if (form.invalid || !this.isGuestsValid() || !menu) return;
+
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    const fullDateDelivery = this.datePrestation() 
+      ? `${this.datePrestation()} ${this.heurePrestation() || '12:00'}:00` 
+      : undefined;
+
+    this.commandeService.createCommande({
+      menuId: menu.id,
+      nbPersonnes: this.guestCount(),
+      ville: this.isHorsBordeaux() ? this.ville() : 'Bordeaux',
+      distanceKm: this.isHorsBordeaux() ? this.distanceKm() : 0,
+      datePrevueLivraison: fullDateDelivery,
+      nom: this.nom(),
+      prenom: this.prenom(),
+      email: this.email(),
+      gsm: this.gsm(),
+      adresse: this.adresse()
+    }).subscribe({
+      next: (res) => {
+        this.isSubmitting.set(false);
+        this.orderResult.set(res);
+        this.orderSubmitted.set(true);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        if (err.status === 401) {
+          this.errorMessage.set('Veuillez vous connecter pour valider votre commande.');
+          void this.router.navigate(['/login']);
+        } else {
+          this.errorMessage.set(err.error?.error || 'Une erreur est survenue lors de la commande.');
+        }
+      }
+    });
   }
 }
