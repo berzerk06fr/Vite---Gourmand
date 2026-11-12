@@ -1,0 +1,133 @@
+<main class="container py-4 my-3">
+  <!-- En-tête -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+      <h1 class="h2 fw-bold text-dark mb-1">Module Décisionnel & Statistiques</h1>
+      <p></p>
+      
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" (click)="chargerStatistiques()">
+        <i class="bi bi-arrow-clockwise"></i> Rafraîchir
+      </button>
+      <a routerLink="/admin/commandes" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Gestion Commandes
+      </a>
+    </div>
+  </div>
+
+  <!-- État de chargement -->
+  @if (loading()) {
+    <div class="text-center py-5">
+      <output class="spinner-border text-primary">
+        <span class="visually-hidden">Chargement...</span>
+      </output>
+      <p class="text-muted mt-2">Calcul des agrégations MongoDB en cours...</p>
+    </div>
+  }
+
+  <!-- État d'erreur -->
+  @if (errorMsg()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
+      <div>
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ errorMsg() }}
+      </div>
+      <button class="btn btn-sm btn-outline-danger" (click)="chargerStatistiques()">Réessayer</button>
+    </div>
+  }
+
+  <!-- Données chargées -->
+  @if (!loading() && stats(); as data) {
+    <!-- Cartes KPI / Indicateurs -->
+    <section class="row g-3 mb-4" aria-label="Indicateurs clés">
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Chiffre d'Affaires</span>
+              <h2 class="h3 fw-bold text-success mb-0 mt-1">
+                {{ data.indicateurs.caTotal | number:'1.2-2' }} €
+              </h2>
+            </div>
+            <div class="bg-success-subtle text-success p-3 rounded-circle">
+              <i class="bi bi-currency-euro fs-3"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Commandes Clôturées</span>
+              <h2 class="h3 fw-bold text-primary mb-0 mt-1">
+                {{ data.indicateurs.nbCommandes }}
+              </h2>
+            </div>
+            <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+              <i class="bi bi-bag-check-fill fs-3"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Convives Servis</span>
+              <h2 class="h3 fw-bold text-warning mb-0 mt-1">
+                {{ data.indicateurs.totalConvives }}
+              </h2>
+            </div>
+            <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+              <i class="bi bi-people-fill fs-3"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tableau de répartition par Menu -->
+    <section class="card border-0 shadow-sm rounded-3 overflow-hidden" aria-label="Ventes par Formule">
+      <div class="card-header bg-white py-3">
+        <h2 class="h5 fw-semibold mb-0 text-dark">
+          <i class="bi bi-pie-chart-fill me-2 text-primary"></i>
+          Performance par Formule de Menu
+        </h2>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-uppercase small">
+            <tr>
+              <th scope="col" class="py-3 ps-4">Formule de Menu</th>
+              <th scope="col" class="py-3 text-center">Volume Commandes</th>
+              <th scope="col" class="py-3 text-center">Nombre Convives</th>
+              <th scope="col" class="py-3 text-end pe-4">Chiffre d'Affaires</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of data.ventesParMenu; track item._id) {
+              <tr>
+                <td class="ps-4 fw-medium text-dark">{{ item._id }}</td>
+                <td class="text-center">{{ item.totalCommandes }}</td>
+                <td class="text-center">{{ item.totalConvives }}</td>
+                <td class="text-end pe-4 fw-bold text-success">
+                  {{ item.chiffreAffaires | number:'1.2-2' }} €
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">
+                  Aucune donnée analytique enregistrée dans MongoDB pour le moment.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</main>

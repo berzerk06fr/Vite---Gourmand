@@ -50,16 +50,31 @@
           </li>
 
           @if (currentUser(); as user) {
-            <!-- Lien réservé aux rôles staff / admin -->
+            <!-- Accès Staff (Employé & Admin) -->
             @if (user.roles.includes('ROLE_ADMIN') || user.roles.includes('ROLE_EMPLOYE')) {
               <li class="nav-item">
-                <a class="nav-link text-amber-700 fw-bold" routerLink="/admin/commandes" routerLinkActive="active-nav" (click)="closeMenu()">
+                <a class="nav-link text-amber-700 fw-bold" 
+                   routerLink="/admin/commandes" 
+                   routerLinkActive="active-nav" 
+                   (click)="closeMenu()">
                   <i class="bi bi-gear-fill me-1"></i> Gestion Commandes
                 </a>
               </li>
             }
 
-            <!-- Lien pour tous les clients connectés -->
+            <!-- Accès Admin STRICT -->
+            @if (user.roles.includes('ROLE_ADMIN')) {
+              <li class="nav-item">
+                <a class="nav-link text-amber-700 fw-bold" 
+                   routerLink="/admin/statistiques" 
+                   routerLinkActive="active-nav" 
+                   (click)="closeMenu()">
+                  <i class="bi bi-bar-chart-line-fill me-1"></i> Statistiques
+                </a>
+              </li>
+            }
+
+            <!-- Lien pour tous les utilisateurs connectés -->
             <li class="nav-item">
               <a class="nav-link text-dark fw-medium" routerLink="/mes-commandes" routerLinkActive="active-nav" (click)="closeMenu()">
                 Mes Commandes

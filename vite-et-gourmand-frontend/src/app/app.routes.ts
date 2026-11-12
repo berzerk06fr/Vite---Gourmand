@@ -7,9 +7,12 @@ import { CommandeComponent } from './pages/commande/commande';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
 import { MesCommandesComponent } from './pages/mes-commandes/mes-commandes';
+import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
 import { staffGuard } from './guards/staff.guard';
 import { AdminCommandesComponent } from './pages/admin-commandes/admin-commandes';
+import { AdminStatistiquesComponent } from './pages/admin-statistiques/admin-statistiques';
+
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -20,6 +23,7 @@ export const routes: Routes = [
   { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
   { path: 'mes-commandes', component: MesCommandesComponent, canActivate: [authGuard] },
   { path: 'admin/commandes', component: AdminCommandesComponent, canActivate: [authGuard, staffGuard] },
+  { path: 'admin/statistiques', component: AdminStatistiquesComponent, canActivate: [authGuard, adminGuard] },
   { path: 'connexion', component: LoginComponent },
   { path: 'inscription', component: RegisterComponent },
   { path: '**', redirectTo: '' }

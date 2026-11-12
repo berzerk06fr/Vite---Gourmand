@@ -1,209 +1,226 @@
-<section class="max-w-7xl mx-auto px-4 py-8">
-  <!-- En-tête -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b border-stone-200">
+<main class="container py-4 my-3">
+  <!-- En-tête harmonisé avec Statistiques -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
     <div>
-      <span class="inline-block text-xs font-semibold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60 mb-1.5">
-        Espace Collaborateur
-      </span>
-      <h1 class="text-3xl font-serif font-bold text-stone-900">Opérations & Gestion</h1>
-      <p class="text-stone-500 mt-1 text-sm">Suivi des commandes traiteur et modération des retours d'expérience</p>
+      <h1 class="h2 fw-bold text-dark mb-1">Opérations &amp; Gestion</h1>
     </div>
-    <div>
+
+    <div class="d-flex gap-2">
       @if (ongletActif() === 'commandes') {
         <button 
-          type="button"
+          type="button" 
+          class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
           (click)="chargerCommandes()" 
-          [disabled]="isLoading()"
-          class="vg-btn-refresh">
-          <svg class="vg-icon-14" [class.vg-spin]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-          <span>{{ isLoading() ? 'Actualisation...' : 'Actualiser commandes' }}</span>
+          [disabled]="isLoading()">
+          <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoading()"></i>
+          <span>{{ isLoading() ? 'Actualisation...' : 'Rafraîchir' }}</span>
         </button>
       } @else {
         <button 
-          type="button"
+          type="button" 
+          class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
           (click)="chargerAvisEnAttente()" 
-          [disabled]="isLoadingAvis()"
-          class="vg-btn-refresh">
-          <svg class="vg-icon-14" [class.vg-spin]="isLoadingAvis()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-          <span>{{ isLoadingAvis() ? 'Actualisation...' : 'Actualiser avis' }}</span>
+          [disabled]="isLoadingAvis()">
+          <i class="bi bi-arrow-clockwise" [class.spin-icon]="isLoadingAvis()"></i>
+          <span>{{ isLoadingAvis() ? 'Actualisation...' : 'Rafraîchir' }}</span>
         </button>
       }
+
+      <a routerLink="/admin/statistiques" class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-bar-chart"></i> Statistiques
+      </a>
     </div>
   </div>
 
   <!-- Messages Flash -->
   @if (successMessage()) {
-    <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex items-center gap-2.5 shadow-sm">
-      <i class="bi bi-check-circle-fill text-emerald-600"></i>
-      <span>{{ successMessage() }}</span>
+    <div class="alert alert-success d-flex align-items-center shadow-sm mb-4" role="alert">
+      <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+      <div>{{ successMessage() }}</div>
     </div>
   }
 
   @if (errorMessage()) {
-    <div class="mb-4 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center gap-2.5 shadow-sm">
-      <i class="bi bi-exclamation-triangle-fill text-rose-600"></i>
-      <span>{{ errorMessage() }}</span>
+    <div class="alert alert-danger d-flex align-items-center shadow-sm mb-4" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+      <div>{{ errorMessage() }}</div>
     </div>
   }
 
-  <!-- Navigation par Onglets -->
-  <div class="flex items-center gap-3 mb-6 border-b border-stone-200 pb-4">
-    <button
-      type="button"
-      (click)="changerOnglet('commandes')"
-      class="vg-tab-btn"
-      [class.active]="ongletActif() === 'commandes'">
-      <i class="bi bi-receipt"></i>
-      <span>Commandes clients ({{ commandes().length }})</span>
-    </button>
+  <!-- Navigation par Onglets (Style Bootstrap) -->
+  <ul class="nav nav-tabs mb-4 border-bottom">
+    <li class="nav-item">
+      <button
+        type="button"
+        (click)="changerOnglet('commandes')"
+        class="nav-link text-dark fw-medium"
+        [class.active]="ongletActif() === 'commandes'"
+        [class.fw-bold]="ongletActif() === 'commandes'">
+        <i class="bi bi-receipt me-1"></i>
+        Commandes clients ({{ commandes().length }})
+      </button>
+    </li>
 
-    <button
-      type="button"
-      (click)="changerOnglet('avis')"
-      class="vg-tab-btn"
-      [class.active]="ongletActif() === 'avis'">
-      <i class="bi bi-chat-square-quote"></i>
-      <span>Modération des avis</span>
-      @if (avisEnAttente().length > 0) {
-        <span class="vg-counter-badge">{{ avisEnAttente().length }}</span>
-      }
-    </button>
-  </div>
+    <li class="nav-item">
+      <button
+        type="button"
+        (click)="changerOnglet('avis')"
+        class="nav-link text-dark fw-medium d-flex align-items-center gap-2"
+        [class.active]="ongletActif() === 'avis'"
+        [class.fw-bold]="ongletActif() === 'avis'">
+        <div>
+          <i class="bi bi-chat-square-quote me-1"></i>
+          Modération des avis
+        </div>
+        @if (avisEnAttente().length > 0) {
+          <span class="badge bg-danger rounded-pill">{{ avisEnAttente().length }}</span>
+        }
+      </button>
+    </li>
+  </ul>
 
-  <!-- VUE 1 : GESTION DES COMMANDES HARMONISÉE -->
+  <!-- VUE 1 : GESTION DES COMMANDES -->
   @if (ongletActif() === 'commandes') {
-    <!-- Barre de Recherche et Filtres par Statut -->
-    <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-      <!-- Champ recherche -->
-      <div class="relative flex-1">
-        <i class="bi bi-search absolute left-3.5 top-3 text-stone-400"></i>
-        <input 
-          type="search" 
-          [value]="rechercheTexte()" 
-          (input)="rechercheTexte.set($any($event.target).value)"
-          placeholder="Rechercher par référence, email ou intitulé de formule..."
-          aria-label="Rechercher une commande"
-          class="w-full pl-10 pr-4 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition" />
-      </div>
+    <!-- Barre de Recherche et Filtres -->
+    <div class="card border-0 shadow-sm rounded-3 p-3 bg-light mb-4">
+      <div class="row g-3 align-items-center justify-content-between">
+        <div class="col-12 col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-search"></i>
+            </span>
+            <input 
+              id="rechercheCommandes"
+              type="search" 
+              [value]="rechercheTexte()" 
+              (input)="rechercheTexte.set($any($event.target).value)"
+              placeholder="Rechercher par référence, email ou formule..." 
+              aria-label="Rechercher par référence, email ou formule"
+              class="form-control border-start-0 ps-0" />
+          </div>
+        </div>
 
-      <!-- Filtres par boutons de statut -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-        <button 
-          type="button" 
-          (click)="filtreStatut.set('tous')"
-          class="vg-filter-btn"
-          [class.active]="filtreStatut() === 'tous'">
-          Tous ({{ commandes().length }})
-        </button>
-        <button 
-          type="button" 
-          (click)="filtreStatut.set('en_attente')"
-          class="vg-filter-btn"
-          [class.active]="filtreStatut() === 'en_attente'">
-          En attente
-        </button>
-        <button 
-          type="button" 
-          (click)="filtreStatut.set('en préparation')"
-          class="vg-filter-btn"
-          [class.active]="filtreStatut() === 'en préparation'">
-          En prépa
-        </button>
-        <button 
-          type="button" 
-          (click)="filtreStatut.set('livré')"
-          class="vg-filter-btn"
-          [class.active]="filtreStatut() === 'livré'">
-          Livrées
-        </button>
-        <button 
-          type="button" 
-          (click)="filtreStatut.set('annulée')"
-          class="vg-filter-btn"
-          [class.active]="filtreStatut() === 'annulée'">
-          Annulées
-        </button>
+        <div class="col-12 col-md-7 d-flex flex-wrap gap-1 justify-content-md-end">
+          <button 
+            type="button" 
+            (click)="filtreStatut.set('tous')"
+            class="btn btn-sm"
+            [class.btn-dark]="filtreStatut() === 'tous'"
+            [class.btn-outline-secondary]="filtreStatut() !== 'tous'">
+            Tous ({{ commandes().length }})
+          </button>
+          <button 
+            type="button" 
+            (click)="filtreStatut.set('en_attente')"
+            class="btn btn-sm"
+            [class.btn-dark]="filtreStatut() === 'en_attente'"
+            [class.btn-outline-secondary]="filtreStatut() !== 'en_attente'">
+            En attente
+          </button>
+          <button 
+            type="button" 
+            (click)="filtreStatut.set('en préparation')"
+            class="btn btn-sm"
+            [class.btn-dark]="filtreStatut() === 'en préparation'"
+            [class.btn-outline-secondary]="filtreStatut() !== 'en préparation'">
+            En prépa
+          </button>
+          <button 
+            type="button" 
+            (click)="filtreStatut.set('livré')"
+            class="btn btn-sm"
+            [class.btn-dark]="filtreStatut() === 'livré'"
+            [class.btn-outline-secondary]="filtreStatut() !== 'livré'">
+            Livrées
+          </button>
+          <button 
+            type="button" 
+            (click)="filtreStatut.set('annulée')"
+            class="btn btn-sm"
+            [class.btn-dark]="filtreStatut() === 'annulée'"
+            [class.btn-outline-secondary]="filtreStatut() !== 'annulée'">
+            Annulées
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Chargement / Vide / Tableau -->
+    <!-- Chargement / Vide / Tableau avec le même card-header et table-hover que stats -->
     @if (isLoading()) {
-      <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm gap-3">
-        <div class="w-10 h-10 rounded-full border-4 border-stone-200 border-t-amber-800 animate-spin"></div>
-        <p class="text-sm font-medium text-stone-600">Chargement des commandes en cours...</p>
+      <div class="text-center py-5">
+        <output class="spinner-border text-primary">
+          <span class="visually-hidden">Chargement...</span>
+        </output>
+        <p class="text-muted mt-2">Chargement des commandes en cours...</p>
       </div>
     } @else if (commandesFiltrees().length === 0) {
-      <div class="text-center py-16 bg-white border border-stone-200 rounded-2xl shadow-sm">
-        <div class="w-14 h-14 bg-stone-100 text-stone-400 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
-          <i class="bi bi-inbox"></i>
+      <div class="card border-0 shadow-sm rounded-3 text-center py-5">
+        <div class="card-body">
+          <i class="bi bi-inbox fs-1 text-muted"></i>
+          <h3 class="h5 fw-bold text-dark mt-3">Aucune commande trouvée</h3>
+          <p class="text-muted small mb-0">Aucune commande ne correspond aux filtres actifs.</p>
         </div>
-        <h3 class="text-base font-serif font-bold text-stone-900">Aucune commande trouvée</h3>
-        <p class="text-stone-500 text-xs mt-1">Aucune commande ne correspond aux filtres actifs.</p>
       </div>
     } @else {
-      <!-- Tableau moderne avec cadre blanc arrondi -->
-      <div class="vg-card-table">
-        <div class="overflow-x-auto">
-          <table class="vg-table">
-            <thead>
+      <section class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-uppercase small">
               <tr>
-                <th style="padding-left: 1.5rem;">Réf.</th>
-                <th>Client</th>
-                <th>Prestation</th>
-                <th>Convives</th>
-                <th>Total</th>
-                <th>Statut</th>
-                <th style="text-align: center;">Gestion Flux</th>
-                <th style="text-align: center; padding-right: 1.5rem;">Fiche</th>
+                <th scope="col" class="py-3 ps-4">Réf.</th>
+                <th scope="col" class="py-3">Client</th>
+                <th scope="col" class="py-3">Prestation</th>
+                <th scope="col" class="py-3 text-center">Convives</th>
+                <th scope="col" class="py-3 text-end">Total</th>
+                <th scope="col" class="py-3 text-center">Statut</th>
+                <th scope="col" class="py-3 text-center">Gestion Flux</th>
+                <th scope="col" class="py-3 text-center pe-4">Fiche</th>
               </tr>
             </thead>
             <tbody>
               @for (cmd of commandesFiltrees(); track cmd.id) {
                 <tr>
-                  <td style="padding-left: 1.5rem;">
-                    <span style="font-family: monospace; font-size: 0.75rem; font-weight: 700; color: #44403c; background: #f5f5f4; border: 1px solid #e7e5e4; padding: 0.2rem 0.5rem; border-radius: 0.375rem;">
+                  <td class="ps-4">
+                    <span class="badge bg-light text-dark border font-monospace px-2 py-1">
                       {{ cmd.numeroCommande }}
                     </span>
                   </td>
-                  <td style="font-weight: 500; color: #292524;">
+                  <td class="fw-medium text-dark">
                     {{ cmd.client?.email || 'N/A' }}
                   </td>
-                  <td style="font-family: Georgia, serif; font-weight: 700; color: #1c1917; font-size: 0.95rem;">
+                  <td class="text-dark fw-semibold">
                     {{ cmd.menu?.titre || 'Menu traiteur' }}
                   </td>
-                  <td style="font-size: 0.8125rem; color: #78716c;">
-                    <i class="bi bi-people" style="margin-right: 0.25rem;"></i>{{ cmd.nbPersonnes }} pers.
+                  <td class="text-center text-muted small">
+                    <i class="bi bi-people me-1"></i>{{ cmd.nbPersonnes }} pers.
                   </td>
-                  <td style="font-family: Georgia, serif; font-weight: 700; color: #292524; font-size: 1rem;">
+                  <td class="text-end fw-bold text-success">
                     {{ cmd.prixTotal | number:'1.2-2' }} €
                   </td>
-                  <td>
-                    <span class="vg-pill" [ngClass]="getStatusClass(cmd.statut)">
+                  <td class="text-center">
+                    <span class="badge rounded-pill px-2.5 py-1.5" [ngClass]="getStatusClass(cmd.statut)">
                       {{ formaterLibelleStatut(cmd.statut) }}
                     </span>
                   </td>
-                  <td style="text-align: center;">
+                  <td class="text-center">
+                    <label [for]="'statut-' + cmd.id" class="visually-hidden">
+                      Changer le statut de la commande {{ cmd.numeroCommande }}
+                    </label>
                     <select 
+                      [id]="'statut-' + cmd.id"
                       [value]="cmd.statut" 
                       (change)="onChangementStatut(cmd, $event)"
-                      [attr.aria-label]="'Modifier le statut de la commande ' + cmd.numeroCommande"
-                      class="vg-status-select">
+                      class="form-select form-select-sm d-inline-block w-auto">
                       @for (st of statutsPossibles; track st) {
                         <option [value]="st">{{ formaterLibelleStatut(st) }}</option>
                       }
                     </select>
                   </td>
-                  <td style="text-align: center; padding-right: 1.5rem;">
+                  <td class="text-center pe-4">
                     <button 
                       type="button" 
                       (click)="ouvrirDetails(cmd)"
-                      class="vg-action-icon-btn"
+                      class="btn btn-sm btn-outline-secondary"
                       title="Ouvrir le bon de préparation">
                       <i class="bi bi-eye"></i>
                     </button>
@@ -213,92 +230,78 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     }
   }
 
   <!-- VUE 2 : MODÉRATION DES AVIS CLIENTS -->
   @if (ongletActif() === 'avis') {
     @if (isLoadingAvis()) {
-      <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-stone-200 shadow-sm gap-3">
-        <div class="w-10 h-10 rounded-full border-4 border-stone-200 border-t-amber-800 animate-spin"></div>
-        <p class="text-sm font-medium text-stone-600">Récupération des avis en attente...</p>
+      <div class="text-center py-5">
+        <output class="spinner-border text-primary">
+          <span class="visually-hidden">Chargement...</span>
+        </output>
+        <p class="text-muted mt-2">Récupération des avis en attente...</p>
       </div>
     } @else if (avisEnAttente().length === 0) {
-      <div class="text-center py-16 bg-white border border-stone-200 rounded-2xl shadow-sm">
-        <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-3">
-          <i class="bi bi-check2-all"></i>
+      <div class="card border-0 shadow-sm rounded-3 text-center py-5">
+        <div class="card-body">
+          <i class="bi bi-check2-all fs-1 text-success"></i>
+          <h3 class="h5 fw-bold text-dark mt-3">Tout est à jour !</h3>
+          <p class="text-muted small mb-0">Aucun avis client n'est actuellement en attente de modération.</p>
         </div>
-        <h3 class="text-base font-serif font-bold text-stone-900">Tout est à jour !</h3>
-        <p class="text-stone-500 text-xs mt-1">Aucun avis client n'est actuellement en attente de modération.</p>
       </div>
     } @else {
-      <div class="space-y-4">
+      <div class="d-flex flex-column gap-3 mb-4">
         @for (avis of avisEnAttente(); track avis.id) {
-          <div class="vg-avis-card">
-            <div class="space-y-2.5 flex-1">
-              <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex items-center gap-1">
-                  @for (star of [1, 2, 3, 4, 5]; track star) {
-                    <svg class="vg-star-small" [class.vg-star-gold]="star <= avis.note" [class.vg-star-empty]="star > avis.note" viewBox="0 0 24 24" width="18" height="18">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                    </svg>
-                  }
-                  <span class="text-xs font-bold text-stone-800 ml-1.5">{{ avis.note }}/5</span>
+          <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="text-warning">
+                    @for (star of [1, 2, 3, 4, 5]; track star) {
+                      <i class="bi" [class.bi-star-fill]="star <= avis.note" [class.bi-star]="star > avis.note"></i>
+                    }
+                  </div>
+                  <span class="fw-bold text-dark small">{{ avis.note }}/5</span>
+                  <span class="badge bg-warning-subtle text-warning-emphasis border">En attente</span>
+                  <span class="text-muted small ms-2">Déposé le {{ avis.dateCreation }}</span>
                 </div>
 
-                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
-                  En attente
-                </span>
+                <p class="fst-italic bg-light p-3 rounded-2 text-dark mb-2">
+                  « {{ avis.commentaire }} »
+                </p>
 
-                <span class="text-xs text-stone-400">
-                  Déposé le {{ avis.dateCreation }}
-                </span>
+                <div class="text-muted small">
+                  Client : <strong class="text-dark">{{ avis.auteur?.pseudo || 'Client' }}</strong> •
+                  Menu : <strong class="text-dark">{{ avis.menuTitre }}</strong>
+                  @if (avis.commande?.numeroCommande) {
+                    • <span class="badge bg-light text-dark border font-monospace">{{ avis.commande?.numeroCommande }}</span>
+                  }
+                </div>
               </div>
 
-              <p class="text-stone-800 text-sm italic bg-stone-50 p-3.5 rounded-xl border border-stone-200/60 leading-relaxed">
-                « {{ avis.commentaire }} »
-              </p>
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  (click)="traiterAvis(avis.id, 'refuser')"
+                  [disabled]="actionEnCoursId() === avis.id"
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
+                  <i class="bi bi-x-circle"></i> Refuser
+                </button>
 
-              <div class="flex items-center gap-3 text-xs text-stone-500 flex-wrap">
-                <span>
-                  Client : <strong class="text-stone-800">{{ avis.auteur?.pseudo || 'Client' }}</strong>
-                </span>
-                <span>•</span>
-                <span>
-                  Menu : <strong class="text-stone-800">{{ avis.menuTitre }}</strong>
-                </span>
-                @if (avis.commande?.numeroCommande) {
-                  <span>•</span>
-                  <span class="font-mono bg-stone-100 px-2 py-0.5 rounded text-stone-700 border border-stone-200">
-                    {{ avis.commande?.numeroCommande }}
-                  </span>
-                }
+                <button
+                  type="button"
+                  (click)="traiterAvis(avis.id, 'valider')"
+                  [disabled]="actionEnCoursId() === avis.id"
+                  class="btn btn-sm btn-success d-flex align-items-center gap-1">
+                  @if (actionEnCoursId() === avis.id) {
+                    <span>En cours...</span>
+                  } @else {
+                    <i class="bi bi-check-circle"></i> Valider &amp; Publier
+                  }
+                </button>
               </div>
-            </div>
-
-            <div class="flex items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100">
-              <button
-                type="button"
-                (click)="traiterAvis(avis.id, 'refuser')"
-                [disabled]="actionEnCoursId() === avis.id"
-                class="vg-btn-action vg-btn-refuser">
-                <i class="bi bi-x-circle"></i>
-                <span>Refuser</span>
-              </button>
-
-              <button
-                type="button"
-                (click)="traiterAvis(avis.id, 'valider')"
-                [disabled]="actionEnCoursId() === avis.id"
-                class="vg-btn-action vg-btn-valider">
-                @if (actionEnCoursId() === avis.id) {
-                  <span>En cours...</span>
-                } @else {
-                  <i class="bi bi-check-circle"></i>
-                  <span>Valider & Publier</span>
-                }
-              </button>
             </div>
           </div>
         }
@@ -308,56 +311,54 @@
 
   <!-- MODAL : BON DE COMMANDE TRAITEUR -->
   @if (commandeSelectionnee(); as detail) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-stone-100 print-area animate-scale-up">
-        
-        <div class="bg-gradient-to-br from-stone-50 to-amber-50/40 px-6 py-5 border-b border-stone-200 flex justify-between items-center">
-          <div>
-            <span class="text-xs uppercase font-semibold tracking-wider text-amber-800">Cuisine & Logistique</span>
-            <h2 class="text-xl font-serif font-bold text-stone-900 mt-0.5">Bon de Préparation</h2>
-            <p class="text-xs text-stone-500 font-mono mt-0.5">{{ detail.numeroCommande }}</p>
-          </div>
-          <button (click)="fermerDetails()" type="button" class="text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-200/50 transition no-print" aria-label="Fermer">
-            <i class="bi bi-x-lg text-sm"></i>
-          </button>
-        </div>
-
-        <div class="p-6 space-y-5 text-sm">
-          <div class="grid grid-cols-2 gap-4 pb-4 border-b border-stone-100">
+    <div class="modal d-block bg-dark bg-opacity-50" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+          <div class="modal-header bg-light">
             <div>
-              <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider">Client</p>
-              <p class="font-medium text-stone-800 mt-1">{{ detail.client?.email }}</p>
+              <span class="text-uppercase small fw-bold text-muted d-block">Cuisine &amp; Logistique</span>
+              <h2 class="modal-title h5 fw-bold text-dark mb-0">Bon de Préparation</h2>
+              <small class="text-muted font-monospace">{{ detail.numeroCommande }}</small>
             </div>
-            <div>
-              <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider">Statut actuel</p>
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border mt-1" [ngClass]="getStatusClass(detail.statut)">
-                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                {{ formaterLibelleStatut(detail.statut) }}
-              </span>
+            <button type="button" class="btn-close" (click)="fermerDetails()" aria-label="Fermer"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row g-3 pb-3 mb-3 border-bottom">
+              <div class="col-6">
+                <span class="small text-muted text-uppercase fw-semibold d-block">Client</span>
+                <span class="fw-medium text-dark">{{ detail.client?.email }}</span>
+              </div>
+              <div class="col-6">
+                <span class="small text-muted text-uppercase fw-semibold d-block">Statut</span>
+                <span class="badge rounded-pill mt-1" [ngClass]="getStatusClass(detail.statut)">
+                  {{ formaterLibelleStatut(detail.statut) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="pb-3 mb-3 border-bottom">
+              <span class="small text-muted text-uppercase fw-semibold d-block">Prestation traiteur</span>
+              <span class="h5 fw-bold text-dark d-block mt-1">{{ detail.menu?.titre || 'Menu traiteur' }}</span>
+              <span class="text-muted small">Convives prévus : <strong class="text-dark">{{ detail.nbPersonnes }} personnes</strong></span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-2">
+              <span class="text-muted small text-uppercase fw-semibold">Montant facturé</span>
+              <span class="h4 fw-bold text-success mb-0">{{ detail.prixTotal | number:'1.2-2' }} €</span>
             </div>
           </div>
 
-          <div class="pb-4 border-b border-stone-100">
-            <p class="text-xs text-stone-400 uppercase font-semibold tracking-wider mb-1">Prestation traiteur</p>
-            <p class="text-lg font-serif font-bold text-stone-900">{{ detail.menu?.titre || 'Menu traiteur' }}</p>
-            <p class="text-stone-600 mt-1 text-xs">Convives prévus : <strong class="text-stone-900 font-semibold">{{ detail.nbPersonnes }} personnes</strong></p>
+          <div class="modal-footer bg-light">
+            <button (click)="imprimerBonCommande()" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+              <i class="bi bi-printer"></i> Imprimer le bon
+            </button>
+            <button (click)="fermerDetails()" type="button" class="btn btn-sm btn-secondary">
+              Fermer
+            </button>
           </div>
-
-          <div class="flex justify-between items-center pt-1 bg-stone-50 p-4 rounded-xl border border-stone-200/60">
-            <span class="text-stone-600 font-medium text-xs uppercase tracking-wider">Montant facturé</span>
-            <span class="text-2xl font-serif font-bold text-amber-900">{{ detail.prixTotal | number:'1.2-2' }} €</span>
-          </div>
-        </div>
-
-        <div class="bg-stone-50/80 px-6 py-4 border-t border-stone-200 flex justify-end gap-3 no-print">
-          <button (click)="imprimerBonCommande()" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-stone-700 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition shadow-sm">
-            <i class="bi bi-printer"></i> Imprimer le bon
-          </button>
-          <button (click)="fermerDetails()" type="button" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-200/80 hover:bg-stone-200 rounded-xl transition">
-            Fermer
-          </button>
         </div>
       </div>
     </div>
   }
-</section>
+</main>
