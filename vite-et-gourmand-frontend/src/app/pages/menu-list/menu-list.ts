@@ -96,7 +96,6 @@ const MOCK_MENUS: Menu[] = [
 })
 export class MenuList implements OnInit {
   private readonly http = inject(HttpClient);
-  // Aligné sur 127.0.0.1 pour la cohérence avec le reste du front
   private readonly apiUrl = 'http://127.0.0.1:8000/api/menus';
 
   readonly menus = signal<Menu[]>([]);
@@ -115,7 +114,6 @@ export class MenuList implements OnInit {
     const minP = this.minPersons();
 
     return this.menus().filter((menu) => {
-      // Sécurisation avec fallback au cas où regime ou theme est null ou un objet
       const menuRegime = (typeof menu.regime === 'string' ? menu.regime : (menu.regime as any)?.nom || '').toLowerCase();
       const menuTheme = (typeof menu.theme === 'string' ? menu.theme : (menu.theme as any)?.nom || '').toLowerCase();
 
@@ -125,10 +123,12 @@ export class MenuList implements OnInit {
       if (theme !== 'tous' && menuTheme !== theme) {
         return false;
       }
-      if (maxP !== null && menu.prixParPersonne > maxP) {
+      // On vérifie que maxP est strictement >= 0 avant de filtrer
+      if (maxP !== null && maxP >= 0 && menu.prixParPersonne > maxP) {
         return false;
       }
-      if (minP !== null && menu.nombrePersonneMin > minP) {
+      // On vérifie que minP est strictement >= 1 avant de filtrer
+      if (minP !== null && minP >= 1 && menu.nombrePersonneMin > minP) {
         return false;
       }
       return true;
@@ -137,6 +137,29 @@ export class MenuList implements OnInit {
 
   ngOnInit(): void {
     this.fetchMenus();
+  }
+
+  // --- Sécurisation des champs numériques (interdiction du négatif) ---
+  onMaxPriceChange(value: number | null): void {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      this.maxPrice.set(null);
+      return;
+    }
+    this.maxPrice.set(value < 0 ? 0 : value);
+  }
+
+  onMinPersonsChange(value: number | null): void {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      this.minPersons.set(null);
+      return;
+    }
+    this.minPersons.set(value < 1 ? 1 : Math.floor(value));
+  }
+
+  preventNegativeKey(event: KeyboardEvent): void {
+    if (event.key === '-' || event.key === '+' || event.key === 'e' || event.key === 'E') {
+      event.preventDefault();
+    }
   }
 
   fetchMenus(): void {
@@ -149,13 +172,8 @@ export class MenuList implements OnInit {
       })
     ).subscribe({
       next: (data) => {
-        console.log('--- DONNÉES MENUS REÇUES ---', data);
-        // Normalisation au cas où le backend renvoie { menus: [...] } ou un tableau brut
         const list = Array.isArray(data) ? data : (data?.menus || data?.data || []);
-        
-        // Si l'API retourne un tableau vide (base vide), on bascule sur les mocks pour l'affichage
         if (list.length === 0) {
-          console.info('Aucun menu en base, affichage du mock de secours.');
           this.menus.set(MOCK_MENUS);
         } else {
           this.menus.set(list);

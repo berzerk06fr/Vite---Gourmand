@@ -74,12 +74,14 @@
               </li>
             }
 
-            <!-- Lien pour tous les utilisateurs connectés -->
-            <li class="nav-item">
-              <a class="nav-link text-dark fw-medium" routerLink="/mes-commandes" routerLinkActive="active-nav" (click)="closeMenu()">
-                Mes Commandes
-              </a>
-            </li>
+            <!-- Lien réservé EXCLUSIVEMENT aux Clients (masqué pour Employé & Admin) -->
+            @if (isClient()) {
+              <li class="nav-item">
+                <a class="nav-link text-dark fw-medium" routerLink="/mes-commandes" routerLinkActive="active-nav" (click)="closeMenu()">
+                  Mes Commandes
+                </a>
+              </li>
+            }
           }
         </ul>
 

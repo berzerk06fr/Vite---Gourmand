@@ -20,6 +20,9 @@ export class MesCommandesComponent implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
 
+  // Signaux pour le bon de commande imprimable
+  readonly selectedCommandeForBon = signal<CommandeItem | null>(null);
+
   // Signaux pour la modale de dépôt d'avis
   readonly selectedCommandeForReview = signal<CommandeItem | null>(null);
   readonly reviewNote = signal<number>(5);
@@ -47,7 +50,20 @@ export class MesCommandesComponent implements OnInit {
     });
   }
 
-  // Vérifie si la commande est éligible pour laisser un avis (livrée ou terminée)
+  // --- Gestion du Bon de Commande ---
+  ouvrirBonCommande(cmd: CommandeItem): void {
+    this.selectedCommandeForBon.set(cmd);
+  }
+
+  fermerBonCommande(): void {
+    this.selectedCommandeForBon.set(null);
+  }
+
+  imprimerBon(): void {
+    window.print();
+  }
+
+  // --- Gestion des Avis (US-13) ---
   canReview(statut: string): boolean {
     const s = (statut || '').toLowerCase().trim();
     return ['livré', 'livre', 'terminée', 'terminee'].includes(s);

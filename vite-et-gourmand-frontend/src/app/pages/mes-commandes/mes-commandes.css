@@ -293,3 +293,50 @@
     animation-fill-mode: forwards;
   }
 }
+/* Boutons et pieds de modale réutilisables */
+.vg-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--vg-border, #e7e5e4);
+  background-color: #fafaf9;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+}
+
+.vg-bon-printable {
+  padding: 1.5rem;
+  background-color: #ffffff;
+}
+
+/* --- RÈGLES D'IMPRESSION --- */
+@media print {
+  /* Masquer l'ensemble du DOM */
+  body * {
+    visibility: hidden ;
+  }
+
+  /* Afficher uniquement la zone du bon */
+  #printable-client-bon,
+  #printable-client-bon * {
+    visibility: visible ;
+  }
+
+  #printable-client-bon {
+    position: absolute ;
+    left: 0 ;
+    top: 0 ;
+    width: 100% ;
+    margin: 0 ;
+    padding: 20px ;
+    background: #ffffff ;
+  }
+
+  .no-print,
+  .no-print-backdrop {
+    background: transparent;
+    border: none;
+  }
+}

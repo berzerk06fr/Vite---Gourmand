@@ -1,20 +1,33 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CommandeService, CommandeItem } from '../../services/commande.service';
 import { AvisService } from '../../services/avis.service';
+import { AuthService } from '../../services/auth.service';
 import { Avis } from '../../models/avis.model';
 
 @Component({
   selector: 'app-admin-commandes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-commandes.html',
   styleUrl: './admin-commandes.css'
 })
 export class AdminCommandesComponent implements OnInit {
   private readonly commandeService = inject(CommandeService);
   private readonly avisService = inject(AvisService);
+  private readonly authService = inject(AuthService);
+
+  // Conversion de l'Observable currentUser$ en Signal
+  readonly currentUser = toSignal(this.authService.currentUser$);
+
+  // Rôle Admin calculé dynamiquement
+  readonly isAdmin = computed(() => {
+    const user = this.currentUser();
+    return Boolean(user?.roles?.includes('ROLE_ADMIN'));
+  });
 
   // Navigation par onglets
   readonly ongletActif = signal<'commandes' | 'avis'>('commandes');
@@ -175,7 +188,6 @@ export class AdminCommandesComponent implements OnInit {
     this.avisService.modererAvis(avisId, action).subscribe({
       next: (res) => {
         this.successMessage.set(res.message);
-        // Retrait immédiat de l'avis modéré de la liste
         this.avisEnAttente.update((liste) => liste.filter((a) => a.id !== avisId));
         this.actionEnCoursId.set(null);
         setTimeout(() => this.successMessage.set(null), 4000);

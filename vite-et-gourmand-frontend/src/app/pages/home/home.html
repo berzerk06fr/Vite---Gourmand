@@ -1,45 +1,218 @@
-<section class="container py-5 my-4">
-    <div class="row g-5 align-items-start">
-      <div class="col-12 col-lg-5">
-        <span class="service-tag text-uppercase fw-semibold mb-2 d-inline-block">Retours d'expérience</span>
-        <h2 class="section-title fw-bold text-dark mb-2">Ils nous ont fait confiance.</h2>
-        <p class="text-secondary small">Quand l'émotion culinaire se prolonge en mots.</p>
-      </div>
-
-      <div class="col-12 col-lg-7">
-        <div class="card border border-light-subtle rounded-4 p-4 bg-white shadow-sm">
-          @if (isLoadingAvis()) {
-            <div class="py-5 text-center text-muted">
-              <output class="spinner-border text-warning spinner-border-sm me-2">
-              <span class="visually-hidden">Chargement des avis en cours...</span>
-            </output>
-              <span class="small">Chargement des avis...</span>
-            </div>
-          } @else {
-            @let listeAvis = avisValides().length > 0 ? avisValides() : temoignagesParDefaut;
-            @for (avis of listeAvis; track avis.id; let last = $last) {
-              <div [class.mb-4]="!last" [class.pb-4]="!last" [class.border-bottom]="!last">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div class="d-flex align-items-center gap-1" [attr.aria-label]="avis.note + ' étoiles sur 5'">
-                    @for (star of [1, 2, 3, 4, 5]; track star) {
-                      <i class="bi" [ngClass]="star <= avis.note ? 'bi-star-fill text-warning' : 'bi-star text-black-50'"></i>
-                    }
-                  </div>
-                  <span class="badge bg-light text-secondary border fw-normal text-xs">
-                    {{ avis.menuTitre || 'Prestation traiteur' }}
-                  </span>
-                </div>
-                <p class="small text-secondary mb-2 fst-italic">
-                  « {{ avis.commentaire }} »
-                </p>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="fw-semibold very-small text-dark">{{ avis.auteur?.pseudo || 'Client vérifié' }}</span>
-                  <span class="text-muted very-small">• Client vérifié</span>
-                </div>
-              </div>
-            }
-          }
-        </div>
+<!-- 1. SECTION HERO BANNER -->
+<section class="container py-5 my-md-3">
+  <div class="row g-5 align-items-center">
+    <div class="col-12 col-lg-6">
+      <span class="badge rounded-pill px-3 py-2 mb-3 text-uppercase fw-semibold" style="background-color: #f5ebe0; color: #b5653d; font-size: 0.72rem; letter-spacing: 0.05em;">
+        Service Traiteur Haut de Gamme
+      </span>
+      <h1 class="display-5 fw-bold text-dark mb-4" style="font-family: Georgia, serif; line-height: 1.18;">
+        L'art de recevoir avec élégance et gourmandise.
+      </h1>
+      <p class="lead text-secondary mb-4" style="font-size: 1.05rem; line-height: 1.6;">
+        De la réception intime au grand banquet d'entreprise, découvrez une cuisine raffinée élaborée à partir de produits frais et de saison.
+      </p>
+      <div class="d-flex flex-wrap gap-3">
+        <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #c86d44; border-color: #c86d44;">
+          Découvrir la carte
+        </a>
+        <a routerLink="/contact" class="btn btn-outline-dark px-4 py-2 fw-semibold rounded-2">
+          Nous contacter
+        </a>
       </div>
     </div>
-  </section>
+
+    <div class="col-12 col-lg-6">
+      <div class="rounded-4 overflow-hidden shadow-lg position-relative" style="aspect-ratio: 4 / 3;">
+        <img 
+          src="https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80" 
+          alt="Dressage gastronomique traiteur Vite et Gourmand" 
+          class="w-100 h-100 object-fit-cover" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. SECTION ENGAGEMENTS / 4 PILIERS -->
+<section class="container py-4 my-3">
+  <div class="row g-4 text-center text-md-start">
+    
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="p-3 h-100">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+          <i class="bi bi-flower1 fs-5"></i>
+        </div>
+        <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">100 % Frais & Artisanal</h2>
+        <p class="small text-secondary mb-0">
+          Produits locaux bruts cuisinés le jour même dans notre atelier bordelais.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="p-3 h-100">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+          <i class="bi bi-snow2 fs-5"></i>
+        </div>
+        <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Livraison Réfrigérée</h2>
+        <p class="small text-secondary mb-0">
+          Respect strict de la chaîne du froid et ponctualité garantie sur le lieu de réception.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="p-3 h-100">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+          <i class="bi bi-heart-pulse fs-5"></i>
+        </div>
+        <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Régimes & Allergies</h2>
+        <p class="small text-secondary mb-0">
+          Alternatives végétariennes, vegan et options adaptées sans surcoût.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="p-3 h-100">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+          <i class="bi bi-stars fs-5"></i>
+        </div>
+        <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Prestations Sur Mesure</h2>
+        <p class="small text-secondary mb-0">
+          Formules personnalisées pour réceptions privées et événements professionnels.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 3. SECTION NOS SUGGESTIONS DU MOMENT -->
+<section class="container py-5 my-2">
+  <div class="text-center mb-5">
+    <h2 class="h2 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Nos suggestions du moment</h2>
+    <p class="text-secondary small">
+      Une sélection de nos créations les plus appréciées, préparées à la commande.
+    </p>
+  </div>
+
+  <div class="row g-4">
+    <!-- Carte 1 -->
+    <div class="col-12 col-md-4">
+      <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="position-relative" style="height: 210px;">
+          <img 
+            src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80" 
+            alt="Menu du Terroir & Saveurs" 
+            class="w-100 h-100 object-fit-cover" />
+          <span class="position-absolute top-0 start-0 m-3 badge rounded-pill px-3 py-1 bg-dark bg-opacity-75 text-white small">
+            Vegan
+          </span>
+        </div>
+        <div class="card-body p-4 d-flex flex-column">
+          <h3 class="h5 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Menu du Terroir & Saveurs.</h3>
+          <p class="card-text text-secondary small flex-grow-1 mb-0">
+            Velouté maraîcher aux éclats de châtaignes, mitonnée de saison et tartelette croustillante.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <!-- Carte 2 -->
+    <div class="col-12 col-md-4">
+      <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="position-relative" style="height: 210px;">
+          <img 
+            src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" 
+            alt="Menu Prestige Océan" 
+            class="w-100 h-100 object-fit-cover" />
+          <span class="position-absolute top-0 start-0 m-3 badge rounded-pill px-3 py-1 bg-dark bg-opacity-75 text-white small">
+            Végétarien
+          </span>
+        </div>
+        <div class="card-body p-4 d-flex flex-column">
+          <h3 class="h5 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Menu Prestige Océan.</h3>
+          <p class="card-text text-secondary small flex-grow-1 mb-0">
+            Noix de Saint-Jacques snackées, émulsion d'agrumes, risotto crémeux et croustillant de sarrasin.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <!-- Carte 3 -->
+    <div class="col-12 col-md-4">
+      <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+        <div class="position-relative" style="height: 210px;">
+          <img 
+            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80" 
+            alt="Buffet Champêtre & Gourmand" 
+            class="w-100 h-100 object-fit-cover" />
+          <span class="position-absolute top-0 start-0 m-3 badge rounded-pill px-3 py-1 bg-dark bg-opacity-75 text-white small">
+            Carnivore
+          </span>
+        </div>
+        <div class="card-body p-4 d-flex flex-column">
+          <h3 class="h5 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Buffet Champêtre & Gourmand.</h3>
+          <p class="card-text text-secondary small flex-grow-1 mb-0">
+            Magret de canard du Sud-Ouest, mousseline de panais et jus réduit au romarin.
+          </p>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <div class="text-center mt-5">
+    <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #c86d44; border-color: #c86d44;">
+      Découvrir tous nos menus
+    </a>
+  </div>
+</section>
+
+<!-- 4. SECTION AVIS CLIENTS ("Ils nous ont fait confiance.") -->
+<section class="container py-5 my-4">
+  <div class="row g-5 align-items-start">
+    <div class="col-12 col-lg-5">
+      <span class="service-tag text-uppercase fw-semibold mb-2 d-inline-block" style="color: #c86d44; font-size: 0.75rem; letter-spacing: 0.05em;">
+        Retours d'expérience
+      </span>
+      <h2 class="section-title fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Ils nous ont fait confiance.</h2>
+      <p class="text-secondary small">Quand l'émotion culinaire se prolonge en mots.</p>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <div class="card border border-light-subtle rounded-4 p-4 bg-white shadow-sm">
+        @if (isLoadingAvis()) {
+          <div class="py-5 text-center text-muted">
+            <output class="spinner-border text-warning spinner-border-sm me-2">
+              <span class="visually-hidden">Chargement des avis en cours...</span>
+            </output>
+            <span class="small">Chargement des avis...</span>
+          </div>
+        } @else {
+          @let listeAvis = avisValides().length > 0 ? avisValides() : temoignagesParDefaut;
+          @for (avis of listeAvis; track avis.id; let last = $last) {
+            <div [class.mb-4]="!last" [class.pb-4]="!last" [class.border-bottom]="!last">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-1" [attr.aria-label]="avis.note + ' étoiles sur 5'">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <i class="bi" [ngClass]="star <= avis.note ? 'bi-star-fill text-warning' : 'bi-star text-black-50'"></i>
+                  }
+                </div>
+                <span class="badge bg-light text-secondary border fw-normal text-xs">
+                  {{ avis.menuTitre || 'Prestation traiteur' }}
+                </span>
+              </div>
+              <p class="small text-secondary mb-2 fst-italic">
+                « {{ avis.commentaire }} »
+              </p>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-semibold very-small text-dark">{{ avis.auteur?.pseudo || 'Client vérifié' }}</span>
+                <span class="text-muted very-small">• Client vérifié</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</section>

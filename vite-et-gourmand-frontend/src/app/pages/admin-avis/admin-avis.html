@@ -1,0 +1,81 @@
+<main class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold text-dark mb-1">Modération des Avis Clients</h1>
+      <p class="text-muted small mb-0">Espace collaborateur : validation ou refus des retours clients avant publication.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="chargerAvisEnAttente()" [disabled]="isLoading()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Rafraîchir
+      </button>
+      <a routerLink="/admin/commandes" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-box-seam me-1"></i> Commandes
+      </a>
+    </div>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>{{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage() }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="text-center py-5">
+      <output class="spinner-border text-amber-700 d-inline-block">
+        <span class="visually-hidden">Chargement des avis en attente...</span>
+      </output>
+      <p class="text-muted mt-2">Récupération des avis en attente...</p>
+    </div>
+  } @else if (avisList().length === 0) {
+    <div class="card border-0 shadow-sm p-5 text-center my-4">
+      <i class="bi bi-chat-square-heart text-muted display-4 mb-3"></i>
+      <h2 class="h5 fw-bold text-dark">Aucun avis en attente de modération</h2>
+      <p class="text-muted small mb-0">Tous les retours clients déposés ont été traités.</p>
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (avis of avisList(); track avis.id) {
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm border-0 d-flex flex-column">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-warning text-dark">
+                  <i class="bi bi-star-fill text-dark me-1"></i>{{ avis.note }} / 5
+                </span>
+                <span class="text-muted small">{{ avis.dateCreation }}</span>
+              </div>
+
+              <h2 class="h6 fw-bold mb-1 text-dark">{{ avis.menuTitre || 'Prestation traiteur' }}</h2>
+              <p class="text-muted small mb-2">
+                Client : <strong>{{ avis.auteur.pseudo }}</strong>
+                @if (avis.commande) {
+                  <span>(Cmd n°{{ avis.commande.numeroCommande }})</span>
+                }
+              </p>
+
+              <blockquote class="blockquote fs-6 text-secondary bg-light p-3 rounded flex-grow-1 mb-3">
+                « {{ avis.commentaire }} »
+              </blockquote>
+
+              <div class="d-flex gap-2 pt-2 border-top">
+                <button type="button" class="btn btn-success btn-sm flex-fill" (click)="traiterAvis(avis.id, 'valider')">
+                  <i class="bi bi-check-lg me-1"></i> Publier
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm flex-fill" (click)="traiterAvis(avis.id, 'refuser')">
+                  <i class="bi bi-x-lg me-1"></i> Refuser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</main>
