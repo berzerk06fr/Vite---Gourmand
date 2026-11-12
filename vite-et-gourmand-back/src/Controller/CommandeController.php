@@ -7,6 +7,7 @@ use App\Entity\Menu;
 use App\Entity\Utilisateur;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
+use App\Service\MongoStatistiqueService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,7 +37,8 @@ class CommandeController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly CommandeRepository $commandeRepository,
         private readonly MenuRepository $menuRepository,
-        private readonly MailerInterface $mailer
+        private readonly MailerInterface $mailer,
+        private readonly MongoStatistiqueService $mongoService
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -128,6 +130,17 @@ class CommandeController extends AbstractController
 
         if ($ancienStatut !== $nouveauStatut) {
             $this->envoyerNotificationStatutClient($commande, $nouveauStatut, $data);
+
+            // Synchronisation NoSQL (MongoDB Analytics)
+            $menu = $commande->getMenu();
+            $this->mongoService->synchroniserCommande([
+                'id'             => $commande->getId(),
+                'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
+                'menuTitre'      => $menu ? ($menu->getTitre() ?? 'Menu traiteur') : 'Menu traiteur',
+                'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
+                'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
+                'statut'         => $nouveauStatut,
+            ]);
         }
 
         return $this->json([
@@ -232,7 +245,7 @@ class CommandeController extends AbstractController
         // Décrémentation du stock du menu
         $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 1) - 1));
 
-        // US-12 : Décrémentation du stock de chaque plat constitutif
+        // Décrémentation du stock de chaque plat constitutif
         foreach ($menu->getPlats() as $plat) {
             $plat->setStock($plat->getStock() - 1);
         }
@@ -308,7 +321,6 @@ class CommandeController extends AbstractController
 
             $this->mailer->send($email);
         } catch (\Throwable $exception) {
-            // Ignorer l'échec de distribution d'e-mail pour ne pas bloquer l'API
             error_log('Erreur envoi notification e-mail : ' . $exception->getMessage());
         }
     }

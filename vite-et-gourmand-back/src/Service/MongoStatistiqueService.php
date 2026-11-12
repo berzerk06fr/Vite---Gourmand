@@ -15,12 +15,12 @@ class MongoStatistiqueService
     public function synchroniserCommande(array $data): bool
     {
         $json = json_encode([
-            'commande_id'     => $data['id'],
+            'commande_id'     => (int) $data['id'],
             'numero_commande' => $data['numeroCommande'],
             'menu_titre'      => $data['menuTitre'],
             'prix_total'      => (float) $data['prixTotal'],
             'nb_personnes'    => (int) $data['nbPersonnes'],
-            'statut'          => $data['statut'],
+            'statut'          => mb_strtolower(trim($data['statut'])),
             'date_commande'   => date('c')
         ]);
 
@@ -41,7 +41,7 @@ class MongoStatistiqueService
         $pipeline = json_encode([
             [
                 '$match' => [
-                    'statut' => ['$in' => ['livré', 'accepté', 'en cours']]
+                    'statut' => ['$in' => ['livré', 'livre', 'terminée', 'terminee', 'cloturee', 'clôturée', 'accepté', 'accepte']]
                 ]
             ],
             [
@@ -64,14 +64,14 @@ class MongoStatistiqueService
     }
 
     /**
-     * Indicateurs globaux (CA Total, Nombre total de commandes livrées/acceptées)
+     * Indicateurs globaux (CA Total, Nombre total de commandes, total convives)
      */
     public function getIndicateursGlobaux(): array
     {
         $pipeline = json_encode([
             [
                 '$match' => [
-                    'statut' => ['$in' => ['livré', 'accepté']]
+                    'statut' => ['$in' => ['livré', 'livre', 'terminée', 'terminee', 'cloturee', 'clôturée', 'accepté', 'accepte']]
                 ]
             ],
             [
@@ -88,7 +88,7 @@ class MongoStatistiqueService
         $res = $this->executerQuery($query);
         $data = $res ? json_decode($res, true) : [];
 
-        if (!empty($data)) {
+        if (!empty($data) && isset($data[0])) {
             return [
                 'caTotal'       => round((float) $data[0]['caTotal'], 2),
                 'nbCommandes'   => (int) $data[0]['nbCommandes'],
@@ -96,7 +96,7 @@ class MongoStatistiqueService
             ];
         }
 
-        return ['caTotal' => 0, 'nbCommandes' => 0, 'totalConvives' => 0];
+        return ['caTotal' => 0.0, 'nbCommandes' => 0, 'totalConvives' => 0];
     }
 
     private function executerQuery(string $mongoScript): ?string
