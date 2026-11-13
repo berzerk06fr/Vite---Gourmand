@@ -43,7 +43,7 @@ export class AdminStatistiquesComponent implements OnInit {
     this.loading.set(true);
     this.errorMsg.set(null);
 
-    this.http.get<StatistiquesResponse>('http://localhost:8000/api/admin/statistiques').subscribe({
+    this.http.get<StatistiquesResponse>('https://vite-et-gourmand-api.alwaysdata.net/api/admin/statistiques').subscribe({
       next: (data) => {
         this.stats.set(data);
         this.loading.set(false);

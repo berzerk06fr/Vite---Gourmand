@@ -1,0 +1,101 @@
+<div class="container py-5">
+  <div class="mb-4">
+    <h1 class="h2 fw-bold text-dark">Gestion de l'Équipe</h1>
+    <p class="text-muted">Création et gestion des accès employés de Vite & Gourmand.</p>
+  </div>
+
+  @if (messageSucces) {
+    <div class="alert alert-success" role="alert">{{ messageSucces }}</div>
+  }
+  @if (messageErreur) {
+    <div class="alert alert-danger" role="alert">{{ messageErreur }}</div>
+  }
+
+  <div class="row g-4">
+    <!-- Formulaire création employé -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h2 class="h5 fw-bold mb-3">Nouveau compte employé</h2>
+
+          <form (ngSubmit)="creerEmploye()">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="empPrenom" class="form-label small fw-semibold">Prénom *</label>
+                <input id="empPrenom" type="text" [(ngModel)]="nouvelEmploye.prenom" name="prenom" required class="form-control">
+              </div>
+              <div class="col-6">
+                <label for="empNom" class="form-label small fw-semibold">Nom *</label>
+                <input id="empNom" type="text" [(ngModel)]="nouvelEmploye.nom" name="nom" required class="form-control">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="empEmail" class="form-label small fw-semibold">E-mail professionnel *</label>
+              <input id="empEmail" type="email" [(ngModel)]="nouvelEmploye.email" name="email" required
+                placeholder="prenom.nom@vite-et-gourmand.fr" class="form-control">
+            </div>
+
+            <div class="mb-3">
+              <label for="empTel" class="form-label small fw-semibold">Téléphone</label>
+              <input id="empTel" type="tel" [(ngModel)]="nouvelEmploye.telephone" name="telephone" class="form-control">
+            </div>
+
+            <div class="mb-4">
+              <label for="empPwd" class="form-label small fw-semibold">Mot de passe provisoire * (8 car. min)</label>
+              <input id="empPwd" type="password" [(ngModel)]="nouvelEmploye.password" name="password" required minlength="8" class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-terracotta w-100 fw-semibold">
+              <i class="bi bi-person-plus-fill me-1"></i> Créer l'accès employé
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des comptes staff -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Collaborateur</th>
+                <th>E-mail</th>
+                <th>Rôle</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (emp of employes; track emp.id) {
+                <tr>
+                  <td class="fw-semibold">{{ emp.prenom }} {{ emp.nom }}</td>
+                  <td class="text-muted small">{{ emp.email }}</td>
+                  <td>
+                    @if (emp.roles.includes('ROLE_ADMIN')) {
+                      <span class="badge bg-dark">Administrateur</span>
+                    } @else {
+                      <span class="badge bg-warning text-dark">Employé</span>
+                    }
+                  </td>
+                  <td class="text-end">
+                    @if (!emp.roles.includes('ROLE_ADMIN')) {
+                      <button type="button" (click)="supprimerEmploye(emp.id)" class="btn btn-outline-danger btn-sm">
+                        Révoquer
+                      </button>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">Aucun collaborateur enregistré.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

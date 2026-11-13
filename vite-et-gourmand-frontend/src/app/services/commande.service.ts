@@ -49,7 +49,7 @@ export interface UpdateStatutPayload {
 })
 export class CommandeService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/commandes';
+  private readonly apiUrl = 'https://vite-et-gourmand-api.alwaysdata.net/api/commandes';
 
   createCommande(payload: CreateCommandePayload): Observable<CommandeResponse> {
     return this.http.post<CommandeResponse>(this.apiUrl, payload);

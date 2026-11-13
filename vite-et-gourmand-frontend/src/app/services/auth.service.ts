@@ -11,7 +11,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
-  private readonly apiUrl = 'http://127.0.0.1:8000/api';
+  private readonly apiUrl = 'https://vite-et-gourmand-api.alwaysdata.net/api';
   private readonly TOKEN_KEY = 'auth_token';
 
   private readonly currentUserSubject = new BehaviorSubject<User | null>(null);

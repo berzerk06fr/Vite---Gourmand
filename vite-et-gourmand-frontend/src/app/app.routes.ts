@@ -12,7 +12,9 @@ import { authGuard } from './guards/auth.guard';
 import { staffGuard } from './guards/staff.guard';
 import { AdminCommandesComponent } from './pages/admin-commandes/admin-commandes';
 import { AdminStatistiquesComponent } from './pages/admin-statistiques/admin-statistiques';
-
+import { AdminCatalogueComponent } from './pages/admin-catalogue/admin-catalogue';
+import { AdminEmployesComponent } from './pages/admin-employes/admin-employes';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -23,8 +25,12 @@ export const routes: Routes = [
   { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
   { path: 'mes-commandes', component: MesCommandesComponent, canActivate: [authGuard] },
   { path: 'admin/commandes', component: AdminCommandesComponent, canActivate: [authGuard, staffGuard] },
+  { path: 'admin/catalogue', component: AdminCatalogueComponent, canActivate: [authGuard, staffGuard] },
   { path: 'admin/statistiques', component: AdminStatistiquesComponent, canActivate: [authGuard, adminGuard] },
+  { path: 'admin/employes', component: AdminEmployesComponent, canActivate: [authGuard, adminGuard] },
   { path: 'connexion', component: LoginComponent },
   { path: 'inscription', component: RegisterComponent },
+  { path: 'mot-de-passe-oublie', component: ResetPasswordComponent },
+  { path: 'reinitialiser-mot-de-passe', component: ResetPasswordComponent },
   { path: '**', redirectTo: '' }
 ];

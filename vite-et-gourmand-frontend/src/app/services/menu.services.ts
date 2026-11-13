@@ -128,7 +128,7 @@ const MOCK_MENUS: Menu[] = [
 export class MenuService {
   private readonly http = inject(HttpClient);
   // Aligné sur le port 8000 de Symfony (et non 8080 qui est phpMyAdmin)
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/menus';
+  private readonly apiUrl = 'https://vite-et-gourmand-api.alwaysdata.net/api/menus';
 
   getMenus(): Observable<Menu[]> {
     return this.http.get<any>(this.apiUrl).pipe(

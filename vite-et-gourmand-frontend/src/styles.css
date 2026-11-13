@@ -5,25 +5,25 @@ nav,
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 1030 !important; 
+  z-index: 1030; 
 }
 
 :root {
-  
-  --vg-terracotta: #C85A32;
-  --vg-olive: #7A8B6E;
+  /* Terracotta ajusté (#9E3B1B) pour garantir un contraste RGAA >= 4.5:1 */
+  --vg-terracotta: #9E3B1B;
+  --vg-olive: #56644C;
   --vg-creme: #FDF5EA;
   --vg-dark: #2B2623;
   --vg-red: #AA1414;
 
   --bs-primary: var(--vg-terracotta);
-  --bs-primary-rgb: 200, 90, 50;
+  --bs-primary-rgb: 158, 59, 27;
+  --bs-secondary-rgb: 73, 80, 87;
   --bs-body-bg: var(--vg-creme);
   --bs-body-color: var(--vg-dark);
   --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --bs-headings-font-family: 'Playfair Display', Georgia, serif;
 }
-
 
 html, body, button, input, select, textarea, .btn, .nav-link {
   font-family: var(--bs-body-font-family);
@@ -52,7 +52,8 @@ main {
   flex: 1 0 auto;
 }
 
-.btn-terracotta {
+body .btn-terracotta,
+body a.btn.text-white[style*="background"] {
   background-color: var(--vg-terracotta);
   color: #ffffff;
   border: 1px solid var(--vg-terracotta);
@@ -60,10 +61,11 @@ main {
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
-.btn-terracotta:hover, 
-.btn-terracotta:focus {
-  background-color: #b04c27;
-  border-color: #b04c27;
+body .btn-terracotta:hover, 
+body .btn-terracotta:focus,
+body a.btn.text-white[style*="background"]:hover {
+  background-color: #822F14;
+  border-color: #822F14;
   color: #ffffff;
 }
 
@@ -81,7 +83,6 @@ main {
   color: #ffffff;
 }
 
-
 .badge-regime {
   background-color: var(--vg-olive);
   color: #ffffff;
@@ -95,4 +96,18 @@ main {
   color: var(--vg-red);
   border: 1px solid #f8b4b4;
   font-weight: 600;
+}
+
+/* Conformité contrastes RGAA (>= 4.5:1) sans !important */
+body .text-secondary {
+  color: #495057;
+}
+
+body .text-terracotta,
+body .service-tag {
+  color: var(--vg-terracotta);
+}
+
+html body footer.site-footer .text-terracotta {
+  color: #9E3B1B;
 }

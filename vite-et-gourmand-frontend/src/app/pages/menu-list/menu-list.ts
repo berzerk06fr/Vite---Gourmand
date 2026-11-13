@@ -96,7 +96,7 @@ const MOCK_MENUS: Menu[] = [
 })
 export class MenuList implements OnInit {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/menus';
+  private readonly apiUrl = 'https://vite-et-gourmand-api.alwaysdata.net/api/menus';
 
   readonly menus = signal<Menu[]>([]);
   readonly isLoading = signal<boolean>(false);

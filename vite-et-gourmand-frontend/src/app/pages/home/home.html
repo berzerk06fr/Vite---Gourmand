@@ -2,7 +2,7 @@
 <section class="container py-5 my-md-3">
   <div class="row g-5 align-items-center">
     <div class="col-12 col-lg-6">
-      <span class="badge rounded-pill px-3 py-2 mb-3 text-uppercase fw-semibold" style="background-color: #f5ebe0; color: #b5653d; font-size: 0.72rem; letter-spacing: 0.05em;">
+      <span class="badge rounded-pill px-3 py-2 mb-3 text-uppercase fw-semibold" style="background-color: #f5ebe0; color: #8c4322; font-size: 0.72rem; letter-spacing: 0.05em;">
         Service Traiteur Haut de Gamme
       </span>
       <h1 class="display-5 fw-bold text-dark mb-4" style="font-family: Georgia, serif; line-height: 1.18;">
@@ -12,7 +12,7 @@
         De la réception intime au grand banquet d'entreprise, découvrez une cuisine raffinée élaborée à partir de produits frais et de saison.
       </p>
       <div class="d-flex flex-wrap gap-3">
-        <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #c86d44; border-color: #c86d44;">
+        <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #9E3B1B; border-color: #9E3B1B;">
           Découvrir la carte
         </a>
         <a routerLink="/contact" class="btn btn-outline-dark px-4 py-2 fw-semibold rounded-2">
@@ -38,7 +38,7 @@
     
     <div class="col-12 col-sm-6 col-lg-3">
       <div class="p-3 h-100">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #8c4322;">
           <i class="bi bi-flower1 fs-5"></i>
         </div>
         <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">100 % Frais & Artisanal</h2>
@@ -50,7 +50,7 @@
 
     <div class="col-12 col-sm-6 col-lg-3">
       <div class="p-3 h-100">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #8c4322;">
           <i class="bi bi-snow2 fs-5"></i>
         </div>
         <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Livraison Réfrigérée</h2>
@@ -62,7 +62,7 @@
 
     <div class="col-12 col-sm-6 col-lg-3">
       <div class="p-3 h-100">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #8c4322;">
           <i class="bi bi-heart-pulse fs-5"></i>
         </div>
         <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Régimes & Allergies</h2>
@@ -74,7 +74,7 @@
 
     <div class="col-12 col-sm-6 col-lg-3">
       <div class="p-3 h-100">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #c86d44;">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 48px; height: 48px; background-color: #f5ebe0; color: #8c4322;">
           <i class="bi bi-stars fs-5"></i>
         </div>
         <h2 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Prestations Sur Mesure</h2>
@@ -162,7 +162,7 @@
   </div>
 
   <div class="text-center mt-5">
-    <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #c86d44; border-color: #c86d44;">
+    <a routerLink="/menus" class="btn px-4 py-2 fw-semibold text-white rounded-2 shadow-sm" style="background-color: #9E3B1B; border-color: #9E3B1B;">
       Découvrir tous nos menus
     </a>
   </div>
@@ -172,7 +172,7 @@
 <section class="container py-5 my-4">
   <div class="row g-5 align-items-start">
     <div class="col-12 col-lg-5">
-      <span class="service-tag text-uppercase fw-semibold mb-2 d-inline-block" style="color: #c86d44; font-size: 0.75rem; letter-spacing: 0.05em;">
+      <span class="service-tag text-uppercase fw-semibold mb-2 d-inline-block" style="color: #9E3B1B; font-size: 0.75rem; letter-spacing: 0.05em;">
         Retours d'expérience
       </span>
       <h2 class="section-title fw-bold text-dark mb-2" style="font-family: Georgia, serif;">Ils nous ont fait confiance.</h2>
@@ -193,9 +193,10 @@
           @for (avis of listeAvis; track avis.id; let last = $last) {
             <div [class.mb-4]="!last" [class.pb-4]="!last" [class.border-bottom]="!last">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <div class="d-flex align-items-center gap-1" [attr.aria-label]="avis.note + ' étoiles sur 5'">
+                <div class="d-flex align-items-center gap-1">
+                  <span class="visually-hidden">{{ avis.note }} étoiles sur 5</span>
                   @for (star of [1, 2, 3, 4, 5]; track star) {
-                    <i class="bi" [ngClass]="star <= avis.note ? 'bi-star-fill text-warning' : 'bi-star text-black-50'"></i>
+                    <i class="bi" [ngClass]="star <= avis.note ? 'bi-star-fill text-warning' : 'bi-star text-black-50'" aria-hidden="true"></i>
                   }
                 </div>
                 <span class="badge bg-light text-secondary border fw-normal text-xs">

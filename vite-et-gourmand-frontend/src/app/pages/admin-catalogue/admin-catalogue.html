@@ -1,0 +1,286 @@
+<div class="container py-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="h2 fw-bold text-dark">Gestion du Catalogue & Stocks</h1>
+      <p class="text-muted mb-0">Administration des formules traiteur, plats et niveaux de stock.</p>
+    </div>
+
+    <div class="btn-group">
+      <button type="button" (click)="ongletActif = 'menus'"
+        [class]="ongletActif === 'menus' ? 'btn btn-terracotta' : 'btn btn-outline-secondary'">
+        Menus ({{ menus.length }})
+      </button>
+      <button type="button" (click)="ongletActif = 'plats'"
+        [class]="ongletActif === 'plats' ? 'btn btn-terracotta' : 'btn btn-outline-secondary'">
+        Plats & Stocks ({{ plats.length }})
+      </button>
+    </div>
+  </div>
+
+  @if (messageSucces) {
+    <div class="alert alert-success" role="alert">{{ messageSucces }}</div>
+  }
+  @if (messageErreur) {
+    <div class="alert alert-danger" role="alert">{{ messageErreur }}</div>
+  }
+
+  <!-- ONGLET MENUS -->
+  @if (ongletActif === 'menus') {
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3">
+              {{ menuEnEditionId ? 'Modifier le menu' : 'Créer un nouveau menu' }}
+            </h2>
+
+            <form (ngSubmit)="sauvegarderMenu()">
+              <div class="mb-3">
+                <label for="menuTitre" class="form-label small fw-semibold">Titre du menu *</label>
+                <input id="menuTitre" type="text" [(ngModel)]="formMenu.titre" name="titre" required class="form-control">
+              </div>
+
+              <div class="mb-3">
+                <label for="menuDesc" class="form-label small fw-semibold">Description *</label>
+                <textarea id="menuDesc" [(ngModel)]="formMenu.description" name="description" rows="2" required class="form-control"></textarea>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label for="menuTheme" class="form-label small fw-semibold">Thème *</label>
+                  <select id="menuTheme" [(ngModel)]="formMenu.theme" name="theme" class="form-select form-select-sm">
+                    <option value="Classique">Classique</option>
+                    <option value="Évènement">Évènement</option>
+                    <option value="Noël">Noël</option>
+                    <option value="Pâques">Pâques</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label for="menuRegime" class="form-label small fw-semibold">Régime *</label>
+                  <select id="menuRegime" [(ngModel)]="formMenu.regime" name="regime" class="form-select form-select-sm">
+                    <option value="Carnivore">Carnivore</option>
+                    <option value="Poisson">Poisson</option>
+                    <option value="Végétarien">Végétarien</option>
+                    <option value="Vegan">Vegan</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="menuPhotoFile" class="form-label small fw-semibold">Photo du menu (fichier ou lien URL)</label>
+                <input id="menuPhotoFile" type="file" accept="image/*"
+                  (change)="onFileSelected($event)" class="form-control form-control-sm mb-2">
+                <label for="menuPhotoUrl" class="visually-hidden">URL de l'image du menu</label>
+                <input id="menuPhotoUrl" type="url" [(ngModel)]="formMenu.image" name="image"
+                  placeholder="Ou collez une URL d'image (https://...)" class="form-control form-control-sm">
+                @if (uploadEnCours) {
+                  <div class="small text-muted mt-1">Téléversement en cours...</div>
+                }
+                @if (formMenu.image) {
+                  <img [src]="formMenu.image" alt="Aperçu du menu" class="img-thumbnail mt-2" style="max-height: 110px; object-fit: cover;">
+                }
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-4">
+                  <label for="menuPrix" class="form-label small fw-semibold">Prix/pers (€)</label>
+                  <input id="menuPrix" type="number" step="0.5" [(ngModel)]="formMenu.prixParPersonne" name="prixParPersonne" class="form-control">
+                </div>
+                <div class="col-4">
+                  <label for="menuMin" class="form-label small fw-semibold">Min. pers.</label>
+                  <input id="menuMin" type="number" [(ngModel)]="formMenu.nbPersonnesMin" name="nbPersonnesMin" class="form-control">
+                </div>
+                <div class="col-4">
+                  <label for="menuStock" class="form-label small fw-semibold">Stock menus</label>
+                  <input id="menuStock" type="number" [(ngModel)]="formMenu.quantiteStock" name="quantiteStock" class="form-control">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="menuCond" class="form-label small fw-semibold">Conditions particulières</label>
+                <input id="menuCond" type="text" [(ngModel)]="formMenu.conditionsMenu" name="conditionsMenu"
+                  placeholder="Ex: Commande 48h à l'avance" class="form-control">
+              </div>
+
+              <div class="mb-3">
+                <span class="form-label d-block small fw-semibold">Plats inclus dans ce menu</span>
+                <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;">
+                  @for (plat of plats; track plat.id) {
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
+                        [checked]="formMenu.platIds.includes(plat.id)"
+                        (change)="togglePlatDansMenu(plat.id)">
+                      <label class="form-check-label small" [for]="'plat_' + plat.id">
+                        {{ plat.nom }} <span class="text-muted">({{ plat.type }})</span>
+                      </label>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="menuActif" [(ngModel)]="formMenu.isActif" name="isActif">
+                <label class="form-check-label small" for="menuActif">
+                  Menu actif et visible sur le catalogue
+                </label>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-terracotta flex-grow-1 fw-semibold">
+                  {{ menuEnEditionId ? 'Enregistrer' : 'Ajouter le menu' }}
+                </button>
+                @if (menuEnEditionId) {
+                  <button type="button" (click)="reinitialiserFormMenu()" class="btn btn-outline-secondary">
+                    Annuler
+                  </button>
+                }
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="d-flex flex-column gap-3">
+          @for (menu of menus; track menu.id) {
+            <div class="card shadow-sm border-0">
+              <div class="card-body d-flex flex-column flex-sm-row justify-content-between gap-3">
+                <div class="d-flex gap-3">
+                  @if (menu.image) {
+                    <img [src]="menu.image" [alt]="menu.titre" class="rounded" style="width: 90px; height: 90px; object-fit: cover;">
+                  }
+                  <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                      <h3 class="h6 fw-bold mb-0">{{ menu.titre }}</h3>
+                      <span [class]="menu.isActif ? 'badge bg-success' : 'badge bg-secondary'">
+                        {{ menu.isActif ? 'Actif' : 'Inactif' }}
+                      </span>
+                      <span class="badge bg-info text-dark">{{ menu.regime }}</span>
+                      <span class="badge bg-light text-dark border">{{ menu.theme }}</span>
+                    </div>
+                    <p class="text-muted small mb-2">{{ menu.description }}</p>
+                    <div class="d-flex flex-wrap gap-3 small fw-semibold text-dark">
+                      <span>{{ menu.prixParPersonne }} € / pers.</span>
+                      <span>Min : {{ menu.nbPersonnesMin }} convives</span>
+                      <span [class]="menu.quantiteStock <= 2 ? 'text-danger' : ''">
+                        Stock : {{ menu.quantiteStock }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-sm-column justify-content-end gap-2">
+                  <button type="button" (click)="editerMenu(menu)" class="btn btn-outline-dark btn-sm">Modifier</button>
+                  <button type="button" (click)="supprimerMenu(menu.id)" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ONGLET PLATS & STOCKS -->
+  @if (ongletActif === 'plats') {
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3">
+              {{ platEnEditionId ? 'Modifier le plat / stock' : 'Ajouter un plat' }}
+            </h2>
+
+            <form (ngSubmit)="sauvegarderPlat()">
+              <div class="mb-3">
+                <label for="platNom" class="form-label small fw-semibold">Nom du plat *</label>
+                <input id="platNom" type="text" [(ngModel)]="formPlat.nom" name="nom" required class="form-control">
+              </div>
+
+              <div class="mb-3">
+                <label for="platType" class="form-label small fw-semibold">Catégorie *</label>
+                <select id="platType" [(ngModel)]="formPlat.type" name="type" class="form-select">
+                  <option value="Entrée">Entrée</option>
+                  <option value="Plat principal">Plat principal</option>
+                  <option value="Dessert">Dessert</option>
+                  <option value="Boisson">Boisson</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="platAllergenes" class="form-label small fw-semibold">Allergènes (séparés par virgule)</label>
+                <input id="platAllergenes" type="text" [(ngModel)]="formPlat.allergenes" name="allergenes"
+                  placeholder="Ex: Gluten, Lactose" class="form-control">
+              </div>
+
+              <div class="row g-2 mb-4">
+                <div class="col-6">
+                  <label for="platStock" class="form-label small fw-semibold">Stock disponible</label>
+                  <input id="platStock" type="number" [(ngModel)]="formPlat.stock" name="stock" class="form-control">
+                </div>
+                <div class="col-6">
+                  <label for="platSeuil" class="form-label small fw-semibold">Seuil alerte</label>
+                  <input id="platSeuil" type="number" [(ngModel)]="formPlat.seuilAlerte" name="seuilAlerte" class="form-control">
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-terracotta flex-grow-1 fw-semibold">
+                  {{ platEnEditionId ? 'Mettre à jour' : 'Créer le plat' }}
+                </button>
+                @if (platEnEditionId) {
+                  <button type="button" (click)="reinitialiserFormPlat()" class="btn btn-outline-secondary">
+                    Annuler
+                  </button>
+                }
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Plat</th>
+                  <th>Catégorie</th>
+                  <th>Stock</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (plat of plats; track plat.id) {
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ plat.nom }}</div>
+                      @if (plat.allergenesRaw) {
+                        <div class="small text-muted">Allergènes : {{ plat.allergenesRaw }}</div>
+                      }
+                    </td>
+                    <td class="small">{{ plat.type }}</td>
+                    <td>
+                      @if (plat.isEnRupture) {
+                        <span class="badge bg-danger">Rupture (0)</span>
+                      } @else if (plat.isStockFaible) {
+                        <span class="badge bg-warning text-dark">Faible ({{ plat.stock }})</span>
+                      } @else {
+                        <span class="badge bg-success">{{ plat.stock }} unités</span>
+                      }
+                    </td>
+                    <td class="text-end">
+                      <button type="button" (click)="editerPlat(plat)" class="btn btn-outline-dark btn-sm me-1">Modifier</button>
+                      <button type="button" (click)="supprimerPlat(plat.id)" class="btn btn-outline-danger btn-sm">Supprimer</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -9,7 +9,7 @@ import { Avis, CreerAvisDto } from '../models/avis.model';
 })
 export class AvisService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/avis';
+  private readonly apiUrl = 'https://vite-et-gourmand-api.alwaysdata.net/api/avis';
 
   /**
    * Récupère la liste des avis validés pour affichage public

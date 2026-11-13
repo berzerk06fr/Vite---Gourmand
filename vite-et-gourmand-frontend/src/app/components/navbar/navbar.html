@@ -1,15 +1,15 @@
 <header class="sticky-top shadow-sm custom-navbar-bg">
-  <div class="container py-2">
-    <nav class="navbar navbar-expand-lg navbar-light p-0" aria-label="Navigation principale">
-      <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/" (click)="closeMenu()">
-        <img 
-          src="/logo.png" 
-          alt="Vite et Gourmand" 
+  <div class="container-fluid px-3 px-xl-5 py-2">
+    <nav class="navbar navbar-expand-xl navbar-light p-0" aria-label="Navigation principale">
+      <a class="navbar-brand d-flex align-items-center gap-2 me-3" routerLink="/" (click)="closeMenu()">
+        <img
+          src="/logo.png"
+          alt="Vite et Gourmand"
           class="navbar-logo">
       </a>
 
       <!-- Actions Mobile (Header droit) -->
-      <div class="d-flex align-items-center gap-2 d-lg-none">
+      <div class="d-flex align-items-center gap-2 d-xl-none">
         @if (currentUser(); as user) {
           <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" (click)="onLogout()" aria-label="Se déconnecter" title="Se déconnecter">
             <i class="bi bi-box-arrow-right fs-5"></i>
@@ -19,12 +19,12 @@
             <i class="bi bi-person fs-5"></i>
           </a>
         }
-        
-        <button 
-          class="navbar-toggler p-2 border-0" 
-          type="button" 
+
+        <button
+          class="navbar-toggler p-2 border-0"
+          type="button"
           (click)="toggleMenu()"
-          [attr.aria-expanded]="!isMenuCollapsed()" 
+          [attr.aria-expanded]="!isMenuCollapsed()"
           aria-label="Basculer la navigation">
           <i class="bi" [ngClass]="isMenuCollapsed() ? 'bi-list fs-3' : 'bi-x-lg fs-3'"></i>
         </button>
@@ -32,19 +32,19 @@
 
       <!-- Menu déroulant (Desktop & Mobile) -->
       <div class="collapse navbar-collapse" [class.show]="!isMenuCollapsed()" id="mainNavbar">
-        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 text-center gap-lg-4 fs-6 py-2 py-lg-0">
+        <ul class="navbar-nav mx-auto align-items-xl-center mb-2 mb-xl-0 text-center gap-1 gap-xl-2 py-2 py-xl-0">
           <li class="nav-item">
-            <a class="nav-link text-dark fw-medium" routerLink="/" routerLinkActive="active-nav" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">
+            <a class="nav-link text-dark fw-medium text-nowrap px-2" routerLink="/" routerLinkActive="active-nav" [routerLinkActiveOptions]="{exact: true}" (click)="closeMenu()">
               Accueil
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-dark fw-medium" routerLink="/menus" routerLinkActive="active-nav" (click)="closeMenu()">
+            <a class="nav-link text-dark fw-medium text-nowrap px-2" routerLink="/menus" routerLinkActive="active-nav" (click)="closeMenu()">
               Nos Menus
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-dark fw-medium" routerLink="/contact" routerLinkActive="active-nav" (click)="closeMenu()">
+            <a class="nav-link text-dark fw-medium text-nowrap px-2" routerLink="/contact" routerLinkActive="active-nav" (click)="closeMenu()">
               Contact
             </a>
           </li>
@@ -52,12 +52,25 @@
           @if (currentUser(); as user) {
             <!-- Accès Staff (Employé & Admin) -->
             @if (user.roles.includes('ROLE_ADMIN') || user.roles.includes('ROLE_EMPLOYE')) {
+              <li class="nav-item d-none d-xl-flex align-items-center mx-1" aria-hidden="true">
+                <span class="vr" style="height: 20px;"></span>
+              </li>
               <li class="nav-item">
-                <a class="nav-link text-amber-700 fw-bold" 
-                   routerLink="/admin/commandes" 
-                   routerLinkActive="active-nav" 
+                <a class="nav-link text-amber-700 fw-bold text-nowrap d-inline-flex align-items-center gap-1 px-2"
+                   routerLink="/admin/commandes"
+                   routerLinkActive="active-nav"
                    (click)="closeMenu()">
-                  <i class="bi bi-gear-fill me-1"></i> Gestion Commandes
+                  <i class="bi bi-gear-fill"></i>
+                  <span>Commandes</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-amber-700 fw-bold text-nowrap d-inline-flex align-items-center gap-1 px-2"
+                   routerLink="/admin/catalogue"
+                   routerLinkActive="active-nav"
+                   (click)="closeMenu()">
+                  <i class="bi bi-journal-text"></i>
+                  <span>Catalogue</span>
                 </a>
               </li>
             }
@@ -65,19 +78,29 @@
             <!-- Accès Admin STRICT -->
             @if (user.roles.includes('ROLE_ADMIN')) {
               <li class="nav-item">
-                <a class="nav-link text-amber-700 fw-bold" 
-                   routerLink="/admin/statistiques" 
-                   routerLinkActive="active-nav" 
+                <a class="nav-link text-amber-700 fw-bold text-nowrap d-inline-flex align-items-center gap-1 px-2"
+                   routerLink="/admin/employes"
+                   routerLinkActive="active-nav"
                    (click)="closeMenu()">
-                  <i class="bi bi-bar-chart-line-fill me-1"></i> Statistiques
+                  <i class="bi bi-people-fill"></i>
+                  <span>Équipe</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-amber-700 fw-bold text-nowrap d-inline-flex align-items-center gap-1 px-2"
+                   routerLink="/admin/statistiques"
+                   routerLinkActive="active-nav"
+                   (click)="closeMenu()">
+                  <i class="bi bi-bar-chart-line-fill"></i>
+                  <span>Statistiques</span>
                 </a>
               </li>
             }
 
-            <!-- Lien réservé EXCLUSIVEMENT aux Clients (masqué pour Employé & Admin) -->
+            <!-- Lien réservé EXCLUSIVEMENT aux Clients -->
             @if (isClient()) {
               <li class="nav-item">
-                <a class="nav-link text-dark fw-medium" routerLink="/mes-commandes" routerLinkActive="active-nav" (click)="closeMenu()">
+                <a class="nav-link text-dark fw-medium text-nowrap px-2" routerLink="/mes-commandes" routerLinkActive="active-nav" (click)="closeMenu()">
                   Mes Commandes
                 </a>
               </li>
@@ -86,29 +109,30 @@
         </ul>
 
         <!-- Actions Desktop -->
-        <div class="d-none d-lg-flex align-items-center gap-3">
+        <div class="d-none d-xl-flex align-items-center gap-3 ms-3">
           @if (currentUser(); as user) {
-            <div class="d-flex align-items-center gap-2 text-dark small fw-semibold">
+            <div class="d-inline-flex align-items-center gap-2 text-dark small fw-semibold text-nowrap">
               <i class="bi bi-person-circle fs-5 text-terracotta"></i>
-              <span>{{ user.prenom }} {{ user.nom }}</span>
+              <span class="text-capitalize">{{ user.prenom }} {{ user.nom }}</span>
             </div>
-            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2 rounded-2" (click)="onLogout()">
-              <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+            <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 text-nowrap px-3 py-2 rounded-2" (click)="onLogout()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Déconnexion</span>
             </button>
           } @else {
-            <a routerLink="/connexion" class="btn btn-outline-dark-custom btn-sm px-3 py-2 rounded-2">
+            <a routerLink="/connexion" class="btn btn-outline-dark-custom btn-sm text-nowrap px-3 py-2 rounded-2">
               Connexion
             </a>
-            <a routerLink="/inscription" class="btn btn-terracotta btn-sm px-3 py-2 rounded-2">
+            <a routerLink="/inscription" class="btn btn-terracotta btn-sm text-nowrap px-3 py-2 rounded-2">
               Créer un compte
             </a>
           }
         </div>
-        
+
         <!-- Actions Mobile (dans le menu déroulé) -->
-        <div class="d-lg-none d-flex flex-column gap-2 mt-3 pt-3 border-top text-center">
+        <div class="d-xl-none d-flex flex-column gap-2 mt-3 pt-3 border-top text-center">
           @if (currentUser(); as user) {
-            <div class="fw-semibold text-dark mb-1">
+            <div class="fw-semibold text-dark text-capitalize mb-1">
               Connecté : {{ user.prenom }} {{ user.nom }}
             </div>
             <button type="button" class="btn btn-outline-danger w-100" (click)="onLogout()">
