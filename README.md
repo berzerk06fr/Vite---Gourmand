@@ -86,3 +86,10 @@ Application accessible sur http://localhost:4200.
   - **Client** : historique des commandes, bon récapitulatif imprimable, modification/annulation et dépôt d'avis noté après prestation.
   - **Employé** : gestion CRUD des menus, plats, horaires, traitement des statuts de commandes et modération des avis.
   - **Administrateur (José)** : création/désactivation des comptes employés et tableau de bord décisionnel MongoDB (graphiques et chiffre d'affaires par menu/période).
+## Comptes de Démonstration (Environnement de Test)
+
+| Rôle | Identifiant (Email) | Mot de passe | Périmètre d'accès |
+| :--- | :--- | :--- | :--- |
+| **Administrateur (José)** | `jose@vite-et-gourmand.fr` | `Admin123!` | Gestion des employés, statistiques décisionnelles NoSQL (CA & commandes), gestion complète |
+| **Employé** | `employe@employe.fr` | `Azerty123!` | Gestion des menus, plats, horaires, suivi des commandes et modération des avis |
+| **Client** | `client@client.fr` | `Azerty123!` | Passage de commande, suivi en temps réel, modification/annulation et dépôt d'avis |
