@@ -44,3 +44,6 @@ tmp/
 *.sw?
 .DS_Store
 Thumbs.db
+# Clés cryptographiques JWT
+config/jwt/*.pem
+*.pem
