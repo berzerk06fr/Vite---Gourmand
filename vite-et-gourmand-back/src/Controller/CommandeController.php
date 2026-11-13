@@ -68,11 +68,27 @@ class CommandeController extends AbstractController
                 $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
             }
 
+            $nbPers = $cmd->getNbPersonnes() ?? 1;
+            $prixTotal = (float) ($cmd->getPrixTotal() ?? 0);
+            $prixUnitaire = $menu ? (float) $menu->getPrixParPersonne() : 0.0;
+            $nbMin = $menu ? ($menu->getNbPersonnesMin() ?? 1) : 1;
+            $sousTotalMenu = $prixUnitaire * $nbPers;
+            if ($nbPers >= ($nbMin + 5)) {
+                $sousTotalMenu *= 0.90;
+            }
+            $sousTotalMenu = round($sousTotalMenu, 2);
+            $fraisLivraison = $prixUnitaire > 0 ? max(0.0, round($prixTotal - $sousTotalMenu, 2)) : 0.0;
+            if ($prixUnitaire <= 0) {
+                $sousTotalMenu = $prixTotal;
+            }
+
             return [
                 'id'             => $cmd->getId(),
                 'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
-                'nbPersonnes'    => $cmd->getNbPersonnes() ?? 1,
-                'prixTotal'      => (float) ($cmd->getPrixTotal() ?? 0),
+                'nbPersonnes'    => $nbPers,
+                'prixMenu'       => $sousTotalMenu,
+                'fraisLivraison' => $fraisLivraison,
+                'prixTotal'      => $prixTotal,
                 'statut'         => $cmd->getStatut() ?? 'en_attente',
                 'dateCommande'   => $cmd->getDateCommande()?->format('d/m/Y H:i'),
                 'client'         => $client ? [
@@ -200,13 +216,14 @@ class CommandeController extends AbstractController
         } else {
             $menu = $this->menuRepository->find($data['menuId']);
             $nbMin = $menu?->getNbPersonnesMin() ?? 1;
+            $stockActuel = $menu?->getQuantiteStock() ?? 0;
 
             if (!$menu || !$menu->isIsActif()) {
                 $error = 'Ce menu n\'est pas disponible.';
             } elseif ($nbPersonnes < $nbMin) {
                 $error = sprintf('Le nombre minimum de personnes pour ce menu est de %d.', $nbMin);
-            } elseif (($menu->getQuantiteStock() ?? 0) <= 0) {
-                $error = 'Ce menu est en rupture de stock.';
+            } elseif ($stockActuel < $nbPersonnes) {
+                $error = sprintf('Stock insuffisant pour ce menu (restant : %d).', $stockActuel);
             } else {
                 $error = $this->verifierDisponibilitePlats($menu);
             }
@@ -240,15 +257,17 @@ class CommandeController extends AbstractController
             $sousTotalMenu *= 0.90;
         }
 
-        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0) ? (5.0 + (0.59 * $distanceKm)) : 0.0;
+        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0)
+            ? (5.0 + (0.59 * max(0.0, $distanceKm)))
+            : 0.0;
         $totalFinal = round($sousTotalMenu + $fraisLivraison, 2);
 
-        // Décrémentation du stock du menu
-        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 1) - 1));
+        // Décrémentation du stock du menu selon le nombre de formules commandées
+        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? $nbPersonnes) - $nbPersonnes));
 
         // Décrémentation du stock de chaque plat constitutif
         foreach ($menu->getPlats() as $plat) {
-            $plat->setStock($plat->getStock() - 1);
+            $plat->setStock(max(0, $plat->getStock() - $nbPersonnes));
         }
 
         $commande = new Commande();

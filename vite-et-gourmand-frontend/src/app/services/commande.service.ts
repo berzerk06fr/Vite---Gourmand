@@ -32,6 +32,8 @@ export interface CommandeItem {
   id: number;
   numeroCommande: string;
   nbPersonnes: number;
+  prixMenu?: number;
+  fraisLivraison?: number;
   prixTotal: number;
   statut: string;
   client?: { id: number; email: string };
