@@ -1,18 +1,23 @@
 security:
     enable_authenticator_manager: true
 
-    # 1. Encoders / Hashers
+    # 1. Encoders / Hashers (Bcrypt / Argon2 automatique)
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
-    # 2. Providers
+    # 2. Hiérarchie des rôles
+    role_hierarchy:
+        ROLE_EMPLOYE: ROLE_USER
+        ROLE_ADMIN: [ROLE_EMPLOYE, ROLE_USER]
+
+    # 3. Providers
     providers:
         app_user_provider:
             entity:
                 class: App\Entity\Utilisateur
                 property: email
 
-    # 3. Firewalls
+    # 4. Firewalls
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -33,17 +38,35 @@ security:
             stateless: true
             jwt: ~
 
-    # 4. Access Control
+    # 5. Access Control (ordre du plus spécifique au plus général)
     access_control:
+        # Preflight CORS
         - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
+
+        # Routes publiques (authentification, inscription, mot de passe oublié, catalogue, avis validés, contact)
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/api/reset-password, roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/api/menus, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/avis$, roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/api/avis/en-attente, roles: [ROLE_EMPLOYE, ROLE_ADMIN] }
-        - { path: ^/api/avis/\d+/moderation, roles: [ROLE_EMPLOYE, ROLE_ADMIN] }
+        - { path: ^/api/contact, roles: PUBLIC_ACCESS, methods: [POST] }
+
+        # Gestion du catalogue, des plats et upload photo (Employé & Admin)
+        - { path: ^/api/menus, roles: ROLE_EMPLOYE, methods: [POST, PUT, PATCH, DELETE] }
+
+        # Modération des avis (Employé & Admin)
+        - { path: ^/api/avis/en-attente, roles: ROLE_EMPLOYE }
+        - { path: ^/api/avis/\d+/moderation, roles: ROLE_EMPLOYE }
+
+        # Administration (Gestion des commandes pour Employé/Admin, reste de /api/admin pour Admin uniquement)
+        - { path: ^/api/admin/commandes, roles: ROLE_EMPLOYE }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+
+        # Routes authentifiées (Client, Employé, Admin)
         - { path: ^/api/avis, roles: IS_AUTHENTICATED_FULLY, methods: [POST] }
-        - { path: ^/api/admin/statistiques, roles: ROLE_ADMIN }
-        - { path: ^/api/admin/commandes, roles: [ROLE_EMPLOYE, ROLE_ADMIN] }
         - { path: ^/api/me, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/commandes, roles: IS_AUTHENTICATED_FULLY }
+
+        # Filet de sécurité global sur toute autre route /api
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

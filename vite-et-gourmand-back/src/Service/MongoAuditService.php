@@ -13,11 +13,12 @@ class MongoAuditService
         private readonly LoggerInterface $logger,
         ?string $database = null
     ) {
-        $this->databaseName = $database ?? 'vite_et_gourmand_nosql';
+        $this->databaseName = $database ?? ($_ENV['MONGODB_DB'] ?? 'vite_et_gourmand_nosql');
+        $mongoUri = $_ENV['MONGODB_URL'] ?? getenv('MONGODB_URL') ?: 'mongodb://127.0.0.1:27017';
 
         if (extension_loaded('mongodb') && class_exists(\MongoDB\Client::class)) {
             try {
-                $this->client = new \MongoDB\Client('mongodb://127.0.0.1:27017');
+                $this->client = new \MongoDB\Client($mongoUri);
             } catch (\Throwable $e) {
                 $this->logger->warning('Erreur connexion MongoDB : ' . $e->getMessage());
             }

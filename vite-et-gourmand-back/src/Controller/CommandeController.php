@@ -21,6 +21,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class CommandeController extends AbstractController
 {
     private const STATUT_ANNULEE = 'annulée';
+    private const DEFAULT_MENU_TITRE = 'Menu traiteur';
 
     private const STATUTS_AUTORISES = [
         'en_attente',
@@ -53,7 +54,7 @@ class CommandeController extends AbstractController
 
         $roles = $user->getRoles();
         $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
-        
+
         $commandes = $isStaff
             ? $this->commandeRepository->findBy([], ['id' => 'DESC'])
             : $this->commandeRepository->findBy(['utilisateur' => $user], ['id' => 'DESC']);
@@ -83,7 +84,7 @@ class CommandeController extends AbstractController
                     'titre' => $menu->getTitre() ?? 'Menu sans titre',
                 ] : [
                     'id'    => 0,
-                    'titre' => 'Menu traiteur',
+                    'titre' => self::DEFAULT_MENU_TITRE,
                 ],
             ];
         }, $commandes);
@@ -136,7 +137,7 @@ class CommandeController extends AbstractController
             $this->mongoService->synchroniserCommande([
                 'id'             => $commande->getId(),
                 'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
-                'menuTitre'      => $menu ? ($menu->getTitre() ?? 'Menu traiteur') : 'Menu traiteur',
+                'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
                 'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
                 'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
                 'statut'         => $nouveauStatut,

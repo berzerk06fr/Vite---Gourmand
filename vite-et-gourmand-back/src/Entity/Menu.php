@@ -37,6 +37,15 @@ class Menu
     #[ORM\Column]
     private ?bool $isActif = null;
 
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $image = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $theme = 'Classique';
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $regime = 'Carnivore';
+
     #[ORM\ManyToMany(targetEntity: Plat::class, inversedBy: 'menus')]
     private Collection $plats;
 
@@ -45,8 +54,7 @@ class Menu
 
     public function __construct()
     {
-        $this->plats = new ArrayCollection();
-        $this->commandes = new ArrayCollection();
+        $this->plats = new ArrayCollection();$this->commandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,7 +69,7 @@ class Menu
 
     public function setTitre(string $titre): static
     {
-        $this->titre = $titre;
+        $this->titre =$titre;
 
         return $this;
     }
@@ -73,7 +81,7 @@ class Menu
 
     public function setDescription(string $description): static
     {
-        $this->description = $description;
+        $this->description =$description;
 
         return $this;
     }
@@ -85,7 +93,7 @@ class Menu
 
     public function setConditionsMenu(?string $conditionsMenu): static
     {
-        $this->conditionsMenu = $conditionsMenu;
+        $this->conditionsMenu =$conditionsMenu;
 
         return $this;
     }
@@ -97,7 +105,7 @@ class Menu
 
     public function setPrixParPersonne(string $prixParPersonne): static
     {
-        $this->prixParPersonne = $prixParPersonne;
+        $this->prixParPersonne =$prixParPersonne;
 
         return $this;
     }
@@ -109,7 +117,7 @@ class Menu
 
     public function setNbPersonnesMin(int $nbPersonnesMin): static
     {
-        $this->nbPersonnesMin = $nbPersonnesMin;
+        $this->nbPersonnesMin =$nbPersonnesMin;
 
         return $this;
     }
@@ -121,7 +129,7 @@ class Menu
 
     public function setQuantiteStock(int $quantiteStock): static
     {
-        $this->quantiteStock = $quantiteStock;
+        $this->quantiteStock =$quantiteStock;
 
         return $this;
     }
@@ -133,7 +141,43 @@ class Menu
 
     public function setIsActif(bool $isActif): static
     {
-        $this->isActif = $isActif;
+        $this->isActif =$isActif;
+
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): static
+    {
+        $this->image =$image;
+
+        return $this;
+    }
+
+    public function getTheme(): ?string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(?string $theme): static
+    {
+        $this->theme =$theme;
+
+        return $this;
+    }
+
+    public function getRegime(): ?string
+    {
+        return $this->regime;
+    }
+
+    public function setRegime(?string $regime): static
+    {
+        $this->regime =$regime;
 
         return $this;
     }
@@ -182,11 +226,7 @@ class Menu
 
     public function removeCommande(Commande $commande): static
     {
-        if ($this->commandes->removeElement($commande)) {
-            // set the owning side to null (unless already changed)
-            if ($commande->getMenu() === $this) {
-                $commande->setMenu(null);
-            }
+        if ($this->commandes->removeElement($commande) &&$commande->getMenu() === $this) {$commande->setMenu(null);
         }
 
         return $this;
