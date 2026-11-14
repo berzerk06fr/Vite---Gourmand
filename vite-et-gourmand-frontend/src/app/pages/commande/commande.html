@@ -76,7 +76,21 @@
                   </label>
                 </div>
               </div>
-
+              <div class="col-12 mt-3">
+                <div class="form-check p-3 bg-light rounded-2 border">
+                  <input 
+                    class="form-check-input ms-0 me-2" 
+                    type="checkbox" 
+                    id="besoinMateriel"
+                    [ngModel]="besoinMateriel()" 
+                    (ngModelChange)="besoinMateriel.set($event)" 
+                    name="besoinMateriel">
+                  <label class="form-check-label fw-semibold" for="besoinMateriel">
+                    Je souhaite bénéficier du prêt de matériel pour ma prestation
+                  </label>
+                </div>
+              </div>
+              
               @if (isHorsBordeaux()) {
                 <div class="col-12 col-md-6 bg-light p-3 rounded-2">
                   <label for="distanceKm" class="form-label fw-semibold">Distance depuis Bordeaux (en km)</label>
