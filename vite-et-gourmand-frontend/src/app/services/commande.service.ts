@@ -13,6 +13,7 @@ export interface CreateCommandePayload {
   email?: string;
   gsm?: string;
   adresse?: string;
+  besoinMateriel?: boolean;
 }
 
 export interface CommandeResponse {

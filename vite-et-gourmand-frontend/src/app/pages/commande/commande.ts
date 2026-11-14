@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Menu } from '../../models/menu.model';
 import { MenuService } from '../../services/menu.services';
 import { CommandeService, CommandeResponse } from '../../services/commande.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-commande',
@@ -18,15 +19,16 @@ export class CommandeComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
   private readonly commandeService = inject(CommandeService);
+  private readonly authService = inject(AuthService);
 
   readonly allMenus = signal<Menu[]>([]);
   readonly selectedMenu = signal<Menu | null>(null);
 
-  nom = signal<string>('Votre nom');
-  prenom = signal<string>('Votre Prénom');
-  email = signal<string>('VotreEmail@exemple.fr');
-  gsm = signal<string>('0612345678');
-  adresse = signal<string>('12 Avenue des Etoiles');
+  nom = signal<string>('');
+  prenom = signal<string>('');
+  email = signal<string>('');
+  gsm = signal<string>('');
+  adresse = signal<string>('');
   ville = signal<string>('Bordeaux');
   isHorsBordeaux = signal<boolean>(false);
   distanceKm = signal<number>(0);
@@ -34,6 +36,9 @@ export class CommandeComponent implements OnInit {
   heurePrestation = signal<string>('12:00');
 
   guestCount = signal<number>(10);
+  
+  // Option prêt de matériel
+  besoinMateriel = signal<boolean>(false);
   
   // États de soumission
   isSubmitting = signal<boolean>(false);
@@ -77,6 +82,17 @@ export class CommandeComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // 1. Pré-remplissage automatique avec les données du compte connecté
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      if (currentUser.nom) this.nom.set(currentUser.nom);
+      if (currentUser.prenom) this.prenom.set(currentUser.prenom);
+      if (currentUser.email) this.email.set(currentUser.email);
+      if (currentUser.telephone) this.gsm.set(currentUser.telephone);
+      if (currentUser.adresse) this.adresse.set(currentUser.adresse);
+    }
+
+    // 2. Chargement des menus
     this.menuService.getMenus().subscribe((menus) => {
       this.allMenus.set(menus);
 
@@ -128,13 +144,13 @@ export class CommandeComponent implements OnInit {
       prenom: this.prenom(),
       email: this.email(),
       gsm: this.gsm(),
-      adresse: this.adresse()
+      adresse: this.adresse(),
+      besoinMateriel: this.besoinMateriel() // <-- Option prêt de matériel transmise ici
     }).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
         this.orderResult.set(res);
         this.orderSubmitted.set(true);
-        // Redirection directe vers l'espace client avec la liste des commandes
         void this.router.navigate(['/mes-commandes']);
       },
       error: (err) => {
