@@ -3,11 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Commande;
-use App\Entity\Menu;
 use App\Entity\Utilisateur;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
-use App\Service\MongoStatistiqueService;
+use App\Service\CommandeManager;
+use App\Service\MongoStatistiquesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,10 +21,13 @@ use Symfony\Component\Routing\Annotation\Route;
 class CommandeController extends AbstractController
 {
     private const STATUT_ANNULEE = 'annulée';
+    private const STATUT_EN_ATTENTE = 'en_attente';
     private const DEFAULT_MENU_TITRE = 'Menu traiteur';
+    private const ERR_NON_AUTHENTIFIE = 'Non authentifié.';
+    private const ERR_COMMANDE_INTROUVABLE = 'Commande introuvable.';
 
     private const STATUTS_AUTORISES = [
-        'en_attente',
+        self::STATUT_EN_ATTENTE,
         'accepté',
         'en préparation',
         'en cours de livraison',
@@ -38,8 +41,9 @@ class CommandeController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly CommandeRepository $commandeRepository,
         private readonly MenuRepository $menuRepository,
+        private readonly CommandeManager $commandeManager,
         private readonly MailerInterface $mailer,
-        private readonly MongoStatistiqueService $mongoService
+        private readonly MongoStatistiquesService $mongoService
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -47,63 +51,16 @@ class CommandeController extends AbstractController
     {
         /** @var Utilisateur|null $user */
         $user = $this->getUser();
-
         if (!$user) {
-            return $this->json(['error' => 'Non authentifié.'], Response::HTTP_UNAUTHORIZED);
+            return $this->json(['error' => self::ERR_NON_AUTHENTIFIE], Response::HTTP_UNAUTHORIZED);
         }
 
-        $roles = $user->getRoles();
-        $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
-
+        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
         $commandes = $isStaff
             ? $this->commandeRepository->findBy([], ['id' => 'DESC'])
             : $this->commandeRepository->findBy(['utilisateur' => $user], ['id' => 'DESC']);
 
-        $data = array_map(function (Commande $cmd) {
-            $menu = $cmd->getMenu();
-            $client = $cmd->getUtilisateur();
-
-            $clientEmail = null;
-            if ($client) {
-                $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
-            }
-
-            $nbPers = $cmd->getNbPersonnes() ?? 1;
-            $prixTotal = (float) ($cmd->getPrixTotal() ?? 0);
-            $prixUnitaire = $menu ? (float) $menu->getPrixParPersonne() : 0.0;
-            $nbMin = $menu ? ($menu->getNbPersonnesMin() ?? 1) : 1;
-            $sousTotalMenu = $prixUnitaire * $nbPers;
-            if ($nbPers >= ($nbMin + 5)) {
-                $sousTotalMenu *= 0.90;
-            }
-            $sousTotalMenu = round($sousTotalMenu, 2);
-            $fraisLivraison = $prixUnitaire > 0 ? max(0.0, round($prixTotal - $sousTotalMenu, 2)) : 0.0;
-            if ($prixUnitaire <= 0) {
-                $sousTotalMenu = $prixTotal;
-            }
-
-            return [
-                'id'             => $cmd->getId(),
-                'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
-                'nbPersonnes'    => $nbPers,
-                'prixMenu'       => $sousTotalMenu,
-                'fraisLivraison' => $fraisLivraison,
-                'prixTotal'      => $prixTotal,
-                'statut'         => $cmd->getStatut() ?? 'en_attente',
-                'dateCommande'   => $cmd->getDateCommande()?->format('d/m/Y H:i'),
-                'client'         => $client ? [
-                    'id'    => $client->getId(),
-                    'email' => $clientEmail,
-                ] : null,
-                'menu'           => $menu ? [
-                    'id'    => $menu->getId(),
-                    'titre' => $menu->getTitre() ?? 'Menu sans titre',
-                ] : [
-                    'id'    => 0,
-                    'titre' => self::DEFAULT_MENU_TITRE,
-                ],
-            ];
-        }, $commandes);
+        $data = array_map(fn (Commande $cmd) => $this->formaterCommandePourListe($cmd), $commandes);
 
         return $this->json($data, Response::HTTP_OK);
     }
@@ -118,13 +75,13 @@ class CommandeController extends AbstractController
         }
 
         $data = json_decode($request->getContent(), true) ?? [];
-        $error = $this->validerRequeteEtMenu($data);
+        $error = $this->commandeManager->validerCreation($data);
         if ($error !== null) {
             return $this->json(['error' => $error], Response::HTTP_BAD_REQUEST);
         }
 
         $menu = $this->menuRepository->find($data['menuId']);
-        $result = $this->enregistrerCommande($user, $menu, $data);
+        $result = $this->commandeManager->creerCommande($user, $menu, $data);
 
         return $this->json($result, Response::HTTP_CREATED);
     }
@@ -147,17 +104,7 @@ class CommandeController extends AbstractController
 
         if ($ancienStatut !== $nouveauStatut) {
             $this->envoyerNotificationStatutClient($commande, $nouveauStatut, $data);
-
-            // Synchronisation NoSQL (MongoDB Analytics)
-            $menu = $commande->getMenu();
-            $this->mongoService->synchroniserCommande([
-                'id'             => $commande->getId(),
-                'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
-                'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
-                'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
-                'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
-                'statut'         => $nouveauStatut,
-            ]);
+            $this->synchroniserStatistiquesMongo($commande, $nouveauStatut);
         }
 
         return $this->json([
@@ -167,139 +114,204 @@ class CommandeController extends AbstractController
         ], Response::HTTP_OK);
     }
 
-    private function verifierAutorisationEtCommande(?Commande $commande, array $data): ?JsonResponse
+    #[Route('/{id}/annuler', name: 'client_annuler', methods: ['PATCH', 'PUT'])]
+    public function annulerParClient(int $id): JsonResponse
     {
-        $response = null;
-        $user = $this->getUser();
-        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
+        $commande = $this->commandeRepository->find($id);
+        $erreurAcces = $this->verifierAccesModificationClient($commande);
+        if ($erreurAcces !== null) {
+            return $erreurAcces;
+        }
 
-        if (!$user || !$isStaff) {
-            $response = $this->json(['error' => 'Accès réservé aux employés et administrateurs.'], Response::HTTP_FORBIDDEN);
+        $menu = $commande->getMenu();
+        $nbPersonnes = $commande->getNbPersonnes() ?? 0;
+        if ($menu && $nbPersonnes > 0) {
+            $this->commandeManager->ajusterStockMenuEtPlats($menu, -$nbPersonnes);
+        }
+
+        $commande->setStatut(self::STATUT_ANNULEE);
+        $this->em->flush();
+
+        return $this->json([
+            'message' => 'Votre commande a bien été annulée.',
+            'statut'  => $commande->getStatut(),
+        ], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}', name: 'client_modifier', methods: ['PUT', 'PATCH'])]
+    public function modifierParClient(int $id, Request $request): JsonResponse
+    {
+        $commande = $this->commandeRepository->find($id);
+        $erreurAcces = $this->verifierAccesModificationClient($commande);
+        if ($erreurAcces !== null) {
+            return $erreurAcces;
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $resultatValidation = $this->commandeManager->appliquerModificationsClient($commande, $data);
+        if ($resultatValidation !== null) {
+            return $this->json(['error' => $resultatValidation], Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'message'        => 'Votre commande a bien été mise à jour.',
+            'numeroCommande' => $commande->getNumeroCommande(),
+            'nbPersonnes'    => $commande->getNbPersonnes(),
+            'prixTotal'      => (float) $commande->getPrixTotal(),
+            'statut'         => $commande->getStatut(),
+        ], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}/staff', name: 'staff_modifier', methods: ['PUT', 'PATCH'])]
+    public function modifierParStaff(int $id, Request $request): JsonResponse
+    {
+        $commande = $this->commandeRepository->find($id);
+        $erreurAcces = $this->verifierAccesModificationStaff($commande);
+        if ($erreurAcces !== null) {
+            return $erreurAcces;
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $erreurValidation = $this->commandeManager->appliquerModificationsStaff($commande, $data);
+        if ($erreurValidation !== null) {
+            return $this->json(['error' => $erreurValidation], Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->em->flush();
+        $this->synchroniserStatistiquesMongo($commande, $commande->getStatut() ?? self::STATUT_EN_ATTENTE);
+
+        return $this->json([
+            'message'        => 'Commande mise à jour par l\'équipe.',
+            'numeroCommande' => $commande->getNumeroCommande(),
+            'nbPersonnes'    => $commande->getNbPersonnes(),
+            'prixTotal'      => (float) $commande->getPrixTotal(),
+        ], Response::HTTP_OK);
+    }
+
+    private function formaterCommandePourListe(Commande $cmd): array
+    {
+        $menu = $cmd->getMenu();
+        $client = $cmd->getUtilisateur();
+        $nbPers = $cmd->getNbPersonnes() ?? 1;
+        $prixTotal = (float) ($cmd->getPrixTotal() ?? 0);
+        $prixUnitaire = $menu ? (float) $menu->getPrixParPersonne() : 0.0;
+        $nbMin = $menu ? ($menu->getNbPersonnesMin() ?? 1) : 1;
+
+        $sousTotalMenu = $prixUnitaire * $nbPers;
+        if ($nbPers >= ($nbMin + 5)) {
+            $sousTotalMenu *= 0.90;
+        }
+        $sousTotalMenu = round($sousTotalMenu, 2);
+
+        $fraisLivraison = $prixUnitaire > 0 ? max(0.0, round($prixTotal - $sousTotalMenu, 2)) : 0.0;
+        if ($prixUnitaire <= 0) {
+            $sousTotalMenu = $prixTotal;
+        }
+
+        $clientEmail = null;
+        if ($client) {
+            $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
+        }
+
+        return [
+            'id'                  => $cmd->getId(),
+            'numeroCommande'      => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
+            'nbPersonnes'         => $nbPers,
+            'prixMenu'            => $sousTotalMenu,
+            'fraisLivraison'      => $fraisLivraison,
+            'prixTotal'           => $prixTotal,
+            'statut'              => $cmd->getStatut() ?? self::STATUT_EN_ATTENTE,
+            'adresse'             => $client?->getAdresse() ?? '',
+            'ville'               => 'Bordeaux',
+            'dateCommande'        => $cmd->getDateCommande()?->format('d/m/Y H:i'),
+            'datePrevueLivraison' => $cmd->getDatePrevueLivraison()?->format('Y-m-d\TH:i'),
+            'client'              => $client ? ['id' => $client->getId(), 'email' => $clientEmail] : null,
+            'menu'                => $menu
+                ? ['id' => $menu->getId(), 'titre' => $menu->getTitre() ?? 'Menu sans titre']
+                : ['id' => 0, 'titre' => self::DEFAULT_MENU_TITRE],
+        ];
+    }
+
+    private function verifierAccesModificationClient(?Commande $commande): ?JsonResponse
+    {
+        /** @var Utilisateur|null $user */
+        $user = $this->getUser();
+        $response = null;
+
+        if (!$user) {
+            $response = $this->json(['error' => self::ERR_NON_AUTHENTIFIE], Response::HTTP_UNAUTHORIZED);
         } elseif (!$commande) {
-            $response = $this->json(['error' => 'Commande introuvable.'], Response::HTTP_NOT_FOUND);
-        } else {
-            $validationError = $this->validerModificationStatut($data);
-            if ($validationError !== null) {
-                $response = $this->json(['error' => $validationError], Response::HTTP_BAD_REQUEST);
-            }
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
+        } elseif ($commande->getUtilisateur()?->getId() !== $user->getId()) {
+            $response = $this->json(['error' => 'Accès refusé pour cette commande.'], Response::HTTP_FORBIDDEN);
+        } elseif ($commande->getStatut() !== self::STATUT_EN_ATTENTE) {
+            $response = $this->json([
+                'error' => 'Action impossible : cette commande a déjà été acceptée ou traitée.'
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         return $response;
     }
 
-    private function validerModificationStatut(array $data): ?string
+    private function verifierAccesModificationStaff(?Commande $commande): ?JsonResponse
     {
-        $error = null;
+        $response = null;
+        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
+
+        if (!$this->getUser() || !$isStaff) {
+            $response = $this->json(['error' => 'Accès réservé aux employés et administrateurs.'], Response::HTTP_FORBIDDEN);
+        } elseif (!$commande) {
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
+        } elseif (in_array($commande->getStatut(), ['livré', 'terminée', self::STATUT_ANNULEE], true)) {
+            $response = $this->json([
+                'error' => 'Modification impossible : cette commande est déjà livrée, clôturée ou annulée.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $response;
+    }
+
+    private function synchroniserStatistiquesMongo(Commande $commande, string $nouveauStatut): void
+    {
+        $menu = $commande->getMenu();
+        $this->mongoService->synchroniserCommande([
+            'id'             => $commande->getId(),
+            'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
+            'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
+            'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
+            'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
+            'statut'         => $nouveauStatut,
+        ]);
+    }
+
+    private function verifierAutorisationEtCommande(?Commande $commande, array $data): ?JsonResponse
+    {
+        $response = null;
+        $user = $this->getUser();
+        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
         $statut = trim($data['statut'] ?? '');
 
-        if (!in_array($statut, self::STATUTS_AUTORISES, true)) {
-            $error = sprintf('Statut invalide. Statuts acceptés : %s.', implode(', ', self::STATUTS_AUTORISES));
+        if (!$user || !$isStaff) {
+            $response = $this->json(['error' => 'Accès réservé aux employés et administrateurs.'], Response::HTTP_FORBIDDEN);
+        } elseif (!$commande) {
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
+        } elseif (!in_array($statut, self::STATUTS_AUTORISES, true)) {
+            $response = $this->json([
+                'error' => sprintf('Statut invalide. Statuts acceptés : %s.', implode(', ', self::STATUTS_AUTORISES))
+            ], Response::HTTP_BAD_REQUEST);
         } elseif ($statut === self::STATUT_ANNULEE) {
             $motif = trim($data['motifAnnulation'] ?? '');
             $contact = strtolower(trim($data['modeContact'] ?? ''));
-
             if (empty($motif) || !in_array($contact, ['gsm', 'mail'], true)) {
-                $error = 'Pour annuler, le motif et le mode de contact (gsm ou mail) sont obligatoires.';
+                $response = $this->json([
+                    'error' => 'Pour annuler, le motif et le mode de contact (gsm ou mail) sont obligatoires.'
+                ], Response::HTTP_BAD_REQUEST);
             }
         }
 
-        return $error;
-    }
-
-    private function validerRequeteEtMenu(array $data): ?string
-    {
-        $error = null;
-        $nbPersonnes = (int) ($data['nbPersonnes'] ?? 0);
-
-        if (empty($data['menuId']) || $nbPersonnes <= 0) {
-            $error = 'Champs obligatoires manquants ou invalides (menuId, nbPersonnes).';
-        } else {
-            $menu = $this->menuRepository->find($data['menuId']);
-            $nbMin = $menu?->getNbPersonnesMin() ?? 1;
-            $stockActuel = $menu?->getQuantiteStock() ?? 0;
-
-            if (!$menu || !$menu->isIsActif()) {
-                $error = 'Ce menu n\'est pas disponible.';
-            } elseif ($nbPersonnes < $nbMin) {
-                $error = sprintf('Le nombre minimum de personnes pour ce menu est de %d.', $nbMin);
-            } elseif ($stockActuel < $nbPersonnes) {
-                $error = sprintf('Stock insuffisant pour ce menu (restant : %d).', $stockActuel);
-            } else {
-                $error = $this->verifierDisponibilitePlats($menu);
-            }
-        }
-
-        return $error;
-    }
-
-    private function verifierDisponibilitePlats(Menu $menu): ?string
-    {
-        foreach ($menu->getPlats() as $plat) {
-            if ($plat->isEnRupture()) {
-                return sprintf('Le plat "%s" de ce menu est actuellement en rupture de stock.', $plat->getNom());
-            }
-        }
-
-        return null;
-    }
-
-    private function enregistrerCommande(Utilisateur $user, Menu $menu, array $data): array
-    {
-        $nbPersonnes = (int) $data['nbPersonnes'];
-        $ville = trim($data['ville'] ?? 'Bordeaux');
-        $distanceKm = (float) ($data['distanceKm'] ?? 0.0);
-
-        $nbMin = $menu->getNbPersonnesMin() ?? 1;
-        $prixUnitaire = (float) $menu->getPrixParPersonne();
-        $sousTotalMenu = $prixUnitaire * $nbPersonnes;
-        $reduction = ($nbPersonnes >= ($nbMin + 5));
-        if ($reduction) {
-            $sousTotalMenu *= 0.90;
-        }
-
-        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0)
-            ? (5.0 + (0.59 * max(0.0, $distanceKm)))
-            : 0.0;
-        $totalFinal = round($sousTotalMenu + $fraisLivraison, 2);
-
-        // Décrémentation du stock du menu selon le nombre de formules commandées
-        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? $nbPersonnes) - $nbPersonnes));
-
-        // Décrémentation du stock de chaque plat constitutif
-        foreach ($menu->getPlats() as $plat) {
-            $plat->setStock(max(0, $plat->getStock() - $nbPersonnes));
-        }
-
-        $commande = new Commande();
-        $commande->setMenu($menu);
-        $commande->setUtilisateur($user);
-        $commande->setNumeroCommande('CMD-' . strtoupper(uniqid()));
-        $commande->setDateCommande(new \DateTimeImmutable());
-        $commande->setNbPersonnes($nbPersonnes);
-        $commande->setPrixTotal((string) $totalFinal);
-        $commande->setStatut('en_attente');
-
-        if (!empty($data['datePrevueLivraison'])) {
-            $commande->setDatePrevueLivraison(new \DateTime($data['datePrevueLivraison']));
-        } else {
-            $commande->setDatePrevueLivraison(new \DateTime('+7 days'));
-        }
-
-        $this->em->persist($commande);
-        $this->em->flush();
-
-        return [
-            'message'             => 'Commande enregistrée avec succès.',
-            'numeroCommande'      => $commande->getNumeroCommande(),
-            'menu'                => $menu->getTitre(),
-            'nbPersonnes'         => $nbPersonnes,
-            'prixMenu'            => round($sousTotalMenu, 2),
-            'reduction10Pourcent' => $reduction,
-            'fraisLivraison'      => round($fraisLivraison, 2),
-            'prixTotal'           => $totalFinal,
-            'statut'              => $commande->getStatut(),
-            'stockRestant'        => $menu->getQuantiteStock(),
-        ];
+        return $response;
     }
 
     private function envoyerNotificationStatutClient(Commande $commande, string $statut, array $data): void
@@ -310,12 +322,9 @@ class CommandeController extends AbstractController
         }
 
         $numero = $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId());
-        $sujet = sprintf('Vite & Gourmand : Suivi de votre commande %s', $numero);
-
-        $motifHtml = '';
-        if ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation'])) {
-            $motifHtml = sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']));
-        }
+        $motifHtml = ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation']))
+            ? sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']))
+            : '';
 
         $corps = sprintf(
             '<h2>Bonjour,</h2>
@@ -336,7 +345,7 @@ class CommandeController extends AbstractController
             $email = (new Email())
                 ->from('contact@vite-et-gourmand.fr')
                 ->to($client->getEmail())
-                ->subject($sujet)
+                ->subject(sprintf('Vite & Gourmand : Suivi de votre commande %s', $numero))
                 ->html($corps);
 
             $this->mailer->send($email);

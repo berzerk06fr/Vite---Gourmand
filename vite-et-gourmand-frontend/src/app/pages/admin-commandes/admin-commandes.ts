@@ -3,10 +3,18 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { CommandeService, CommandeItem } from '../../services/commande.service';
 import { AvisService } from '../../services/avis.service';
 import { AuthService } from '../../services/auth.service';
 import { Avis } from '../../models/avis.model';
+
+interface MenuOption {
+  id: number;
+  titre: string;
+  prixParPersonne?: number;
+  nbPersonnesMin?: number;
+}
 
 @Component({
   selector: 'app-admin-commandes',
@@ -15,31 +23,42 @@ import { Avis } from '../../models/avis.model';
   templateUrl: './admin-commandes.html',
   styleUrl: './admin-commandes.css'
 })
+
 export class AdminCommandesComponent implements OnInit {
   private readonly commandeService = inject(CommandeService);
   private readonly avisService = inject(AvisService);
   private readonly authService = inject(AuthService);
+  private readonly http = inject(HttpClient);
 
-  // Conversion de l'Observable currentUser$ en Signal
   readonly currentUser = toSignal(this.authService.currentUser$);
 
-  // Rôle Admin calculé dynamiquement
   readonly isAdmin = computed(() => {
     const user = this.currentUser();
     return Boolean(user?.roles?.includes('ROLE_ADMIN'));
   });
 
-  // Navigation par onglets
   readonly ongletActif = signal<'commandes' | 'avis'>('commandes');
 
   // Signaux Commandes
   readonly commandes = signal<CommandeItem[]>([]);
+  readonly menusDisponibles = signal<MenuOption[]>([]);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly rechercheTexte = signal<string>('');
   readonly filtreStatut = signal<string>('tous');
   readonly commandeSelectionnee = signal<CommandeItem | null>(null);
+
+  // Signaux Modale Édition Staff
+  readonly commandeEnEdition = signal<CommandeItem | null>(null);
+  readonly editMenuId = signal<number>(0);
+  readonly editNbPersonnes = signal<number>(1);
+  readonly editDateLivraison = signal<string>('');
+  readonly editAdresse = signal<string>('');
+  readonly editVille = signal<string>('Bordeaux');
+  readonly editDistanceKm = signal<number>(0);
+  readonly isSubmittingEdit = signal<boolean>(false);
+  readonly editError = signal<string | null>(null);
 
   // Signaux Modération Avis
   readonly avisEnAttente = signal<Avis[]>([]);
@@ -76,10 +95,10 @@ export class AdminCommandesComponent implements OnInit {
 
   ngOnInit(): void {
     this.chargerCommandes();
+    this.chargerMenus();
     this.chargerAvisEnAttente();
   }
 
-  // --- Gestion des onglets ---
   changerOnglet(onglet: 'commandes' | 'avis'): void {
     this.ongletActif.set(onglet);
     if (onglet === 'avis') {
@@ -87,7 +106,6 @@ export class AdminCommandesComponent implements OnInit {
     }
   }
 
-  // --- Flux Commandes ---
   chargerCommandes(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -100,6 +118,63 @@ export class AdminCommandesComponent implements OnInit {
       error: (err) => {
         this.errorMessage.set(err.error?.error || 'Erreur lors de la récupération des commandes.');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  chargerMenus(): void {
+    this.http.get<MenuOption[]>('https://vite-et-gourmand-api.alwaysdata.net/api/menus').subscribe({
+      next: (data) => this.menusDisponibles.set(data),
+      error: () => { /* Silencieux si indisponible */ }
+    });
+  }
+
+  peutModifierStaff(statut: string): boolean {
+    const s = (statut || '').toLowerCase().trim();
+    return !['livré', 'livre', 'terminée', 'terminee', 'annulée', 'annulee'].includes(s);
+  }
+
+  ouvrirEditionStaff(cmd: CommandeItem): void {
+    this.commandeEnEdition.set(cmd);
+    this.editMenuId.set(cmd.menu?.id || 0);
+    this.editNbPersonnes.set(cmd.nbPersonnes || 1);
+    this.editDateLivraison.set(cmd.datePrevueLivraison || '');
+    this.editAdresse.set(cmd.adresse || '');
+    this.editVille.set(cmd.ville || 'Bordeaux');
+    this.editDistanceKm.set(0);
+    this.editError.set(null);
+  }
+
+  fermerEditionStaff(): void {
+    this.commandeEnEdition.set(null);
+    this.editError.set(null);
+  }
+
+  enregistrerEditionStaff(): void {
+    const cmd = this.commandeEnEdition();
+    if (!cmd) return;
+
+    this.isSubmittingEdit.set(true);
+    this.editError.set(null);
+
+    this.commandeService.modifierCommandeStaff(cmd.id, {
+      menuId: Number(this.editMenuId()) || undefined,
+      nbPersonnes: Number(this.editNbPersonnes()),
+      adresse: this.editAdresse().trim(),
+      ville: this.editVille().trim() || 'Bordeaux',
+      distanceKm: Number(this.editDistanceKm() || 0),
+      datePrevueLivraison: this.editDateLivraison() || undefined,
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingEdit.set(false);
+        this.fermerEditionStaff();
+        this.successMessage.set(res.message);
+        this.chargerCommandes();
+        setTimeout(() => this.successMessage.set(null), 4000);
+      },
+      error: (err) => {
+        this.isSubmittingEdit.set(false);
+        this.editError.set(err.error?.error || 'Impossible de modifier cette commande.');
       }
     });
   }

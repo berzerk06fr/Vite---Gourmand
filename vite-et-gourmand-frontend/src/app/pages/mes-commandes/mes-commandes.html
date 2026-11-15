@@ -51,7 +51,7 @@
       </div>
     } @else {
       @for (cmd of commandes(); track cmd.id) {
-        <div class="vg-card" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: #fff; border: 1px solid #e7e5e4; border-radius: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="vg-card" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: #fff; border: 1px solid #e7e5e4; border-radius: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); gap: 1rem; flex-wrap: wrap;">
           <div>
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
               <span style="font-family: monospace; font-size: 0.75rem; background: #f5f5f4; border: 1px solid #e7e5e4; padding: 0.2rem 0.5rem; border-radius: 0.375rem; color: #57534e;">
@@ -69,7 +69,7 @@
             </p>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
             <!-- Bouton Fiche / Bon avec icône Œil -->
             <button
               type="button"
@@ -81,6 +81,24 @@
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
+            @if (peutModifierOuAnnuler(cmd.statut)) {
+              <button
+                type="button"
+                (click)="ouvrirModaleEdition(cmd)"
+                class="vg-btn vg-btn-outline"
+                style="font-size: 0.8125rem; padding: 0.45rem 0.85rem;">
+                Modifier
+              </button>
+
+              <button
+                type="button"
+                (click)="annulerCommande(cmd)"
+                [disabled]="cancellingCommandeId() === cmd.id"
+                class="vg-btn"
+                style="font-size: 0.8125rem; padding: 0.45rem 0.85rem; background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;">
+                {{ cancellingCommandeId() === cmd.id ? 'Annulation...' : 'Annuler' }}
+              </button>
+            }
 
             <!-- Statut Avis -->
             @if (canReview(cmd.statut)) {
@@ -94,7 +112,7 @@
                 </svg>
                 <span>Donner mon avis</span>
               </button>
-            } @else {
+            } @else if (!peutModifierOuAnnuler(cmd.statut)) {
               <span style="font-size: 0.75rem; color: #a8a29e; font-style: italic;">
                 Avis disponible après livraison
               </span>
@@ -112,7 +130,6 @@
   <div style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; padding: 1rem;">
     <div style="background: #ffffff; width: 100%; max-width: 760px; max-height: 90vh; border-radius: 1rem; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
       
-      <!-- En-tête de la modale -->
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e7e5e4;" class="no-print">
         <div>
           <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #b45309;">Détail de la commande</span>
@@ -129,9 +146,7 @@
         </button>
       </div>
 
-      <!-- Corps du bon imprimable -->
       <div style="padding: 1.5rem;" id="printable-client-bon">
-        
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e7e5e4; padding-bottom: 1rem; margin-bottom: 1.5rem;">
           <div>
             <h3 style="font-family: serif; font-size: 1.5rem; font-weight: 700; color: #1c1917; margin: 0;">Vite & Gourmand</h3>
@@ -166,7 +181,7 @@
               Lieu de réception
             </span>
             <p style="font-size: 0.8125rem; margin: 0; color: #292524; overflow-wrap: break-word;">
-              {{ $any(cmdBon).adresseLivraison || $any(cmdBon).ville || 'Atelier Vite & Gourmand' }}
+              {{ cmdBon.adresse || 'Bordeaux' }}
             </p>
           </div>
         </div>
@@ -225,10 +240,8 @@
           <p style="margin: 0 0 0.25rem 0;">Document justificatif édité par Vite & Gourmand.</p>
           <p style="margin: 0;">En cas de prêt de matériel, restitution sous 10 jours ouvrés.</p>
         </div>
-
       </div>
 
-      <!-- Actions de la modale -->
       <div style="display: flex; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 1px solid #e7e5e4; background: #fafaf9;" class="no-print">
         <button
           type="button"
@@ -348,6 +361,150 @@
             } @else {
               <span>Publier mon avis</span>
             }
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modale Modification Commande Client (tout sauf le menu) -->
+@if (selectedCommandeForEdit(); as cmdEdit) {
+  <div class="vg-modal-backdrop">
+    <div class="vg-modal-dialog">
+
+      <div class="vg-modal-header">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--vg-terracotta);">Modification de commande</span>
+          <h2 style="font-family: serif; font-size: 1.25rem; font-weight: 700; color: var(--vg-stone-dark); margin: 0.25rem 0 0 0;">
+            Commande n° {{ cmdEdit.numeroCommande }}
+          </h2>
+        </div>
+        <button
+          type="button"
+          (click)="fermerModaleEdition()"
+          [disabled]="isSubmittingEdit()"
+          class="vg-modal-close"
+          aria-label="Fermer la fenêtre">
+          ✕
+        </button>
+      </div>
+
+      <form (ngSubmit)="enregistrerModification()" class="vg-modal-body">
+
+        <!-- Menu verrouillé (non modifiable) -->
+        <div style="background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 0.625rem; padding: 0.75rem 1rem;">
+          <span style="display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: #78716c;">
+            Menu sélectionné (non modifiable)
+          </span>
+          <strong style="font-size: 0.95rem; color: #1c1917;">
+            {{ cmdEdit.menu?.titre || 'Menu traiteur' }}
+          </strong>
+        </div>
+
+        <div>
+          <label for="editNbPersonnes" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+            Nombre de convives
+          </label>
+          <input
+            id="editNbPersonnes"
+            type="number"
+            min="1"
+            [ngModel]="editNbPersonnes()"
+            (ngModelChange)="editNbPersonnes.set($event)"
+            name="nbPersonnes"
+            required
+            class="vg-textarea"
+            style="min-height: auto; padding: 0.6rem 0.75rem;">
+        </div>
+
+        <div>
+          <label for="editDateLivraison" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+            Date et heure de livraison souhaitées
+          </label>
+          <input
+            id="editDateLivraison"
+            type="datetime-local"
+            [ngModel]="editDateLivraison()"
+            (ngModelChange)="editDateLivraison.set($event)"
+            name="datePrevueLivraison"
+            class="vg-textarea"
+            style="min-height: auto; padding: 0.6rem 0.75rem;">
+        </div>
+
+        <div>
+          <label for="editAdresse" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+            Adresse de livraison
+          </label>
+          <input
+            id="editAdresse"
+            type="text"
+            [ngModel]="editAdresse()"
+            (ngModelChange)="editAdresse.set($event)"
+            name="adresse"
+            required
+            placeholder="Numéro et rue de livraison"
+            class="vg-textarea"
+            style="min-height: auto; padding: 0.6rem 0.75rem;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div>
+            <label for="editVille" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+              Ville
+            </label>
+            <input
+              id="editVille"
+              type="text"
+              [ngModel]="editVille()"
+              (ngModelChange)="editVille.set($event)"
+              name="ville"
+              required
+              class="vg-textarea"
+              style="min-height: auto; padding: 0.6rem 0.75rem;">
+          </div>
+
+          <div>
+            <label for="editDistance" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+              Distance hors Bordeaux (km)
+            </label>
+            <input
+              id="editDistance"
+              type="number"
+              min="0"
+              step="0.1"
+              [ngModel]="editDistanceKm()"
+              (ngModelChange)="editDistanceKm.set($event)"
+              name="distanceKm"
+              class="vg-textarea"
+              style="min-height: auto; padding: 0.6rem 0.75rem;">
+          </div>
+        </div>
+
+        @if (editFeedback(); as feedback) {
+          <div
+            style="padding: 0.75rem 1rem; border-radius: 0.625rem; font-size: 0.75rem; font-weight: 500;"
+            [style.background-color]="feedback.isError ? '#fef2f2' : '#f0fdf4'"
+            [style.color]="feedback.isError ? '#991b1b' : '#166534'"
+            [style.border]="feedback.isError ? '1px solid #fecaca' : '1px solid #bbf7d0'">
+            {{ feedback.message }}
+          </div>
+        }
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding-top: 0.5rem;">
+          <button
+            type="button"
+            (click)="fermerModaleEdition()"
+            [disabled]="isSubmittingEdit()"
+            class="vg-btn vg-btn-secondary">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmittingEdit() || editNbPersonnes() < 1"
+            class="vg-btn vg-btn-primary">
+            {{ isSubmittingEdit() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
           </button>
         </div>
 

@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\CommandeRepository;
-use App\Service\MongoStatistiqueService;
+use App\Service\MongoStatistiquesService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +15,7 @@ class StatistiqueController extends AbstractController
 {
     public function __construct(
         private readonly CommandeRepository $commandeRepository,
-        private readonly MongoStatistiqueService $mongoService
+        private readonly MongoStatistiquesService $mongoService
     ) {}
 
     #[Route('', name: 'index', methods: ['GET', 'OPTIONS'])]
