@@ -33,12 +33,21 @@ export interface CommandeItem {
   id: number;
   numeroCommande: string;
   nbPersonnes: number;
-  prixMenu?: number;
-  fraisLivraison?: number;
+  prixMenu: number;
+  fraisLivraison: number;
   prixTotal: number;
   statut: string;
-  client?: { id: number; email: string };
-  menu?: { id: number; titre: string };
+  adresse?: string;
+  ville?: string;
+  dateCommande?: string;
+  client?: {
+    id: number;
+    email: string;
+  };
+  menu?: {
+    id: number;
+    titre: string;
+  };
 }
 
 export interface UpdateStatutPayload {

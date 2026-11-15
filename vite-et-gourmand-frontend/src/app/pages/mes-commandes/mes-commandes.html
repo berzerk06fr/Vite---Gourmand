@@ -165,8 +165,9 @@
             <span style="display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: #78716c; margin-bottom: 0.35rem;">
               Lieu de réception
             </span>
+
             <p style="font-size: 0.8125rem; margin: 0; color: #292524; overflow-wrap: break-word;">
-              {{ $any(cmdBon).adresseLivraison || $any(cmdBon).ville || 'Atelier Vite & Gourmand' }}
+              {{ cmdBon.adresse || 'Bordeaux' }}
             </p>
           </div>
         </div>
