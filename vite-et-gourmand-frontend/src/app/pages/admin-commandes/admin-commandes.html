@@ -95,7 +95,7 @@
               id="rechercheCommandes"
               type="search" 
               [value]="rechercheTexte()" 
-              (input)="rechercheTexte.set($any($event.target).value)"
+              (input)="rechercheTexte.set($any($event.target).value)" 
               placeholder="Rechercher par référence, email ou formule..." 
               aria-label="Rechercher par référence, email ou formule"
               class="form-control border-start-0 ps-0" />
@@ -147,7 +147,7 @@
       </div>
     </div>
 
-    <!-- Chargement / Vide / Tableau avec le même card-header et table-hover que stats -->
+    <!-- Chargement / Vide / Tableau -->
     @if (isLoading()) {
       <div class="text-center py-5">
         <output class="spinner-border text-primary">
@@ -176,7 +176,7 @@
                 <th scope="col" class="py-3 text-end">Total</th>
                 <th scope="col" class="py-3 text-center">Statut</th>
                 <th scope="col" class="py-3 text-center">Gestion Flux</th>
-                <th scope="col" class="py-3 text-center pe-4">Fiche</th>
+                <th scope="col" class="py-3 text-center pe-4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -219,13 +219,24 @@
                     </select>
                   </td>
                   <td class="text-center pe-4">
-                    <button 
-                      type="button" 
-                      (click)="ouvrirDetails(cmd)"
-                      class="btn btn-sm btn-outline-secondary"
-                      title="Ouvrir le bon de préparation">
-                      <i class="bi bi-eye"></i>
-                    </button>
+                    <div class="d-inline-flex align-items-center gap-1">
+                      @if (peutModifierStaff(cmd.statut)) {
+                        <button
+                          type="button"
+                          (click)="ouvrirEditionStaff(cmd)"
+                          class="btn btn-sm btn-outline-primary"
+                          title="Modifier la commande">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                      }
+                      <button 
+                        type="button" 
+                        (click)="ouvrirDetails(cmd)"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="Ouvrir le bon de préparation">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -369,6 +380,124 @@
               Fermer
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL : MODIFICATION COMMANDE STAFF -->
+  @if (commandeEnEdition(); as cmdEdit) {
+    <div class="modal d-block bg-dark bg-opacity-50" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+          <div class="modal-header bg-light">
+            <div>
+              <span class="text-uppercase small fw-bold text-primary d-block">Administration Commande</span>
+              <h2 class="modal-title h5 fw-bold text-dark mb-0">Modifier {{ cmdEdit.numeroCommande }}</h2>
+              <small class="text-muted">Client : {{ cmdEdit.client?.email }}</small>
+            </div>
+            <button type="button" class="btn-close" (click)="fermerEditionStaff()" [disabled]="isSubmittingEdit()" aria-label="Fermer"></button>
+          </div>
+
+          <form (ngSubmit)="enregistrerEditionStaff()">
+            <div class="modal-body d-flex flex-column gap-3">
+              @if (editError()) {
+                <div class="alert alert-danger py-2 px-3 small mb-0">
+                  {{ editError() }}
+                </div>
+              }
+
+              @if (menusDisponibles().length > 0) {
+                <div>
+                  <label for="staffEditMenu" class="form-label small fw-bold text-uppercase text-muted mb-1">Menu traiteur</label>
+                  <select
+                    id="staffEditMenu"
+                    class="form-select form-select-sm"
+                    [ngModel]="editMenuId()"
+                    (ngModelChange)="editMenuId.set($event)"
+                    name="menuId">
+                    @for (m of menusDisponibles(); track m.id) {
+                      <option [value]="m.id">{{ m.titre }}</option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label for="staffEditNbPers" class="form-label small fw-bold text-uppercase text-muted mb-1">Convives</label>
+                  <input
+                    id="staffEditNbPers"
+                    type="number"
+                    min="1"
+                    class="form-control form-control-sm"
+                    [ngModel]="editNbPersonnes()"
+                    (ngModelChange)="editNbPersonnes.set($event)"
+                    name="nbPersonnes"
+                    required>
+                </div>
+
+                <div class="col-6">
+                  <label for="staffEditDate" class="form-label small fw-bold text-uppercase text-muted mb-1">Date de livraison</label>
+                  <input
+                    id="staffEditDate"
+                    type="datetime-local"
+                    class="form-control form-control-sm"
+                    [ngModel]="editDateLivraison()"
+                    (ngModelChange)="editDateLivraison.set($event)"
+                    name="datePrevueLivraison">
+                </div>
+              </div>
+
+              <div>
+                <label for="staffEditAdresse" class="form-label small fw-bold text-uppercase text-muted mb-1">Adresse de livraison</label>
+                <input
+                  id="staffEditAdresse"
+                  type="text"
+                  class="form-control form-control-sm"
+                  [ngModel]="editAdresse()"
+                  (ngModelChange)="editAdresse.set($event)"
+                  name="adresse"
+                  placeholder="Adresse complète">
+              </div>
+
+              <div class="row g-2">
+                <div class="col-6">
+                  <label for="staffEditVille" class="form-label small fw-bold text-uppercase text-muted mb-1">Ville</label>
+                  <input
+                    id="staffEditVille"
+                    type="text"
+                    class="form-control form-control-sm"
+                    [ngModel]="editVille()"
+                    (ngModelChange)="editVille.set($event)"
+                    name="ville"
+                    required>
+                </div>
+
+                <div class="col-6">
+                  <label for="staffEditDistance" class="form-label small fw-bold text-uppercase text-muted mb-1">Distance hors Bordeaux (km)</label>
+                  <input
+                    id="staffEditDistance"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    class="form-control form-control-sm"
+                    [ngModel]="editDistanceKm()"
+                    (ngModelChange)="editDistanceKm.set($event)"
+                    name="distanceKm">
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer bg-light">
+              <button type="button" (click)="fermerEditionStaff()" [disabled]="isSubmittingEdit()" class="btn btn-sm btn-secondary">
+                Annuler
+              </button>
+              <button type="submit" [disabled]="isSubmittingEdit() || editNbPersonnes() < 1" class="btn btn-sm btn-primary">
+                {{ isSubmittingEdit() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
