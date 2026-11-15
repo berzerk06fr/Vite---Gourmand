@@ -23,6 +23,19 @@ export class MesCommandesComponent implements OnInit {
   // Signaux pour le bon de commande imprimable
   readonly selectedCommandeForBon = signal<CommandeItem | null>(null);
 
+  // Signaux pour la modale de modification client
+  readonly selectedCommandeForEdit = signal<CommandeItem | null>(null);
+  readonly editNbPersonnes = signal<number>(1);
+  readonly editAdresse = signal<string>('');
+  readonly editVille = signal<string>('Bordeaux');
+  readonly editDistanceKm = signal<number>(0);
+  readonly editDateLivraison = signal<string>('');
+  readonly isSubmittingEdit = signal<boolean>(false);
+  readonly editFeedback = signal<{ message: string; isError: boolean } | null>(null);
+
+  // Signal pour le chargement lors d'une annulation
+  readonly cancellingCommandeId = signal<number | null>(null);
+
   // Signaux pour la modale de dépôt d'avis
   readonly selectedCommandeForReview = signal<CommandeItem | null>(null);
   readonly reviewNote = signal<number>(5);
@@ -46,6 +59,81 @@ export class MesCommandesComponent implements OnInit {
       error: (err) => {
         this.errorMessage.set(err.error?.error || 'Impossible de récupérer vos commandes.');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  // --- Règle métier : modifiable/annulable uniquement tant que non acceptée ---
+  peutModifierOuAnnuler(statut: string): boolean {
+    return (statut || '').toLowerCase().trim() === 'en_attente';
+  }
+
+  // --- Modification par le client (tout sauf le menu) ---
+  ouvrirModaleEdition(cmd: CommandeItem): void {
+    this.selectedCommandeForEdit.set(cmd);
+    this.editNbPersonnes.set(cmd.nbPersonnes || 1);
+    this.editAdresse.set(cmd.adresse || '');
+    this.editVille.set(cmd.ville || 'Bordeaux');
+    this.editDistanceKm.set(0);
+    this.editDateLivraison.set(cmd.datePrevueLivraison || '');
+    this.editFeedback.set(null);
+  }
+
+  fermerModaleEdition(): void {
+    this.selectedCommandeForEdit.set(null);
+    this.editFeedback.set(null);
+  }
+
+  enregistrerModification(): void {
+    const cmd = this.selectedCommandeForEdit();
+    if (!cmd) return;
+
+    this.isSubmittingEdit.set(true);
+    this.editFeedback.set(null);
+
+    this.commandeService.modifierCommandeClient(cmd.id, {
+      nbPersonnes: Number(this.editNbPersonnes()),
+      adresse: this.editAdresse().trim(),
+      ville: this.editVille().trim() || 'Bordeaux',
+      distanceKm: Number(this.editDistanceKm() || 0),
+      datePrevueLivraison: this.editDateLivraison() || undefined,
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingEdit.set(false);
+        this.editFeedback.set({ message: res.message, isError: false });
+        this.chargerCommandes();
+        setTimeout(() => {
+          this.fermerModaleEdition();
+        }, 1400);
+      },
+      error: (err) => {
+        this.isSubmittingEdit.set(false);
+        this.editFeedback.set({
+          message: err.error?.error || 'Impossible de modifier la commande.',
+          isError: true,
+        });
+      }
+    });
+  }
+
+  // --- Annulation par le client ---
+  annulerCommande(cmd: CommandeItem): void {
+    const confirmation = window.confirm(
+      `Souhaitez-vous vraiment annuler votre commande ${cmd.numeroCommande} ?`
+    );
+    if (!confirmation) return;
+
+    this.cancellingCommandeId.set(cmd.id);
+    this.errorMessage.set(null);
+
+    this.commandeService.annulerCommandeClient(cmd.id).subscribe({
+      next: () => {
+        this.cancellingCommandeId.set(null);
+        this.chargerCommandes();
+      },
+      error: (err) => {
+        this.cancellingCommandeId.set(null);
+        this.errorMessage.set(err.error?.error || 'Impossible d\'annuler la commande.');
       }
     });
   }

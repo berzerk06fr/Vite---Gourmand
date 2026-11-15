@@ -40,6 +40,7 @@ export interface CommandeItem {
   adresse?: string;
   ville?: string;
   dateCommande?: string;
+  datePrevueLivraison?: string;
   client?: {
     id: number;
     email: string;
@@ -54,6 +55,14 @@ export interface UpdateStatutPayload {
   statut: string;
   motifAnnulation?: string;
   modeContact?: 'gsm' | 'mail';
+}
+
+export interface UpdateCommandeClientPayload {
+  nbPersonnes: number;
+  adresse: string;
+  ville: string;
+  distanceKm?: number;
+  datePrevueLivraison?: string;
 }
 
 @Injectable({
@@ -75,6 +84,20 @@ export class CommandeService {
     return this.http.patch<{ message: string; numeroCommande: string; statut: string }>(
       `${this.apiUrl}/${id}/statut`,
       payload
+    );
+  }
+
+  modifierCommandeClient(id: number, payload: UpdateCommandeClientPayload): Observable<{ message: string; prixTotal: number }> {
+    return this.http.put<{ message: string; prixTotal: number }>(
+      `${this.apiUrl}/${id}`,
+      payload
+    );
+  }
+
+  annulerCommandeClient(id: number): Observable<{ message: string; statut: string }> {
+    return this.http.patch<{ message: string; statut: string }>(
+      `${this.apiUrl}/${id}/annuler`,
+      {}
     );
   }
 }
