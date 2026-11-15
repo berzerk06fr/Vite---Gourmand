@@ -4,7 +4,7 @@ namespace App\Service;
 
 use Psr\Log\LoggerInterface;
 
-class MongoStatistiqueService
+class MongoStatistiquesService
 {
     private mixed $client = null;
     private string $database = 'vite_et_gourmand_analytics';

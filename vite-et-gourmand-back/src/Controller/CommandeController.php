@@ -7,7 +7,7 @@ use App\Entity\Menu;
 use App\Entity\Utilisateur;
 use App\Repository\CommandeRepository;
 use App\Repository\MenuRepository;
-use App\Service\MongoStatistiqueService;
+use App\Service\MongoStatistiquesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,10 +21,13 @@ use Symfony\Component\Routing\Annotation\Route;
 class CommandeController extends AbstractController
 {
     private const STATUT_ANNULEE = 'annulée';
+    private const STATUT_EN_ATTENTE = 'en_attente';
     private const DEFAULT_MENU_TITRE = 'Menu traiteur';
+    private const ERR_NON_AUTHENTIFIE = 'Non authentifié.';
+    private const ERR_COMMANDE_INTROUVABLE = 'Commande introuvable.';
 
     private const STATUTS_AUTORISES = [
-        'en_attente',
+        self::STATUT_EN_ATTENTE,
         'accepté',
         'en préparation',
         'en cours de livraison',
@@ -39,7 +42,7 @@ class CommandeController extends AbstractController
         private readonly CommandeRepository $commandeRepository,
         private readonly MenuRepository $menuRepository,
         private readonly MailerInterface $mailer,
-        private readonly MongoStatistiqueService $mongoService
+        private readonly MongoStatistiquesService $mongoService
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -47,65 +50,16 @@ class CommandeController extends AbstractController
     {
         /** @var Utilisateur|null $user */
         $user = $this->getUser();
-
         if (!$user) {
-            return $this->json(['error' => 'Non authentifié.'], Response::HTTP_UNAUTHORIZED);
+            return $this->json(['error' => self::ERR_NON_AUTHENTIFIE], Response::HTTP_UNAUTHORIZED);
         }
 
-        $roles = $user->getRoles();
-        $isStaff = in_array('ROLE_EMPLOYE', $roles, true) || in_array('ROLE_ADMIN', $roles, true);
-
+        $isStaff = $this->isGranted('ROLE_EMPLOYE') || $this->isGranted('ROLE_ADMIN');
         $commandes = $isStaff
             ? $this->commandeRepository->findBy([], ['id' => 'DESC'])
             : $this->commandeRepository->findBy(['utilisateur' => $user], ['id' => 'DESC']);
 
-        $data = array_map(function (Commande $cmd) {
-            $menu = $cmd->getMenu();
-            $client = $cmd->getUtilisateur();
-
-            $clientEmail = null;
-            if ($client) {
-                $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
-            }
-
-            $nbPers = $cmd->getNbPersonnes() ?? 1;
-            $prixTotal = (float) ($cmd->getPrixTotal() ?? 0);
-            $prixUnitaire = $menu ? (float) $menu->getPrixParPersonne() : 0.0;
-            $nbMin = $menu ? ($menu->getNbPersonnesMin() ?? 1) : 1;
-            $sousTotalMenu = $prixUnitaire * $nbPers;
-            if ($nbPers >= ($nbMin + 5)) {
-                $sousTotalMenu *= 0.90;
-            }
-            $sousTotalMenu = round($sousTotalMenu, 2);
-            $fraisLivraison = $prixUnitaire > 0 ? max(0.0, round($prixTotal - $sousTotalMenu, 2)) : 0.0;
-            if ($prixUnitaire <= 0) {
-                $sousTotalMenu = $prixTotal;
-            }
-
-            return [
-                'id'             => $cmd->getId(),
-                'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
-                'nbPersonnes'    => $nbPers,
-                'prixMenu'       => $sousTotalMenu,
-                'fraisLivraison' => $fraisLivraison,
-                'prixTotal'      => $prixTotal,
-                'statut'         => $cmd->getStatut() ?? 'en_attente',
-                'adresse'        => $client ? $client->getAdresse() : '',
-                'ville'          => 'Bordeaux',
-                'dateCommande'   => $cmd->getDateCommande()?->format('d/m/Y H:i'),
-                'client'         => $client ? [
-                    'id'    => $client->getId(),
-                    'email' => $clientEmail,
-                ] : null,
-                'menu'           => $menu ? [
-                    'id'    => $menu->getId(),
-                    'titre' => $menu->getTitre() ?? 'Menu sans titre',
-                ] : [
-                    'id'    => 0,
-                    'titre' => self::DEFAULT_MENU_TITRE,
-                ],
-            ];
-        }, $commandes);
+        $data = array_map(fn (Commande $cmd) => $this->formaterCommandePourListe($cmd), $commandes);
 
         return $this->json($data, Response::HTTP_OK);
     }
@@ -149,17 +103,7 @@ class CommandeController extends AbstractController
 
         if ($ancienStatut !== $nouveauStatut) {
             $this->envoyerNotificationStatutClient($commande, $nouveauStatut, $data);
-
-            // Synchronisation NoSQL (MongoDB Analytics)
-            $menu = $commande->getMenu();
-            $this->mongoService->synchroniserCommande([
-                'id'             => $commande->getId(),
-                'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
-                'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
-                'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
-                'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
-                'statut'         => $nouveauStatut,
-            ]);
+            $this->synchroniserStatistiquesMongo($commande, $nouveauStatut);
         }
 
         return $this->json([
@@ -167,6 +111,201 @@ class CommandeController extends AbstractController
             'numeroCommande' => $commande->getNumeroCommande(),
             'statut'         => $commande->getStatut(),
         ], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}/annuler', name: 'client_annuler', methods: ['PATCH', 'PUT'])]
+    public function annulerParClient(int $id): JsonResponse
+    {
+        $commande = $this->commandeRepository->find($id);
+        $erreurAcces = $this->verifierAccesModificationClient($commande);
+        if ($erreurAcces !== null) {
+            return $erreurAcces;
+        }
+
+        $menu = $commande->getMenu();
+        $nbPersonnes = $commande->getNbPersonnes() ?? 0;
+        if ($menu && $nbPersonnes > 0) {
+            $this->ajusterStockMenuEtPlats($menu, -$nbPersonnes);
+        }
+
+        $commande->setStatut(self::STATUT_ANNULEE);
+        $this->em->flush();
+
+        return $this->json([
+            'message' => 'Votre commande a bien été annulée.',
+            'statut'  => $commande->getStatut(),
+        ], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}', name: 'client_modifier', methods: ['PUT', 'PATCH'])]
+    public function modifierParClient(int $id, Request $request): JsonResponse
+    {
+        $commande = $this->commandeRepository->find($id);
+        $erreurAcces = $this->verifierAccesModificationClient($commande);
+        if ($erreurAcces !== null) {
+            return $erreurAcces;
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $resultatValidation = $this->appliquerModificationsClient($commande, $data);
+        if ($resultatValidation !== null) {
+            return $this->json(['error' => $resultatValidation], Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'message'        => 'Votre commande a bien été mise à jour.',
+            'numeroCommande' => $commande->getNumeroCommande(),
+            'nbPersonnes'    => $commande->getNbPersonnes(),
+            'prixTotal'      => (float) $commande->getPrixTotal(),
+            'statut'         => $commande->getStatut(),
+        ], Response::HTTP_OK);
+    }
+
+    private function formaterCommandePourListe(Commande $cmd): array
+    {
+        $menu = $cmd->getMenu();
+        $client = $cmd->getUtilisateur();
+        $nbPers = $cmd->getNbPersonnes() ?? 1;
+        $prixTotal = (float) ($cmd->getPrixTotal() ?? 0);
+        $prixUnitaire = $menu ? (float) $menu->getPrixParPersonne() : 0.0;
+        $nbMin = $menu ? ($menu->getNbPersonnesMin() ?? 1) : 1;
+
+        $sousTotalMenu = $this->calculerSousTotalMenu($prixUnitaire, $nbPers, $nbMin);
+        $fraisLivraison = $prixUnitaire > 0 ? max(0.0, round($prixTotal - $sousTotalMenu, 2)) : 0.0;
+        if ($prixUnitaire <= 0) {
+            $sousTotalMenu = $prixTotal;
+        }
+
+        $clientEmail = null;
+        if ($client) {
+            $clientEmail = method_exists($client, 'getEmail') ? $client->getEmail() : $client->getUserIdentifier();
+        }
+
+        return [
+            'id'                  => $cmd->getId(),
+            'numeroCommande'      => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
+            'nbPersonnes'         => $nbPers,
+            'prixMenu'            => $sousTotalMenu,
+            'fraisLivraison'      => $fraisLivraison,
+            'prixTotal'           => $prixTotal,
+            'statut'              => $cmd->getStatut() ?? self::STATUT_EN_ATTENTE,
+            'adresse'             => $client?->getAdresse() ?? '',
+            'ville'               => 'Bordeaux',
+            'dateCommande'        => $cmd->getDateCommande()?->format('d/m/Y H:i'),
+            'datePrevueLivraison' => $cmd->getDatePrevueLivraison()?->format('Y-m-d\TH:i'),
+            'client'              => $client ? ['id' => $client->getId(), 'email' => $clientEmail] : null,
+            'menu'                => $menu
+                ? ['id' => $menu->getId(), 'titre' => $menu->getTitre() ?? 'Menu sans titre']
+                : ['id' => 0, 'titre' => self::DEFAULT_MENU_TITRE],
+        ];
+    }
+
+    private function verifierAccesModificationClient(?Commande $commande): ?JsonResponse
+    {
+        /** @var Utilisateur|null $user */
+        $user = $this->getUser();
+        $response = null;
+
+        if (!$user) {
+            $response = $this->json(['error' => self::ERR_NON_AUTHENTIFIE], Response::HTTP_UNAUTHORIZED);
+        } elseif (!$commande) {
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
+        } elseif ($commande->getUtilisateur()?->getId() !== $user->getId()) {
+            $response = $this->json(['error' => 'Accès refusé pour cette commande.'], Response::HTTP_FORBIDDEN);
+        } elseif ($commande->getStatut() !== self::STATUT_EN_ATTENTE) {
+            $response = $this->json([
+                'error' => 'Action impossible : cette commande a déjà été acceptée ou traitée.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $response;
+    }
+
+    private function appliquerModificationsClient(Commande $commande, array $data): ?string
+    {
+        $error = null;
+        $menu = $commande->getMenu();
+        $ancienNb = $commande->getNbPersonnes() ?? 1;
+        $nouveauNb = isset($data['nbPersonnes']) ? (int) $data['nbPersonnes'] : $ancienNb;
+        $nbMin = $menu?->getNbPersonnesMin() ?? 1;
+        $diff = $nouveauNb - $ancienNb;
+
+        if (!$menu) {
+            $error = 'Menu associé introuvable.';
+        } elseif ($nouveauNb < $nbMin) {
+            $error = sprintf('Le nombre minimum de personnes pour ce menu est de %d.', $nbMin);
+        } elseif ($diff > 0 && ($menu->getQuantiteStock() ?? 0) < $diff) {
+            $error = sprintf('Stock insuffisant pour ajouter %d personne(s).', $diff);
+        } else {
+            if ($diff !== 0) {
+                $this->ajusterStockMenuEtPlats($menu, $diff);
+            }
+            $this->mettreAJourInfosLivraison($commande, $data);
+            $commande->setNbPersonnes($nouveauNb);
+            $commande->setPrixTotal((string) $this->calculerTotalCommande($menu, $nouveauNb, $data));
+        }
+
+        return $error;
+    }
+
+    private function ajusterStockMenuEtPlats(Menu $menu, int $deltaPersonnes): void
+    {
+        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 0) - $deltaPersonnes));
+        foreach ($menu->getPlats() as $plat) {
+            $plat->setStock(max(0, $plat->getStock() - $deltaPersonnes));
+        }
+    }
+
+    private function mettreAJourInfosLivraison(Commande $commande, array $data): void
+    {
+        $client = $commande->getUtilisateur();
+        if ($client && !empty($data['adresse'])) {
+            $client->setAdresse(trim($data['adresse']));
+        }
+
+        if (!empty($data['datePrevueLivraison'])) {
+            $commande->setDatePrevueLivraison(new \DateTime($data['datePrevueLivraison']));
+        }
+    }
+
+    private function calculerSousTotalMenu(float $prixUnitaire, int $nbPersonnes, int $nbMin): float
+    {
+        $sousTotal = $prixUnitaire * $nbPersonnes;
+        if ($nbPersonnes >= ($nbMin + 5)) {
+            $sousTotal *= 0.90;
+        }
+
+        return round($sousTotal, 2);
+    }
+
+    private function calculerTotalCommande(Menu $menu, int $nbPersonnes, array $data): float
+    {
+        $nbMin = $menu->getNbPersonnesMin() ?? 1;
+        $prixUnitaire = (float) $menu->getPrixParPersonne();
+        $sousTotalMenu = $this->calculerSousTotalMenu($prixUnitaire, $nbPersonnes, $nbMin);
+
+        $ville = trim($data['ville'] ?? 'Bordeaux');
+        $distanceKm = (float) ($data['distanceKm'] ?? 0.0);
+        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0)
+            ? (5.0 + (0.59 * max(0.0, $distanceKm)))
+            : 0.0;
+
+        return round($sousTotalMenu + $fraisLivraison, 2);
+    }
+
+    private function synchroniserStatistiquesMongo(Commande $commande, string $nouveauStatut): void
+    {
+        $menu = $commande->getMenu();
+        $this->mongoService->synchroniserCommande([
+            'id'             => $commande->getId(),
+            'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
+            'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
+            'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
+            'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
+            'statut'         => $nouveauStatut,
+        ]);
     }
 
     private function verifierAutorisationEtCommande(?Commande $commande, array $data): ?JsonResponse
@@ -178,7 +317,7 @@ class CommandeController extends AbstractController
         if (!$user || !$isStaff) {
             $response = $this->json(['error' => 'Accès réservé aux employés et administrateurs.'], Response::HTTP_FORBIDDEN);
         } elseif (!$commande) {
-            $response = $this->json(['error' => 'Commande introuvable.'], Response::HTTP_NOT_FOUND);
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
         } else {
             $validationError = $this->validerModificationStatut($data);
             if ($validationError !== null) {
@@ -248,8 +387,6 @@ class CommandeController extends AbstractController
     private function enregistrerCommande(Utilisateur $user, Menu $menu, array $data): array
     {
         $nbPersonnes = (int) $data['nbPersonnes'];
-        $ville = trim($data['ville'] ?? 'Bordeaux');
-        $distanceKm = (float) ($data['distanceKm'] ?? 0.0);
         $adresse = trim($data['adresse'] ?? '');
 
         if (!empty($adresse)) {
@@ -260,24 +397,11 @@ class CommandeController extends AbstractController
 
         $nbMin = $menu->getNbPersonnesMin() ?? 1;
         $prixUnitaire = (float) $menu->getPrixParPersonne();
-        $sousTotalMenu = $prixUnitaire * $nbPersonnes;
-        $reduction = ($nbPersonnes >= ($nbMin + 5));
-        if ($reduction) {
-            $sousTotalMenu *= 0.90;
-        }
+        $sousTotalMenu = $this->calculerSousTotalMenu($prixUnitaire, $nbPersonnes, $nbMin);
+        $totalFinal = $this->calculerTotalCommande($menu, $nbPersonnes, $data);
+        $fraisLivraison = round($totalFinal - $sousTotalMenu, 2);
 
-        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0)
-            ? (5.0 + (0.59 * max(0.0, $distanceKm)))
-            : 0.0;
-        $totalFinal = round($sousTotalMenu + $fraisLivraison, 2);
-
-        // Décrémentation du stock du menu selon le nombre de formules commandées
-        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? $nbPersonnes) - $nbPersonnes));
-
-        // Décrémentation du stock de chaque plat constitutif
-        foreach ($menu->getPlats() as $plat) {
-            $plat->setStock(max(0, $plat->getStock() - $nbPersonnes));
-        }
+        $this->ajusterStockMenuEtPlats($menu, $nbPersonnes);
 
         $commande = new Commande();
         $commande->setMenu($menu);
@@ -286,13 +410,12 @@ class CommandeController extends AbstractController
         $commande->setDateCommande(new \DateTimeImmutable());
         $commande->setNbPersonnes($nbPersonnes);
         $commande->setPrixTotal((string) $totalFinal);
-        $commande->setStatut('en_attente');
-
-        if (!empty($data['datePrevueLivraison'])) {
-            $commande->setDatePrevueLivraison(new \DateTime($data['datePrevueLivraison']));
-        } else {
-            $commande->setDatePrevueLivraison(new \DateTime('+7 days'));
-        }
+        $commande->setStatut(self::STATUT_EN_ATTENTE);
+        $commande->setDatePrevueLivraison(
+            !empty($data['datePrevueLivraison'])
+                ? new \DateTime($data['datePrevueLivraison'])
+                : new \DateTime('+7 days')
+        );
 
         $this->em->persist($commande);
         $this->em->flush();
@@ -302,9 +425,9 @@ class CommandeController extends AbstractController
             'numeroCommande'      => $commande->getNumeroCommande(),
             'menu'                => $menu->getTitre(),
             'nbPersonnes'         => $nbPersonnes,
-            'prixMenu'            => round($sousTotalMenu, 2),
-            'reduction10Pourcent' => $reduction,
-            'fraisLivraison'      => round($fraisLivraison, 2),
+            'prixMenu'            => $sousTotalMenu,
+            'reduction10Pourcent' => ($nbPersonnes >= ($nbMin + 5)),
+            'fraisLivraison'      => $fraisLivraison,
             'prixTotal'           => $totalFinal,
             'statut'              => $commande->getStatut(),
             'stockRestant'        => $menu->getQuantiteStock(),
