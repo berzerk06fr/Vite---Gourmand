@@ -90,6 +90,8 @@ class CommandeController extends AbstractController
                 'fraisLivraison' => $fraisLivraison,
                 'prixTotal'      => $prixTotal,
                 'statut'         => $cmd->getStatut() ?? 'en_attente',
+                'adresse'        => $client ? $client->getAdresse() : '',
+                'ville'          => 'Bordeaux',
                 'dateCommande'   => $cmd->getDateCommande()?->format('d/m/Y H:i'),
                 'client'         => $client ? [
                     'id'    => $client->getId(),
@@ -248,6 +250,13 @@ class CommandeController extends AbstractController
         $nbPersonnes = (int) $data['nbPersonnes'];
         $ville = trim($data['ville'] ?? 'Bordeaux');
         $distanceKm = (float) ($data['distanceKm'] ?? 0.0);
+        $adresse = trim($data['adresse'] ?? '');
+
+        if (!empty($adresse)) {
+            $user->setAdresse($adresse);
+            $this->em->persist($user);
+            $this->em->flush();
+        }
 
         $nbMin = $menu->getNbPersonnesMin() ?? 1;
         $prixUnitaire = (float) $menu->getPrixParPersonne();
