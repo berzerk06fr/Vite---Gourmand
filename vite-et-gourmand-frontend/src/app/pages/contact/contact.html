@@ -8,6 +8,57 @@
           Une question sur nos formules, une demande de prestation sur-mesure ou un devis particulier ? Laissez-nous un message.
         </p>
       </div>
+      @if (isAdmin()) {
+        <div class="card border-primary-subtle bg-light p-3 mb-4 rounded-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small">
+              <span class="fw-bold text-primary d-block">
+                <i class="bi bi-shield-lock me-1"></i>Réglage Administrateur
+              </span>
+              <span class="text-muted">Mail de réception : <strong>{{ emailReception() }}</strong></span>
+            </div>
+
+            @if (!isEditingEmail()) {
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                (click)="ouvrirEditionEmail()">
+                <i class="bi bi-pencil-square me-1"></i>Personnaliser le mail
+              </button>
+            }
+          </div>
+
+          @if (isEditingEmail()) {
+            <div class="input-group input-group-sm mt-3">
+              <input
+                type="email"
+                class="form-control"
+                [ngModel]="tempEmailReception()"
+                (ngModelChange)="tempEmailReception.set($event)"
+                placeholder="nouveau-mail@vite-et-gourmand.fr"
+                aria-label="Nouvelle adresse email de réception">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="sauvegarderEmailReception()">
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="isEditingEmail.set(false)">
+                Annuler
+              </button>
+            </div>
+          }
+
+          @if (configSaved()) {
+            <div class="text-success small fw-semibold mt-2">
+              <i class="bi bi-check-circle me-1"></i>Adresse de réception mise à jour !
+            </div>
+          }
+        </div>
+      }
 
       <div class="card shadow-sm border-0 p-4 p-md-5 bg-white">
         
