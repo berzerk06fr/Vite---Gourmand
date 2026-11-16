@@ -10,10 +10,10 @@ Elle permet de digitaliser l'activité du traiteur bordelais **Vite & Gourmand**
 
 ## Stack Technique
 
-- **Front-end** : Angular (Standalone Components, Signals, Reactive Forms, TypeScript, CSS3 / Responsive & RGAA)
+- **Front-end** : Angular (Standalone Components, Signals, Reactive Forms, Chart.js, TypeScript, Bootstrap 5 / Responsive & RGAA)
 - **Back-end (API REST)** : PHP 8.x / Symfony 7 (Architecture MVC, Sécurité par rôles, Mailer)
 - **Base de données relationnelle (SQL)** : MySQL / MariaDB (Utilisateurs, menus, plats, allergènes, commandes, avis, horaires)
-- **Base de données NoSQL** : MongoDB 6.0 + Mongo Express (Statistiques décisionnelles : CA et volume de commandes par menu et par période)
+- **Base de données NoSQL** : MongoDB 6.0 + Mongo Express (Statistiques décisionnelles : agrégation du CA et comparatif des volumes par menu/période, avec bascule automatique sur MySQL si la collection est vide)
 - **Conteneurisation & Hébergement** : Docker / Docker Compose (local) & Alwaysdata (production)
 
 ## Architecture du Dépôt
@@ -33,7 +33,7 @@ Vite et Gourmand/
 ### 1. Cloner le dépôt
 
 ```bash
-git clone [https://github.com/berzerk06fr/Vite---Gourmand.git](https://github.com/berzerk06fr/Vite---Gourmand.git)
+git clone https://github.com/berzerk06fr/Vite---Gourmand.git
 cd "Vite et Gourmand"
 ```
 
@@ -53,6 +53,11 @@ node database/seed.mjs
 cd vite-et-gourmand-back
 composer install
 cp .env .env.local
+```
+
+Renseigner `DATABASE_URL` (MySQL/MariaDB) et `MONGODB_URL=mongodb://127.0.0.1:27017` dans `.env.local`, puis initialiser la base :
+
+```bash
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
 php -S 127.0.0.1:8000 -t public
@@ -91,5 +96,5 @@ Application accessible sur http://localhost:4200.
 | Rôle | Identifiant (Email) | Mot de passe | Périmètre d'accès |
 | :--- | :--- | :--- | :--- |
 | **Administrateur (José)** | `jose@vite-et-gourmand.fr` | `Admin123!` | Gestion des employés, statistiques décisionnelles NoSQL (CA & commandes), gestion complète |
-| **Employé** | `employe@employe.fr` | `Azerty123!` | Gestion des menus, plats, horaires, suivi des commandes et modération des avis |
-| **Client** | `client@client.fr` | `Azerty123!` | Passage de commande, suivi en temps réel, modification/annulation et dépôt d'avis |
+| **Employé** | `employe@employe.fr` | `Employe123!` | Gestion des menus, plats, horaires, suivi des commandes et modération des avis |
+| **Client** | `client@client.fr` | `Client123!` | Passage de commande, suivi en temps réel, modification/annulation et dépôt d'avis |
