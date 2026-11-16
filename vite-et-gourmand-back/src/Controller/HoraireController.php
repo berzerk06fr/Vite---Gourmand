@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-class HorraireController extends AbstractController
+class HoraireController extends AbstractController
 {
     private function getFilePath(): string
     {
@@ -58,7 +58,9 @@ class HorraireController extends AbstractController
      */
     public function update(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted('ROLE_EMPLOYE');
+        if (!$this->isGranted('ROLE_EMPLOYE') && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException('Accès réservé aux employés et administrateurs.');
+        }
 
         $data = json_decode($request->getContent(), true);
 
