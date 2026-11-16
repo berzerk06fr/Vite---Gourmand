@@ -1,133 +1,165 @@
-<main class="container py-4 my-3">
-  <!-- En-tête -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-      <h1 class="h2 fw-bold text-dark mb-1">Module Décisionnel & Statistiques</h1>
-      <p></p>
-      
+      <h1 class="h3 mb-1">Statistiques &amp; Chiffre d'Affaires</h1>
+      <p class="text-muted small mb-0">Données analytiques issues de la base NoSQL MongoDB</p>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" (click)="chargerStatistiques()">
-        <i class="bi bi-arrow-clockwise"></i> Rafraîchir
-      </button>
-      <a routerLink="/admin/commandes" class="btn btn-outline-dark btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Gestion Commandes
-      </a>
+    <a routerLink="/admin" class="btn btn-outline-secondary btn-sm">Retour à l'administration</a>
+  </div>
+
+  <!-- Filtres de calcul du chiffre d'affaires -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <h2 class="h6 text-uppercase text-muted mb-3">Filtrer le chiffre d'affaires et les ventes</h2>
+      <form (ngSubmit)="chargerStatistiques()" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="filtreMenu" class="form-label fw-semibold">Menu</label>
+          <select
+            id="filtreMenu"
+            class="form-select"
+            [ngModel]="filtreMenu()"
+            (ngModelChange)="filtreMenu.set($event)"
+            name="menu">
+            <option value="">Tous les menus (comparatif global)</option>
+            @for (menu of menusDisponibles(); track menu) {
+              <option [value]="menu">{{ menu }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label for="filtreDateDebut" class="form-label fw-semibold">Date de début</label>
+          <input
+            type="date"
+            id="filtreDateDebut"
+            class="form-control"
+            [ngModel]="filtreDateDebut()"
+            (ngModelChange)="filtreDateDebut.set($event)"
+            name="dateDebut" />
+        </div>
+
+        <div class="col-md-3">
+          <label for="filtreDateFin" class="form-label fw-semibold">Date de fin</label>
+          <input
+            type="date"
+            id="filtreDateFin"
+            class="form-control"
+            [ngModel]="filtreDateFin()"
+            (ngModelChange)="filtreDateFin.set($event)"
+            name="dateFin" />
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">Calculer</button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            title="Réinitialiser les filtres"
+            (click)="reinitialiserFiltres()">
+            ↺
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- État de chargement -->
   @if (loading()) {
     <div class="text-center py-5">
       <output class="spinner-border text-primary">
         <span class="visually-hidden">Chargement...</span>
       </output>
-      <p class="text-muted mt-2">Calcul des agrégations MongoDB en cours...</p>
+    </div>
+  } @else if (errorMsg()) {
+    <div class="alert alert-danger" role="alert">{{ errorMsg() }}</div>
+  } @else if (stats(); as data) {
+    <!-- Indicateurs KPIs filtrés -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100 border-start border-4 border-success">
+          <div class="card-body">
+            <span class="text-muted small text-uppercase fw-semibold">Chiffre d'affaires calculé</span>
+            <div class="display-6 fw-bold text-success mt-1">
+              {{ data.indicateurs.caTotal | number:'1.2-2' }} €
+            </div>
+            <small class="text-muted">
+              {{ filtreMenu() ? 'Menu : ' + filtreMenu() : 'Tous les menus confondus' }}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100 border-start border-4 border-primary">
+          <div class="card-body">
+            <span class="text-muted small text-uppercase fw-semibold">Commandes validées</span>
+            <div class="display-6 fw-bold text-primary mt-1">
+              {{ data.indicateurs.nbCommandes }}
+            </div>
+            <small class="text-muted">Sur la période sélectionnée</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100 border-start border-4 border-warning">
+          <div class="card-body">
+            <span class="text-muted small text-uppercase fw-semibold">Convives servis</span>
+            <div class="display-6 fw-bold text-dark mt-1">
+              {{ data.indicateurs.totalConvives }}
+            </div>
+            <small class="text-muted">Total des personnes</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique comparatif du nombre de commandes par menu -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Comparatif du nombre de commandes par menu</h2>
+        @if ((data.ventesComparatives ?? data.ventesParMenu).length === 0) {
+          <p class="text-muted text-center py-4 mb-0">Aucune commande trouvée sur cette période.</p>
+        } @else {
+          <div style="height: 340px; position: relative;">
+            <canvas #commandesChart></canvas>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Détail du chiffre d'affaires par menu -->
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Détail du chiffre d'affaires par menu</h2>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Menu</th>
+                <th class="text-center">Nombre de commandes</th>
+                <th class="text-center">Convives</th>
+                <th class="text-end">Chiffre d'affaires</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of data.ventesParMenu; track item._id) {
+                <tr>
+                  <td class="fw-semibold">{{ item._id }}</td>
+                  <td class="text-center">
+                    <span class="badge bg-primary rounded-pill">{{ item.totalCommandes }}</span>
+                  </td>
+                  <td class="text-center">{{ item.totalConvives }}</td>
+                  <td class="text-end fw-bold text-success">{{ item.chiffreAffaires | number:'1.2-2' }} €</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">Aucune donnée pour ces critères.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   }
-
-  <!-- État d'erreur -->
-  @if (errorMsg()) {
-    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-      <div>
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        {{ errorMsg() }}
-      </div>
-      <button class="btn btn-sm btn-outline-danger" (click)="chargerStatistiques()">Réessayer</button>
-    </div>
-  }
-
-  <!-- Données chargées -->
-  @if (!loading() && stats(); as data) {
-    <!-- Cartes KPI / Indicateurs -->
-    <section class="row g-3 mb-4" aria-label="Indicateurs clés">
-      <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small text-uppercase fw-semibold">Chiffre d'Affaires</span>
-              <h2 class="h3 fw-bold text-success mb-0 mt-1">
-                {{ data.indicateurs.caTotal | number:'1.2-2' }} €
-              </h2>
-            </div>
-            <div class="bg-success-subtle text-success p-3 rounded-circle">
-              <i class="bi bi-currency-euro fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small text-uppercase fw-semibold">Commandes Clôturées</span>
-              <h2 class="h3 fw-bold text-primary mb-0 mt-1">
-                {{ data.indicateurs.nbCommandes }}
-              </h2>
-            </div>
-            <div class="bg-primary-subtle text-primary p-3 rounded-circle">
-              <i class="bi bi-bag-check-fill fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 col-md-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-light">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-muted small text-uppercase fw-semibold">Convives Servis</span>
-              <h2 class="h3 fw-bold text-warning mb-0 mt-1">
-                {{ data.indicateurs.totalConvives }}
-              </h2>
-            </div>
-            <div class="bg-warning-subtle text-warning p-3 rounded-circle">
-              <i class="bi bi-people-fill fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tableau de répartition par Menu -->
-    <section class="card border-0 shadow-sm rounded-3 overflow-hidden" aria-label="Ventes par Formule">
-      <div class="card-header bg-white py-3">
-        <h2 class="h5 fw-semibold mb-0 text-dark">
-          <i class="bi bi-pie-chart-fill me-2 text-primary"></i>
-          Performance par Formule de Menu
-        </h2>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light text-uppercase small">
-            <tr>
-              <th scope="col" class="py-3 ps-4">Formule de Menu</th>
-              <th scope="col" class="py-3 text-center">Volume Commandes</th>
-              <th scope="col" class="py-3 text-center">Nombre Convives</th>
-              <th scope="col" class="py-3 text-end pe-4">Chiffre d'Affaires</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of data.ventesParMenu; track item._id) {
-              <tr>
-                <td class="ps-4 fw-medium text-dark">{{ item._id }}</td>
-                <td class="text-center">{{ item.totalCommandes }}</td>
-                <td class="text-center">{{ item.totalConvives }}</td>
-                <td class="text-end pe-4 fw-bold text-success">
-                  {{ item.chiffreAffaires | number:'1.2-2' }} €
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="4" class="text-center py-4 text-muted">
-                  Aucune donnée analytique enregistrée dans MongoDB pour le moment.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-  }
-</main>
+</div>
