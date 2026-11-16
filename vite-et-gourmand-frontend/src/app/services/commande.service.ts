@@ -56,6 +56,7 @@ export interface CommandeResponse {
 }
 
 export interface UpdateCommandeClientPayload {
+  menuId?: number;
   nbPersonnes: number;
   adresse: string;
   ville: string;

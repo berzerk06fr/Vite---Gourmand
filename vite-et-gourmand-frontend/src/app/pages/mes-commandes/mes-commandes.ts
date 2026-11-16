@@ -2,8 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { CommandeService, CommandeItem } from '../../services/commande.service';
 import { AvisService } from '../../services/avis.service';
+
+interface MenuOption {
+  id: number;
+  titre: string;
+}
 
 @Component({
   selector: 'app-mes-commandes',
@@ -15,8 +21,10 @@ import { AvisService } from '../../services/avis.service';
 export class MesCommandesComponent implements OnInit {
   private readonly commandeService = inject(CommandeService);
   private readonly avisService = inject(AvisService);
+  private readonly http = inject(HttpClient);
 
   readonly commandes = signal<CommandeItem[]>([]);
+  readonly menusDisponibles = signal<MenuOption[]>([]);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
 
@@ -25,6 +33,7 @@ export class MesCommandesComponent implements OnInit {
 
   // Signaux pour la modale de modification client
   readonly selectedCommandeForEdit = signal<CommandeItem | null>(null);
+  readonly editMenuId = signal<number>(0);
   readonly editNbPersonnes = signal<number>(1);
   readonly editAdresse = signal<string>('');
   readonly editVille = signal<string>('Bordeaux');
@@ -45,6 +54,7 @@ export class MesCommandesComponent implements OnInit {
 
   ngOnInit(): void {
     this.chargerCommandes();
+    this.chargerMenus();
   }
 
   chargerCommandes(): void {
@@ -63,14 +73,31 @@ export class MesCommandesComponent implements OnInit {
     });
   }
 
-  // --- Règle métier : modifiable/annulable uniquement tant que non acceptée ---
-  peutModifierOuAnnuler(statut: string): boolean {
+  chargerMenus(): void {
+    this.http.get<MenuOption[]>('https://vite-et-gourmand-api.alwaysdata.net/api/menus').subscribe({
+      next: (menus) => this.menusDisponibles.set(menus),
+      error: () => this.menusDisponibles.set([])
+    });
+  }
+
+  // --- Règles métier client ---
+  peutAnnuler(statut: string): boolean {
     return (statut || '').toLowerCase().trim() === 'en_attente';
   }
 
-  // --- Modification par le client (tout sauf le menu) ---
+  peutModifier(statut: string): boolean {
+    const s = (statut || '').toLowerCase().trim();
+    return ['en_attente', 'accepté', 'accepte'].includes(s);
+  }
+
+  peutChangerMenu(statut: string): boolean {
+    return (statut || '').toLowerCase().trim() === 'en_attente';
+  }
+
+  // --- Modification par le client ---
   ouvrirModaleEdition(cmd: CommandeItem): void {
     this.selectedCommandeForEdit.set(cmd);
+    this.editMenuId.set(cmd.menu?.id || 0);
     this.editNbPersonnes.set(cmd.nbPersonnes || 1);
     this.editAdresse.set(cmd.adresse || '');
     this.editVille.set(cmd.ville || 'Bordeaux');
@@ -92,6 +119,7 @@ export class MesCommandesComponent implements OnInit {
     this.editFeedback.set(null);
 
     this.commandeService.modifierCommandeClient(cmd.id, {
+      menuId: this.peutChangerMenu(cmd.statut) ? Number(this.editMenuId()) : undefined,
       nbPersonnes: Number(this.editNbPersonnes()),
       adresse: this.editAdresse().trim(),
       ville: this.editVille().trim() || 'Bordeaux',

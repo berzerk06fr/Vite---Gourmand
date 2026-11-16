@@ -81,7 +81,8 @@
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </button>
-            @if (peutModifierOuAnnuler(cmd.statut)) {
+
+            @if (peutModifier(cmd.statut)) {
               <button
                 type="button"
                 (click)="ouvrirModaleEdition(cmd)"
@@ -89,7 +90,9 @@
                 style="font-size: 0.8125rem; padding: 0.45rem 0.85rem;">
                 Modifier
               </button>
+            }
 
+            @if (peutAnnuler(cmd.statut)) {
               <button
                 type="button"
                 (click)="annulerCommande(cmd)"
@@ -112,7 +115,7 @@
                 </svg>
                 <span>Donner mon avis</span>
               </button>
-            } @else if (!peutModifierOuAnnuler(cmd.statut)) {
+            } @else if (!peutModifier(cmd.statut)) {
               <span style="font-size: 0.75rem; color: #a8a29e; font-style: italic;">
                 Avis disponible après livraison
               </span>
@@ -369,7 +372,7 @@
   </div>
 }
 
-<!-- Modale Modification Commande Client (tout sauf le menu) -->
+<!-- Modale Modification Commande Client -->
 @if (selectedCommandeForEdit(); as cmdEdit) {
   <div class="vg-modal-backdrop">
     <div class="vg-modal-dialog">
@@ -393,15 +396,33 @@
 
       <form (ngSubmit)="enregistrerModification()" class="vg-modal-body">
 
-        <!-- Menu verrouillé (non modifiable) -->
-        <div style="background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 0.625rem; padding: 0.75rem 1rem;">
-          <span style="display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: #78716c;">
-            Menu sélectionné (non modifiable)
-          </span>
-          <strong style="font-size: 0.95rem; color: #1c1917;">
-            {{ cmdEdit.menu?.titre || 'Menu traiteur' }}
-          </strong>
-        </div>
+        @if (peutChangerMenu(cmdEdit.statut)) {
+          <div>
+            <label for="editMenuSelect" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
+              Menu sélectionné (modifiable avant validation)
+            </label>
+            <select
+              id="editMenuSelect"
+              [ngModel]="editMenuId()"
+              (ngModelChange)="editMenuId.set($event)"
+              name="menuId"
+              class="vg-textarea"
+              style="min-height: auto; padding: 0.6rem 0.75rem;">
+              @for (m of menusDisponibles(); track m.id) {
+                <option [ngValue]="m.id">{{ m.titre }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div style="background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 0.625rem; padding: 0.75rem 1rem;">
+            <span style="display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; color: #78716c;">
+              Menu sélectionné (verrouillé car commande acceptée)
+            </span>
+            <strong style="font-size: 0.95rem; color: #1c1917;">
+              {{ cmdEdit.menu?.titre || 'Menu traiteur' }}
+            </strong>
+          </div>
+        }
 
         <div>
           <label for="editNbPersonnes" style="display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #57534e; margin-bottom: 0.35rem;">
