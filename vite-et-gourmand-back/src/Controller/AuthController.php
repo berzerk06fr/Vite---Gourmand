@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 class AuthController extends AbstractController
 {
@@ -75,7 +77,8 @@ class AuthController extends AbstractController
     public function updateMe(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        MailerInterface $mailer
     ): JsonResponse {
         /** @var \App\Entity\Utilisateur|null $user */
         $user = $this->getUser();
@@ -107,11 +110,17 @@ class AuthController extends AbstractController
         $user->setTelephone($telephone !== '' ? $telephone : null);
         $user->setAdresse($adresse !== '' ? $adresse : null);
 
+        $passwordChanged = false;
         if ($newPassword !== '') {
             $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+            $passwordChanged = true;
         }
 
         $em->flush();
+
+        if ($passwordChanged) {
+            $this->notifyPasswordChanged($user, $mailer);
+        }
 
         return $this->json([
             'message' => 'Profil mis à jour avec succès.',
@@ -165,7 +174,8 @@ class AuthController extends AbstractController
     public function resetPassword(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        MailerInterface $mailer
     ): JsonResponse {
         $data = json_decode($request->getContent(), true) ?? [];
         $token = trim((string) ($data['token'] ?? ''));
@@ -189,7 +199,38 @@ class AuthController extends AbstractController
         $user->setResetTokenExpiresAt(null);
         $em->flush();
 
+        $this->notifyPasswordChanged($user, $mailer);
+
         return $this->json(['message' => 'Votre mot de passe a été réinitialisé avec succès.'], Response::HTTP_OK);
+    }
+
+    private function notifyPasswordChanged(Utilisateur $user, MailerInterface $mailer): void
+    {
+        $recipient = $user->getEmail();
+        if (empty($recipient)) {
+            return;
+        }
+
+        $firstName = htmlspecialchars($user->getPrenom() ?? 'Client');
+        $body = <<<HTML
+            <h2>Confirmation de modification de mot de passe</h2>
+            <p>Bonjour {$firstName},</p>
+            <p>Le mot de passe associé à votre compte <strong>Vite &amp; Gourmand</strong> a bien été mis à jour.</p>
+            <p>Si vous n'avez pas effectué cette démarche, merci de nous contacter rapidement.</p>
+            <p>Cordialement,<br>L'équipe Vite &amp; Gourmand</p>
+        HTML;
+
+        try {
+            $message = (new Email())
+                ->from('vite-et-gourmand-api@alwaysdata.net')
+                ->to($recipient)
+                ->subject('Vite & Gourmand - Confirmation de changement de mot de passe')
+                ->html($body);
+
+            $mailer->send($message);
+        } catch (\Throwable $e) {
+            error_log('Échec envoi mail confirmation mot de passe : ' . $e->getMessage());
+        }
     }
 
     private function isPasswordStrong(string $password): bool
@@ -201,3 +242,4 @@ class AuthController extends AbstractController
             && preg_match('/[\W_]/', $password) === 1;
     }
 }
+
