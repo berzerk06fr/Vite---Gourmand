@@ -16,6 +16,7 @@ import { AdminStatistiquesComponent } from './pages/admin-statistiques/admin-sta
 import { AdminCatalogueComponent } from './pages/admin-catalogue/admin-catalogue';
 import { AdminEmployesComponent } from './pages/admin-employes/admin-employes';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password';
+import { GestionFooterComponent } from './components/gestion-footer/gestion-footer';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -28,6 +29,7 @@ export const routes: Routes = [
   { path: 'mon-profil', component: MonProfilComponent, canActivate: [authGuard] },
   { path: 'admin/commandes', component: AdminCommandesComponent, canActivate: [authGuard, staffGuard] },
   { path: 'admin/catalogue', component: AdminCatalogueComponent, canActivate: [authGuard, staffGuard] },
+  { path: 'admin/footer', component: GestionFooterComponent, canActivate: [authGuard, staffGuard] },
   { path: 'admin/statistiques', component: AdminStatistiquesComponent, canActivate: [authGuard, adminGuard] },
   { path: 'admin/employes', component: AdminEmployesComponent, canActivate: [authGuard, adminGuard] },
   { path: 'connexion', component: LoginComponent },

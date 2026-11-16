@@ -5,33 +5,39 @@
       <div class="col-12 col-lg-4">
         <h3 class="fs-5 fw-bold text-dark mb-3">Vite & Gourmand</h3>
         <p class="footer-text small mb-3">
-          Traiteur gastronomique de saison, créateur de moments conviviaux et de réceptions sur-mesure.
+          {{ footer().description }}
         </p>
         <div class="d-flex gap-3 fs-5">
-          <a href="#" class="footer-social-link" aria-label="Consulter notre page Twitter / X"><i class="bi bi-twitter-x"></i></a>
-          <a href="#" class="footer-social-link" aria-label="Consulter notre page Facebook"><i class="bi bi-facebook"></i></a>
-          <a href="#" class="footer-social-link" aria-label="Consulter notre page Instagram"><i class="bi bi-instagram"></i></a>
+          @if (footer().reseaux.twitter) {
+            <a [href]="footer().reseaux.twitter" target="_blank" rel="noopener" class="footer-social-link" aria-label="Consulter notre page Twitter / X"><i class="bi bi-twitter-x"></i></a>
+          }
+          @if (footer().reseaux.facebook) {
+            <a [href]="footer().reseaux.facebook" target="_blank" rel="noopener" class="footer-social-link" aria-label="Consulter notre page Facebook"><i class="bi bi-facebook"></i></a>
+          }
+          @if (footer().reseaux.instagram) {
+            <a [href]="footer().reseaux.instagram" target="_blank" rel="noopener" class="footer-social-link" aria-label="Consulter notre page Instagram"><i class="bi bi-instagram"></i></a>
+          }
         </div>
       </div>
-      
+
       <div class="col-12 col-sm-6 col-lg-4">
         <h4 class="fs-6 fw-bold text-dark mb-3">Contact & Atelier</h4>
         <ul class="list-unstyled small footer-text d-flex flex-column gap-2 mb-0">
           <li class="d-flex align-items-center">
             <span class="footer-icon me-2"><i class="bi bi-telephone"></i></span>
-            <a href="tel:0493000000" class="footer-link">04 93 XX XX XX</a>
+            <a [href]="'tel:' + footer().contact.telephone" class="footer-link">{{ footer().contact.telephone }}</a>
           </li>
           <li class="d-flex align-items-center">
             <span class="footer-icon me-2"><i class="bi bi-envelope"></i></span>
-            <a href="mailto:contact@vite-et-gourmand.fr" class="footer-link">contact&#64;vite-et-gourmand.fr</a>
+            <a [href]="'mailto:' + footer().contact.email" class="footer-link">{{ footer().contact.email }}</a>
           </li>
           <li class="d-flex align-items-center">
             <span class="footer-icon me-2"><i class="bi bi-geo-alt"></i></span>
-            <span>Atelier & Cuisines : Bordeaux</span>
+            <span>{{ footer().contact.adresse }}</span>
           </li>
           <li class="d-flex align-items-center">
             <span class="footer-icon me-2"><i class="bi bi-truck"></i></span>
-            <span>Livraison Bordeaux & Gironde</span>
+            <span>{{ footer().contact.livraison }}</span>
           </li>
         </ul>
       </div>
@@ -39,18 +45,20 @@
       <div class="col-12 col-sm-6 col-lg-3">
         <h4 class="fs-6 fw-bold text-dark mb-3">Horaires d'ouverture</h4>
         <ul class="list-unstyled small footer-text d-flex flex-column gap-2 mb-0">
-          <li class="d-flex justify-content-between pb-1 border-bottom border-light-subtle">
-            <span class="text-secondary">Lun. – Jeu.</span>
-            <span class="fw-medium text-dark">08h00 – 19h00</span>
-          </li>
-          <li class="d-flex justify-content-between pb-1 border-bottom border-light-subtle">
-            <span class="text-secondary">Ven. – Sam.</span>
-            <span class="fw-medium text-dark">08h00 – 20h00</span>
-          </li>
-          <li class="d-flex justify-content-between pt-1">
-            <span class="text-terracotta fw-semibold">Dimanche</span>
-            <span class="text-terracotta fw-semibold">09h00 – 14h00</span>
-          </li>
+          @for (item of footer().horaires; track $index; let last = $last) {
+            <li class="d-flex justify-content-between"
+                [class.pb-1]="!last"
+                [class.border-bottom]="!last"
+                [class.border-light-subtle]="!last"
+                [class.pt-1]="last && item.highlight">
+              <span [class]="item.highlight ? 'text-terracotta fw-semibold' : 'text-secondary'">
+                {{ item.jour }}
+              </span>
+              <span [class]="item.highlight ? 'text-terracotta fw-semibold' : 'fw-medium text-dark'">
+                {{ item.heures }}
+              </span>
+            </li>
+          }
         </ul>
       </div>
     </div>

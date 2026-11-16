@@ -54,6 +54,7 @@
 
           @if (currentUser(); as user) {
             <!-- Accès Staff (Employé & Admin) -->
+            <!-- Accès Staff (Employé & Admin) -->
             @if (user.roles.includes('ROLE_ADMIN') || user.roles.includes('ROLE_EMPLOYE')) {
               <li class="nav-item d-none d-xl-flex align-items-center mx-1" aria-hidden="true">
                 <span class="vr" style="height: 20px;"></span>
@@ -74,6 +75,15 @@
                    (click)="closeMenu()">
                   <i class="bi bi-journal-text"></i>
                   <span>Catalogue</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-amber-700 fw-bold text-nowrap d-inline-flex align-items-center gap-1 px-2"
+                   routerLink="/admin/footer"
+                   routerLinkActive="active-nav"
+                   (click)="closeMenu()">
+                  <i class="bi bi-layout-text-window-reverse"></i>
+                  <span>Entreprise</span>
                 </a>
               </li>
             }

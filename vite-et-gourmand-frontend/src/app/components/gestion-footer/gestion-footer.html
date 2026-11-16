@@ -1,0 +1,157 @@
+<div class="container py-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+      <h2 class="h5 mb-0 fw-bold text-dark">
+        <i class="bi bi-layout-text-window-reverse me-2"></i>Gestion des informations du bas de page
+      </h2>
+    </div>
+
+    <div class="card-body">
+      @if (messageSucces()) {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          {{ messageSucces() }}
+          <button type="button" class="btn-close" (click)="messageSucces.set(null)" aria-label="Fermer"></button>
+        </div>
+      }
+
+      @if (messageErreur()) {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ messageErreur() }}
+          <button type="button" class="btn-close" (click)="messageErreur.set(null)" aria-label="Fermer"></button>
+        </div>
+      }
+
+      <form (ngSubmit)="enregistrer()">
+        <!-- Présentation -->
+        <div class="mb-4">
+          <h3 class="h6 fw-bold border-bottom pb-2 mb-3">Présentation de l'entreprise</h3>
+          <label for="footerDesc" class="form-label small fw-semibold">Texte descriptif</label>
+          <textarea
+            id="footerDesc"
+            class="form-control"
+            rows="2"
+            name="description"
+            [(ngModel)]="formData.description"
+            required></textarea>
+        </div>
+
+        <!-- Réseaux sociaux -->
+        <div class="mb-4">
+          <h3 class="h6 fw-bold border-bottom pb-2 mb-3">Réseaux sociaux (laisser vide pour masquer)</h3>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label for="socialTwitter" class="form-label small fw-semibold">
+                <i class="bi bi-twitter-x me-1"></i>Twitter / X
+              </label>
+              <input id="socialTwitter" type="text" class="form-control" name="twitter" [(ngModel)]="formData.reseaux.twitter">
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="socialFacebook" class="form-label small fw-semibold">
+                <i class="bi bi-facebook me-1"></i>Facebook
+              </label>
+              <input id="socialFacebook" type="text" class="form-control" name="facebook" [(ngModel)]="formData.reseaux.facebook">
+            </div>
+            <div class="col-12 col-md-4">
+              <label for="socialInstagram" class="form-label small fw-semibold">
+                <i class="bi bi-instagram me-1"></i>Instagram
+              </label>
+              <input id="socialInstagram" type="text" class="form-control" name="instagram" [(ngModel)]="formData.reseaux.instagram">
+            </div>
+          </div>
+        </div>
+
+        <!-- Coordonnées -->
+        <div class="mb-4">
+          <h3 class="h6 fw-bold border-bottom pb-2 mb-3">Contact & Atelier</h3>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label for="contactTel" class="form-label small fw-semibold">Téléphone</label>
+              <input id="contactTel" type="text" class="form-control" name="telephone" [(ngModel)]="formData.contact.telephone" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="contactEmail" class="form-label small fw-semibold">E-mail</label>
+              <input id="contactEmail" type="email" class="form-control" name="email" [(ngModel)]="formData.contact.email" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="contactAdresse" class="form-label small fw-semibold">Adresse / Atelier</label>
+              <input id="contactAdresse" type="text" class="form-control" name="adresse" [(ngModel)]="formData.contact.adresse" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="contactLivraison" class="form-label small fw-semibold">Zone de livraison</label>
+              <input id="contactLivraison" type="text" class="form-control" name="livraison" [(ngModel)]="formData.contact.livraison" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horaires d'ouverture -->
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+            <h3 class="h6 fw-bold mb-0">Horaires d'ouverture</h3>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="ajouterHoraire()">
+              <i class="bi bi-plus-lg me-1"></i>Ajouter un créneau
+            </button>
+          </div>
+
+          @for (item of formData.horaires; track $index) {
+            <div class="row g-2 align-items-center mb-2">
+              <div class="col-12 col-md-4">
+                <label class="visually-hidden" [for]="'jour_' + $index">Jours du créneau {{ $index + 1 }}</label>
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="Ex: Lun. – Jeu."
+                  [id]="'jour_' + $index"
+                  [name]="'jour_' + $index"
+                  [(ngModel)]="item.jour"
+                  required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="visually-hidden" [for]="'heures_' + $index">Heures du créneau {{ $index + 1 }}</label>
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  placeholder="Ex: 08h00 – 19h00"
+                  [id]="'heures_' + $index"
+                  [name]="'heures_' + $index"
+                  [(ngModel)]="item.heures"
+                  required>
+              </div>
+              <div class="col-8 col-md-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [id]="'highlight_' + $index"
+                    [name]="'highlight_' + $index"
+                    [(ngModel)]="item.highlight">
+                  <label class="form-check-label small" [for]="'highlight_' + $index">
+                    Mettre en valeur
+                  </label>
+                </div>
+              </div>
+              <div class="col-4 col-md-1 text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="supprimerHoraire($index)"
+                  aria-label="Supprimer ce créneau">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-dark px-4" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <output class="spinner-border spinner-border-sm me-2" aria-hidden="true"></output>Enregistrement...
+            } @else {
+              <i class="bi bi-check2-circle me-1"></i>Enregistrer les modifications
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
