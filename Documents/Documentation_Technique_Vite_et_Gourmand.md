@@ -75,7 +75,7 @@ J'ai structuré l'application autour d'une architecture en trois couches bien di
 | :--- | :--- | :--- |
 | **Front-end** | **Angular 21.2 (TypeScript 5.9, RxJS 7.8)** | J'ai choisi Angular pour sa structure modulaire et le typage strict de TypeScript qui m'a permis d'éviter pas mal d'erreurs dès le développement. Il facilite aussi la gestion dynamique des filtres de menus et la sécurisation des pages grâce aux Guards. |
 | **Style & UI** | **Bootstrap 5.3.8 & Bootstrap Icons 1.13** | Permet de créer rapidement une interface responsive (adaptée mobile et ordinateur), accessible (respect des contrastes RGAA >= 4.5:1) et de réaliser mes graphiques directement en CSS/Bootstrap sans alourdir le projet avec d'autres bibliothèques. |
-| **Back-end** | **Symfony 5.4 LTS (PHP 8.4)** | J'ai utilisé Bootstrap pour concevoir facilement une interface responsive mobile-first et accessible (contrastes conformes au RGAA), tout en affichant mes graphiques directement avec ses composants natifs sans ajouter de dépendances inutiles. |
+| **Back-end** | **Symfony 5.4 LTS (PHP 8.4)** | J'ai choisi Symfony pour sa robustesse et sa structure modulaire permettant de concevoir une API REST sécurisée, avec une gestion native des rôles (RBAC), du hachage des mots de passe et de l'envoi d'e-mails via Symfony Mailer. |
 | **BDD Relationnelle** | **MySQL / MariaDB** | J'ai choisi MySQL pour stocker les données principales (comptes, menus, commandes) car sa structure relationnelle garantit leur cohérence (propriétés ACID), sécurise les liens entre les tables et évite toute erreur lors du suivi des commandes. |
 | **BDD NoSQL** | **MongoDB 6.0 (mongodb/mongodb ^2.5)** | J'ai utilisé MongoDB pour stocker les données statistiques sous forme de documents JSON : cela permet d'afficher rapidement le chiffre d'affaires par menu et par période côté administrateur sans surcharger MySQL. |
 | **Tests & Qualité** | **Vitest 4.0 (jsdom) & Prettier 3.8** | J'utilise Vitest pour valider rapidement le bon fonctionnement de mon code front-end et Prettier pour m'assurer que le formatage du code reste propre et homogène. |
@@ -196,7 +196,7 @@ Vite---Gourmand/
 | **Stockage des mots de passe** | Je sécurise les mots de passe grâce au hachage irréversible **bcrypt** (cost = 13) natif de Symfony Security, avec une politique de complexité stricte (10 caractères minimum, majuscules, minuscules, chiffres et caractères spéciaux). |
 | **Contrôle d'accès (Broken Access Control)** | Je sécurise l'application avec un double verrouillage : des **Guards Angular** côté front-end et une vérification rigoureuse des rôles (ROLE_USER, ROLE_EMPLOYE, ROLE_ADMIN) associée à un contrôle de propriété dans chaque contrôleur API. |
 | **Injections SQL & NoSQL** | J'utilise exclusivement **Doctrine ORM** (avec des requêtes préparées et paramétrées) pour MySQL et je caste strictement les paramètres pour les agrégations MongoDB afin de bloquer toute injection. |
-| **Failles XSS (Cross-Site Scripting)** | Je restreins les origines autorisées via **NelmioCorsBundle** et je protège les données sensibles en excluant strictement les fichiers .env.local ainsi que les clés JWT (*.pem) du dépôt Git via .gitignore. |
+| **Failles XSS (Cross-Site Scripting)** | Angular échappe automatiquement les données affichées dans les templates HTML, et le back-end valide et nettoie systématiquement les entrées utilisateurs avant enregistrement en base. |
 | **Configuration CORS & Secrets** | Restriction des origines autorisées via **NelmioCorsBundle**. Exclusion stricte des fichiers .env.local et clés cryptographiques JWT (*.pem) du dépôt Git via .gitignore. |
 | **Conformité RGPD** | J'intègre le consentement explicite à l'inscription, la minimisation des données collectées, un espace client pour consulter ou modifier ses informations, ainsi que la gestion du droit à l'effacement ou de la désactivation. |
 
@@ -218,7 +218,7 @@ Vite---Gourmand/
 <div style="margin-top: 24px;"></div>
 
 ### 6.2 Configuration serveur et bases de données
-1. **Côté MySQL (Alwaysdata) :** J initialise la base **vite-et-gourmand-api_db**, je lance mes migrations Doctrine en automatique, et j'ajoute mes comptes de test.
+1. **Côté MySQL (Alwaysdata) :** J'initialise la base **vite-et-gourmand-api_db**, je lance mes migrations Doctrine en automatique, et j'ajoute mes comptes de test.
 2. **Côté MongoDB :** Je renseigne la chaîne de connexion **MONGODB_URL** pour la partie décisionnelle.
 3. **Fichier .env.local :** Je sécurise les variables de production (APP_ENV=prod, clés secrètes, accès aux bases, passphrase JWT et configuration e-mail).
 4. **Sécurité SSL :** Je mets en place le certificat **Let's Encrypt** sur Alwaysdata pour garantir une navigation entièrement chiffrée en HTTPS.
