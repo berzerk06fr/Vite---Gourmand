@@ -284,13 +284,17 @@ class CommandeController extends AbstractController
     private function synchroniserStatistiquesMongo(Commande $commande, string $nouveauStatut): void
     {
         $menu = $commande->getMenu();
+        $dateCommande = $commande->getDateCommande() ?? $commande->getDatePrevueLivraison() ?? new \DateTimeImmutable();
+
         $this->mongoService->synchroniserCommande([
             'id'             => $commande->getId(),
             'numeroCommande' => $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId()),
+            'menuId'         => $menu ? (int) $menu->getId() : 0,
             'menuTitre'      => $menu ? ($menu->getTitre() ?? self::DEFAULT_MENU_TITRE) : self::DEFAULT_MENU_TITRE,
             'prixTotal'      => (float) ($commande->getPrixTotal() ?? 0),
             'nbPersonnes'    => (int) ($commande->getNbPersonnes() ?? 1),
             'statut'         => $nouveauStatut,
+            'dateCommande'   => $dateCommande->format('Y-m-d'),
         ]);
     }
 

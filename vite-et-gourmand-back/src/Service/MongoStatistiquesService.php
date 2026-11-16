@@ -9,6 +9,10 @@ class MongoStatistiquesService
     private mixed $client = null;
     private string $database = 'vite_et_gourmand_analytics';
 
+    private const STATUTS_VALIDES = [
+        'livré', 'livre', 'terminée', 'terminee', 'cloturee', 'clôturée', 'accepté', 'accepte'
+    ];
+
     public function __construct(
         private readonly LoggerInterface $logger
     ) {
@@ -23,9 +27,6 @@ class MongoStatistiquesService
         }
     }
 
-    /**
-     * Enregistre ou met à jour une commande dans la collection NoSQL
-     */
     public function synchroniserCommande(array $data): bool
     {
         if ($this->client === null) {
@@ -40,11 +41,12 @@ class MongoStatistiquesService
                     '$set' => [
                         'commande_id'     => (int) $data['id'],
                         'numero_commande' => $data['numeroCommande'],
+                        'menu_id'         => (int) ($data['menuId'] ?? 0),
                         'menu_titre'      => $data['menuTitre'],
                         'prix_total'      => (float) $data['prixTotal'],
                         'nb_personnes'    => (int) $data['nbPersonnes'],
                         'statut'          => mb_strtolower(trim($data['statut'])),
-                        'date_commande'   => date('c')
+                        'date_commande'   => $data['dateCommande'] ?? date('Y-m-d'),
                     ]
                 ],
                 ['upsert' => true]
@@ -57,9 +59,9 @@ class MongoStatistiquesService
     }
 
     /**
-     * Calcule le chiffre d'affaires et les volumes via un pipeline d'agrégation NoSQL
+     * Calcule le chiffre d'affaires et le nombre de commandes par menu avec filtres optionnels
      */
-    public function getStatistiquesVentes(): array
+    public function getStatistiquesVentes(?string $menuTitre = null, ?string $dateDebut = null, ?string $dateFin = null): array
     {
         if ($this->client === null) {
             return [];
@@ -67,30 +69,28 @@ class MongoStatistiquesService
 
         try {
             $collection = $this->client->selectDatabase($this->database)->selectCollection('commandes_analytics');
+            $match = $this->construireFiltreMatch($menuTitre, $dateDebut, $dateFin);
+
             $cursor = $collection->aggregate([
-                [
-                    '$match' => [
-                        'statut' => ['$in' => ['livré', 'livre', 'terminée', 'terminee', 'cloturee', 'clôturée', 'accepté', 'accepte']]
-                    ]
-                ],
+                ['$match' => $match],
                 [
                     '$group' => [
                         '_id'             => '$menu_titre',
+                        'menuId'          => ['$first' => '$menu_id'],
                         'chiffreAffaires' => ['$sum' => '$prix_total'],
                         'totalCommandes'  => ['$sum' => 1],
                         'totalConvives'   => ['$sum' => '$nb_personnes']
                     ]
                 ],
-                [
-                    '$sort' => ['chiffreAffaires' => -1]
-                ]
+                ['$sort' => ['totalCommandes' => -1]]
             ]);
 
             $results = [];
             foreach ($cursor as $doc) {
                 $results[] = [
                     '_id'             => $doc['_id'],
-                    'chiffreAffaires' => (float) $doc['chiffreAffaires'],
+                    'menuId'          => (int) ($doc['menuId'] ?? 0),
+                    'chiffreAffaires' => round((float) $doc['chiffreAffaires'], 2),
                     'totalCommandes'  => (int) $doc['totalCommandes'],
                     'totalConvives'   => (int) $doc['totalConvives']
                 ];
@@ -104,9 +104,9 @@ class MongoStatistiquesService
     }
 
     /**
-     * Indicateurs globaux (CA Total, Nombre total de commandes, total convives)
+     * Indicateurs globaux filtrés (CA Total, Nombre total de commandes, total convives)
      */
-    public function getIndicateursGlobaux(): array
+    public function getIndicateursGlobaux(?string $menuTitre = null, ?string $dateDebut = null, ?string $dateFin = null): array
     {
         if ($this->client === null) {
             return ['caTotal' => 0.0, 'nbCommandes' => 0, 'totalConvives' => 0];
@@ -114,12 +114,10 @@ class MongoStatistiquesService
 
         try {
             $collection = $this->client->selectDatabase($this->database)->selectCollection('commandes_analytics');
+            $match = $this->construireFiltreMatch($menuTitre, $dateDebut, $dateFin);
+
             $cursor = $collection->aggregate([
-                [
-                    '$match' => [
-                        'statut' => ['$in' => ['livré', 'livre', 'terminée', 'terminee', 'cloturee', 'clôturée', 'accepté', 'accepte']]
-                    ]
-                ],
+                ['$match' => $match],
                 [
                     '$group' => [
                         '_id'           => null,
@@ -144,5 +142,29 @@ class MongoStatistiquesService
         }
 
         return ['caTotal' => 0.0, 'nbCommandes' => 0, 'totalConvives' => 0];
+    }
+
+    private function construireFiltreMatch(?string $menuTitre, ?string $dateDebut, ?string $dateFin): array
+    {
+        $match = [
+            'statut' => ['$in' => self::STATUTS_VALIDES]
+        ];
+
+        if ($menuTitre !== null && trim($menuTitre) !== '') {
+            $match['menu_titre'] = trim($menuTitre);
+        }
+
+        if (($dateDebut !== null && $dateDebut !== '') || ($dateFin !== null && $dateFin !== '')) {
+            $dateFilter = [];
+            if ($dateDebut !== null && $dateDebut !== '') {
+                $dateFilter['$gte'] = substr($dateDebut, 0, 10);
+            }
+            if ($dateFin !== null && $dateFin !== '') {
+                $dateFilter['$lte'] = substr($dateFin, 0, 10);
+            }
+            $match['date_commande'] = $dateFilter;
+        }
+
+        return $match;
     }
 }
