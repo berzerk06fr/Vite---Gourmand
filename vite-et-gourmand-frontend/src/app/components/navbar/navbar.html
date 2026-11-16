@@ -11,6 +11,9 @@
       <!-- Actions Mobile (Header droit) -->
       <div class="d-flex align-items-center gap-2 d-xl-none">
         @if (currentUser(); as user) {
+          <a routerLink="/mon-profil" class="btn btn-outline-secondary btn-sm p-1 px-2" aria-label="Mon profil" title="Mon profil">
+            <i class="bi bi-person-circle fs-5"></i>
+          </a>
           <button type="button" class="btn btn-outline-danger btn-sm p-1 px-2" (click)="onLogout()" aria-label="Se déconnecter" title="Se déconnecter">
             <i class="bi bi-box-arrow-right fs-5"></i>
           </button>
@@ -111,10 +114,13 @@
         <!-- Actions Desktop -->
         <div class="d-none d-xl-flex align-items-center gap-3 ms-3">
           @if (currentUser(); as user) {
-            <div class="d-inline-flex align-items-center gap-2 text-dark small fw-semibold text-nowrap">
+            <a routerLink="/mon-profil"
+               routerLinkActive="text-terracotta"
+               class="d-inline-flex align-items-center gap-2 text-dark text-decoration-none small fw-semibold text-nowrap"
+               title="Modifier mes informations">
               <i class="bi bi-person-circle fs-5 text-terracotta"></i>
               <span class="text-capitalize">{{ user.prenom }} {{ user.nom }}</span>
-            </div>
+            </a>
             <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 text-nowrap px-3 py-2 rounded-2" (click)="onLogout()">
               <i class="bi bi-box-arrow-right"></i>
               <span>Déconnexion</span>
@@ -132,9 +138,10 @@
         <!-- Actions Mobile (dans le menu déroulé) -->
         <div class="d-xl-none d-flex flex-column gap-2 mt-3 pt-3 border-top text-center">
           @if (currentUser(); as user) {
-            <div class="fw-semibold text-dark text-capitalize mb-1">
-              Connecté : {{ user.prenom }} {{ user.nom }}
-            </div>
+            <a routerLink="/mon-profil" (click)="closeMenu()" class="fw-semibold text-dark text-decoration-none text-capitalize mb-1 d-block">
+              <i class="bi bi-person-circle text-terracotta me-1"></i>
+              Mon profil ({{ user.prenom }} {{ user.nom }})
+            </a>
             <button type="button" class="btn btn-outline-danger w-100" (click)="onLogout()">
               Déconnexion
             </button>

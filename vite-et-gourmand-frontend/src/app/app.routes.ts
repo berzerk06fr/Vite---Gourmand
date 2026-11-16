@@ -7,6 +7,7 @@ import { CommandeComponent } from './pages/commande/commande';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
 import { MesCommandesComponent } from './pages/mes-commandes/mes-commandes';
+import { MonProfilComponent } from './pages/mon-profil/mon-profil';
 import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
 import { staffGuard } from './guards/staff.guard';
@@ -24,6 +25,7 @@ export const routes: Routes = [
   { path: 'contact', component: ContactComponent },
   { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
   { path: 'mes-commandes', component: MesCommandesComponent, canActivate: [authGuard] },
+  { path: 'mon-profil', component: MonProfilComponent, canActivate: [authGuard] },
   { path: 'admin/commandes', component: AdminCommandesComponent, canActivate: [authGuard, staffGuard] },
   { path: 'admin/catalogue', component: AdminCatalogueComponent, canActivate: [authGuard, staffGuard] },
   { path: 'admin/statistiques', component: AdminStatistiquesComponent, canActivate: [authGuard, adminGuard] },

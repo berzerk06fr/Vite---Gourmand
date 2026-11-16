@@ -1,0 +1,79 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4">
+        <h1 class="h2 fw-bold text-dark">Mon Profil</h1>
+        <p class="text-muted mb-0">Consultez et mettez à jour vos informations personnelles et coordonnées de livraison.</p>
+      </div>
+
+      @if (messageSucces) {
+        <div class="alert alert-success" role="alert">
+          <i class="bi bi-check-circle-fill me-2"></i>{{ messageSucces }}
+        </div>
+      }
+
+      @if (messageErreur) {
+        <div class="alert alert-danger" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ messageErreur }}
+        </div>
+      }
+
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4 p-md-5">
+          <form (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="profilEmail" class="form-label small fw-semibold">Adresse e-mail (identifiant de connexion)</label>
+              <input id="profilEmail" type="email" [value]="email" class="form-control bg-light" disabled readonly>
+              <div class="form-text">L'adresse e-mail de connexion ne peut pas être modifiée directement.</div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="profilPrenom" class="form-label small fw-semibold">Prénom *</label>
+                <input id="profilPrenom" type="text" [(ngModel)]="prenom" name="prenom" required class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="profilNom" class="form-label small fw-semibold">Nom *</label>
+                <input id="profilNom" type="text" [(ngModel)]="nom" name="nom" required class="form-control">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="profilTelephone" class="form-label small fw-semibold">Téléphone</label>
+              <input id="profilTelephone" type="tel" [(ngModel)]="telephone" name="telephone" placeholder="Ex: 06 12 34 56 78" class="form-control">
+            </div>
+
+            <div class="mb-4">
+              <label for="profilAdresse" class="form-label small fw-semibold">Adresse postale par défaut</label>
+              <textarea id="profilAdresse" [(ngModel)]="adresse" name="adresse" rows="2" placeholder="Numéro, rue, code postal, ville" class="form-control"></textarea>
+            </div>
+
+            <hr class="my-4">
+
+            <h2 class="h6 fw-bold mb-3">Changer mon mot de passe (facultatif)</h2>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="profilNewPassword" class="form-label small fw-semibold">Nouveau mot de passe</label>
+                <input id="profilNewPassword" type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="Laisser vide pour conserver l'actuel" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label for="profilConfirmPassword" class="form-label small fw-semibold">Confirmer le nouveau mot de passe</label>
+                <input id="profilConfirmPassword" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Confirmer le mot de passe" class="form-control">
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+              <button type="submit" [disabled]="loading" class="btn btn-terracotta px-4 py-2 fw-semibold">
+                @if (loading) {
+                  <span>Enregistrement...</span>
+                } @else {
+                  <span>Enregistrer mes modifications</span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

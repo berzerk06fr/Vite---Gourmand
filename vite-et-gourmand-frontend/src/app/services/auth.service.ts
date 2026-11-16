@@ -4,6 +4,14 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse, RegisterPayload, User } from '../models/user.model';
 
+export interface UpdateProfilePayload {
+  nom: string;
+  prenom: string;
+  telephone?: string;
+  adresse?: string;
+  newPassword?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -44,10 +52,20 @@ export class AuthService {
     );
   }
 
+  updateProfile(data: UpdateProfilePayload): Observable<{ message: string; user: User }> {
+    return this.http.put<{ message: string; user: User }>(`${this.apiUrl}/me`, data).pipe(
+      tap(res => {
+        if (res.user) {
+          this.currentUserSubject.next(res.user);
+        }
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this.currentUserSubject.next(null);
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/connexion']);
   }
 
   getToken(): string | null {
