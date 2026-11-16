@@ -17,6 +17,9 @@ import { AdminCatalogueComponent } from './pages/admin-catalogue/admin-catalogue
 import { AdminEmployesComponent } from './pages/admin-employes/admin-employes';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password';
 import { GestionFooterComponent } from './components/gestion-footer/gestion-footer';
+import { MentionsLegalesComponent } from './pages/mentions-legales/mentions-legales';
+import { CgvComponent } from './pages/cgv/cgv';
+import { PolitiqueConfidentialiteComponent } from './pages/politique-confidentialite/politique-confidentialite';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -24,6 +27,9 @@ export const routes: Routes = [
   { path: 'menus/:id', component: MenuDetail },
   { path: 'menu/:id', redirectTo: 'menus/:id' },
   { path: 'contact', component: ContactComponent },
+  { path: 'cgv', component: CgvComponent },
+  { path: 'mentions-legales', component: MentionsLegalesComponent },
+  { path: 'politique-confidentialite', component: PolitiqueConfidentialiteComponent },
   { path: 'commande', component: CommandeComponent, canActivate: [authGuard] },
   { path: 'mes-commandes', component: MesCommandesComponent, canActivate: [authGuard] },
   { path: 'mon-profil', component: MonProfilComponent, canActivate: [authGuard] },
