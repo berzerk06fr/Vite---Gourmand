@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Menu } from '../../models/menu.model';
 import { MenuService } from '../../services/menu.services';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-menu-detail',
@@ -16,10 +17,12 @@ export class MenuDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  private readonly authService = inject(AuthService);
 
   readonly menu = signal<Menu | null>(null);
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly showAuthModal = signal<boolean>(false);
 
   readonly guestCount = signal<number>(1);
 
@@ -37,16 +40,16 @@ export class MenuDetail implements OnInit {
 
   // US-12 : Signal calculé pour détecter une rupture sur le menu ou ses plats
   readonly isStockEpuise = computed(() => {
-  const currentMenu = this.menu();
-  if (!currentMenu) return false;
+    const currentMenu = this.menu();
+    if (!currentMenu) return false;
 
-  const stockFormule = currentMenu.quantiteStock ?? currentMenu.stockDisponible;
-  if (stockFormule !== undefined && stockFormule <= 0) {
-    return true;
-  }
+    const stockFormule = currentMenu.quantiteStock ?? currentMenu.stockDisponible;
+    if (stockFormule !== undefined && stockFormule <= 0) {
+      return true;
+    }
 
-  return currentMenu.plats?.some(plat => plat.isEnRupture || (plat.stock !== undefined && plat.stock <= 0)) ?? false;
-});
+    return currentMenu.plats?.some(plat => plat.isEnRupture || (plat.stock !== undefined && plat.stock <= 0)) ?? false;
+  });
 
   ngOnInit(): void {
     const menuId = Number(this.route.snapshot.paramMap.get('id'));
@@ -77,11 +80,20 @@ export class MenuDetail implements OnInit {
     const currentMenu = this.menu();
     if (!currentMenu || !this.isGuestCountValid() || this.isStockEpuise()) return;
 
+    if (!this.authService.isAuthenticated()) {
+      this.showAuthModal.set(true);
+      return;
+    }
+
     void this.router.navigate(['/commande'], {
       queryParams: {
         menuId: currentMenu.id,
         guests: this.guestCount()
       }
     });
+  }
+
+  closeAuthModal(): void {
+    this.showAuthModal.set(false);
   }
 }

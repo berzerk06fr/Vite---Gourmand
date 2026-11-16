@@ -168,3 +168,39 @@
     </div>
   }
 </main>
+
+<!-- Modale visiteur non connecté -->
+@if (showAuthModal()) {
+  <dialog open class="modal fade show d-block border-0 p-0 w-100 h-100" aria-labelledby="authModalTitle" style="background-color: rgba(0, 0, 0, 0.55);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-3">
+        <div class="modal-header border-0 pb-0">
+          <h2 id="authModalTitle" class="modal-title h5 fw-bold text-dark">
+            <i class="bi bi-person-lock text-terracotta me-2"></i>Connexion requise
+          </h2>
+          <button type="button" class="btn-close" aria-label="Fermer" (click)="closeAuthModal()"></button>
+        </div>
+        <div class="modal-body py-3">
+          <p class="text-secondary mb-2">
+            Il n'est pas possible de passer une commande sans être connecté à votre espace client.
+          </p>
+          <p class="small text-muted mb-0">
+            Créez votre compte gratuitement en quelques secondes pour finaliser votre réservation ou connectez-vous si vous êtes déjà client.
+          </p>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex flex-column flex-sm-row gap-2 justify-content-end">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeAuthModal()">
+            Continuer la visite
+          </button>
+          <a routerLink="/connexion" class="btn btn-outline-dark" (click)="closeAuthModal()">
+            Se connecter
+          </a>
+          <a routerLink="/inscription" class="btn btn-terracotta fw-semibold" (click)="closeAuthModal()">
+            <i class="bi bi-person-plus me-1"></i>Créer mon compte
+          </a>
+        </div>
+      </div>
+    </div>
+  </dialog>
+}
+
