@@ -15,21 +15,20 @@ use Symfony\Component\Mime\Email;
 
 class AuthController extends AbstractController
 {
+    private const EXPEDITEUR_EMAIL = 'vite-et-gourmand-api@alwaysdata.net';
+    private const FRONTEND_URL = 'https://vite-et-gourmand-api.alwaysdata.net';
+
     #[Route('/api/register', name: 'api_register', methods: ['POST'])]
     public function register(
         Request $request,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MailerInterface $mailer
     ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        if (empty($data['email']) || empty($data['password']) || empty($data['nom']) || empty($data['prenom'])) {
-            return $this->json(['error' => 'Champs obligatoires manquants.'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $existing = $em->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']]);
-        if ($existing) {
-            return $this->json(['error' => 'Cet email est déjà utilisé.'], Response::HTTP_CONFLICT);
+        $data = json_decode($request->getContent(), true) ?? [];
+        $errorResponse = $this->validateRegistrationData($data, $em);
+        if ($errorResponse !== null) {
+            return $errorResponse;
         }
 
         $user = new Utilisateur();
@@ -39,17 +38,34 @@ class AuthController extends AbstractController
         $user->setTelephone($data['telephone'] ?? null);
         $user->setAdresse($data['adresse'] ?? $data['adressePostale'] ?? null);
         $user->setRoles(['ROLE_USER']);
-
-        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
-        $user->setPassword($hashedPassword);
+        $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
 
         $em->persist($user);
         $em->flush();
+
+        $this->sendWelcomeEmail($user, $mailer);
 
         return $this->json([
             'message' => 'Utilisateur créé avec succès.',
             'userId' => $user->getId()
         ], Response::HTTP_CREATED);
+    }
+
+    private function validateRegistrationData(array $data, EntityManagerInterface $em): ?JsonResponse
+    {
+        $response = null;
+
+        if (empty($data['email']) || empty($data['password']) || empty($data['nom']) || empty($data['prenom'])) {
+            $response = $this->json(['error' => 'Champs obligatoires manquants.'], Response::HTTP_BAD_REQUEST);
+        } elseif (!$this->isPasswordStrong((string) $data['password'])) {
+            $response = $this->json([
+                'error' => 'Le mot de passe doit contenir au moins 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+            ], Response::HTTP_BAD_REQUEST);
+        } elseif ($em->getRepository(Utilisateur::class)->findOneBy(['email' => $data['email']])) {
+            $response = $this->json(['error' => 'Cet email est déjà utilisé.'], Response::HTTP_CONFLICT);
+        }
+
+        return $response;
     }
 
     #[Route('/api/me', name: 'api_me', methods: ['GET'])]
@@ -137,8 +153,11 @@ class AuthController extends AbstractController
     }
 
     #[Route('/api/forgot-password', name: 'api_forgot_password', methods: ['POST'])]
-    public function forgotPassword(Request $request, EntityManagerInterface $em): JsonResponse
-    {
+    public function forgotPassword(
+        Request $request,
+        EntityManagerInterface $em,
+        MailerInterface $mailer
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true) ?? [];
         $email = trim((string) ($data['email'] ?? ''));
 
@@ -155,13 +174,16 @@ class AuthController extends AbstractController
             $user->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
             $em->flush();
 
+            $resetUrl = self::FRONTEND_URL . '/reinitialiser-mot-de-passe?token=' . $token;
+            $this->sendPasswordResetEmail($user, $resetUrl, $mailer);
+
             if ($this->getParameter('kernel.environment') === 'dev') {
                 $devResetUrl = 'http://localhost:4200/reinitialiser-mot-de-passe?token=' . $token;
             }
         }
 
         $payload = [
-            'message' => 'Si un compte correspond à cet email, un lien de réinitialisation vient d\'être généré (valide 1 heure).'
+            'message' => 'Si un compte correspond à cet email, un lien de réinitialisation vient d\'être envoyé (valide 1 heure).'
         ];
         if ($devResetUrl !== null) {
             $payload['devResetUrl'] = $devResetUrl;
@@ -204,6 +226,72 @@ class AuthController extends AbstractController
         return $this->json(['message' => 'Votre mot de passe a été réinitialisé avec succès.'], Response::HTTP_OK);
     }
 
+    private function sendWelcomeEmail(Utilisateur $user, MailerInterface $mailer): void
+    {
+        $recipient = $user->getEmail();
+        if (empty($recipient)) {
+            return;
+        }
+
+        $firstName = htmlspecialchars($user->getPrenom() ?? 'Client');
+        $loginUrl = self::FRONTEND_URL . '/connexion';
+        $menusUrl = self::FRONTEND_URL . '/menus';
+
+        $body = <<<HTML
+            <h2>Bienvenue chez Vite &amp; Gourmand, {$firstName} !</h2>
+            <p>Votre compte client a bien été créé. Nous sommes ravis de vous compter parmi nos gourmets.</p>
+            <p>Vous pouvez dès à présent découvrir notre carte de saison et passer commande en ligne :</p>
+            <ul>
+                <li><a href="{$menusUrl}">Découvrir nos menus</a></li>
+                <li><a href="{$loginUrl}">Accéder à mon espace client</a></li>
+            </ul>
+            <p>À très bientôt,<br>L'équipe Vite &amp; Gourmand</p>
+        HTML;
+
+        try {
+            $message = (new Email())
+                ->from(self::EXPEDITEUR_EMAIL)
+                ->to($recipient)
+                ->subject('Bienvenue chez Vite & Gourmand !')
+                ->html($body);
+
+            $mailer->send($message);
+        } catch (\Throwable $e) {
+            error_log('Échec envoi mail de bienvenue : ' . $e->getMessage());
+        }
+    }
+
+    private function sendPasswordResetEmail(Utilisateur $user, string $resetUrl, MailerInterface $mailer): void
+    {
+        $recipient = $user->getEmail();
+        if (empty($recipient)) {
+            return;
+        }
+
+        $firstName = htmlspecialchars($user->getPrenom() ?? 'Client');
+        $body = <<<HTML
+            <h2>Réinitialisation de votre mot de passe</h2>
+            <p>Bonjour {$firstName},</p>
+            <p>Vous avez demandé la réinitialisation du mot de passe de votre compte <strong>Vite &amp; Gourmand</strong>.</p>
+            <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe (ce lien est valide pendant 1 heure) :</p>
+            <p><a href="{$resetUrl}">Réinitialiser mon mot de passe</a></p>
+            <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.</p>
+            <p>Cordialement,<br>L'équipe Vite &amp; Gourmand</p>
+        HTML;
+
+        try {
+            $message = (new Email())
+                ->from(self::EXPEDITEUR_EMAIL)
+                ->to($recipient)
+                ->subject('Vite & Gourmand - Réinitialisation de votre mot de passe')
+                ->html($body);
+
+            $mailer->send($message);
+        } catch (\Throwable $e) {
+            error_log('Échec envoi mail réinitialisation mot de passe : ' . $e->getMessage());
+        }
+    }
+
     private function notifyPasswordChanged(Utilisateur $user, MailerInterface $mailer): void
     {
         $recipient = $user->getEmail();
@@ -222,7 +310,7 @@ class AuthController extends AbstractController
 
         try {
             $message = (new Email())
-                ->from('vite-et-gourmand-api@alwaysdata.net')
+                ->from(self::EXPEDITEUR_EMAIL)
                 ->to($recipient)
                 ->subject('Vite & Gourmand - Confirmation de changement de mot de passe')
                 ->html($body);
@@ -242,4 +330,3 @@ class AuthController extends AbstractController
             && preg_match('/[\W_]/', $password) === 1;
     }
 }
-

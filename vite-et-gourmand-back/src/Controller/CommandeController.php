@@ -23,10 +23,12 @@ class CommandeController extends AbstractController
     private const STATUT_ANNULEE = 'annulée';
     private const STATUT_EN_ATTENTE = 'en_attente';
     private const STATUT_RETOUR_MATERIEL = 'en attente du retour de matériel';
+    private const STATUT_TERMINEE = 'terminée';
     private const DEFAULT_MENU_TITRE = 'Menu traiteur';
     private const ERR_NON_AUTHENTIFIE = 'Non authentifié.';
     private const ERR_COMMANDE_INTROUVABLE = 'Commande introuvable.';
     private const EXPEDITEUR_EMAIL = 'vite-et-gourmand-api@alwaysdata.net';
+    private const FRONTEND_URL = 'https://vite-et-gourmand-api.alwaysdata.net';
 
     private const STATUTS_AUTORISES = [
         self::STATUT_EN_ATTENTE,
@@ -35,7 +37,7 @@ class CommandeController extends AbstractController
         'en cours de livraison',
         'livré',
         self::STATUT_RETOUR_MATERIEL,
-        'terminée',
+        self::STATUT_TERMINEE,
         self::STATUT_ANNULEE,
     ];
 
@@ -122,7 +124,7 @@ class CommandeController extends AbstractController
     public function annulerParClient(int $id): JsonResponse
     {
         $commande = $this->commandeRepository->find($id);
-        $erreurAcces = $this->verifierAccesModificationClient($commande);
+        $erreurAcces = $this->verifierAccesAnnulationClient($commande);
         if ($erreurAcces !== null) {
             return $erreurAcces;
         }
@@ -242,7 +244,7 @@ class CommandeController extends AbstractController
         ];
     }
 
-    private function verifierAccesModificationClient(?Commande $commande): ?JsonResponse
+    private function verifierAccesAnnulationClient(?Commande $commande): ?JsonResponse
     {
         /** @var Utilisateur|null $user */
         $user = $this->getUser();
@@ -256,7 +258,28 @@ class CommandeController extends AbstractController
             $response = $this->json(['error' => 'Accès refusé pour cette commande.'], Response::HTTP_FORBIDDEN);
         } elseif ($commande->getStatut() !== self::STATUT_EN_ATTENTE) {
             $response = $this->json([
-                'error' => 'Action impossible : cette commande a déjà été acceptée ou traitée.'
+                'error' => 'Annulation impossible : cette commande a déjà été acceptée.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $response;
+    }
+
+    private function verifierAccesModificationClient(?Commande $commande): ?JsonResponse
+    {
+        /** @var Utilisateur|null $user */
+        $user = $this->getUser();
+        $response = null;
+
+        if (!$user) {
+            $response = $this->json(['error' => self::ERR_NON_AUTHENTIFIE], Response::HTTP_UNAUTHORIZED);
+        } elseif (!$commande) {
+            $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
+        } elseif ($commande->getUtilisateur()?->getId() !== $user->getId()) {
+            $response = $this->json(['error' => 'Accès refusé pour cette commande.'], Response::HTTP_FORBIDDEN);
+        } elseif (!in_array($commande->getStatut(), [self::STATUT_EN_ATTENTE, 'accepté'], true)) {
+            $response = $this->json([
+                'error' => 'Modification impossible : cette commande est déjà en cours de préparation, livrée ou annulée.'
             ], Response::HTTP_BAD_REQUEST);
         }
 
@@ -272,7 +295,7 @@ class CommandeController extends AbstractController
             $response = $this->json(['error' => 'Accès réservé aux employés et administrateurs.'], Response::HTTP_FORBIDDEN);
         } elseif (!$commande) {
             $response = $this->json(['error' => self::ERR_COMMANDE_INTROUVABLE], Response::HTTP_NOT_FOUND);
-        } elseif (in_array($commande->getStatut(), ['livré', 'terminée', self::STATUT_ANNULEE], true)) {
+        } elseif (in_array($commande->getStatut(), ['livré', self::STATUT_TERMINEE, self::STATUT_ANNULEE], true)) {
             $response = $this->json([
                 'error' => 'Modification impossible : cette commande est déjà livrée, clôturée ou annulée.'
             ], Response::HTTP_BAD_REQUEST);
@@ -342,6 +365,7 @@ class CommandeController extends AbstractController
         $dateLivraison = $requestData['datePrevueLivraison'] ?? $requestData['dateLivraison'] ?? 'À confirmer';
         $adresse = $requestData['adresseLivraison'] ?? $client->getAdresse() ?? 'Adresse enregistrée sur votre profil';
         $prenom = $client->getPrenom() ?? 'Client';
+        $lienCommandes = self::FRONTEND_URL . '/mes-commandes';
 
         $corps = sprintf(
             '<h2>Bonjour %s,</h2>
@@ -357,7 +381,7 @@ class CommandeController extends AbstractController
             </ul>
             <p>Votre commande est actuellement <strong>en attente de validation</strong> par notre équipe.</p>
             <p>Vous pouvez la suivre, la modifier ou l\'annuler tant qu\'elle n\'a pas été acceptée depuis votre espace personnel :
-                <a href="http://localhost:4200/mes-commandes">Mes Commandes</a>.
+                <a href="%s">Mes Commandes</a>.
             </p>
             <br>
             <p>Merci pour votre confiance,<br>L\'équipe Vite &amp; Gourmand</p>',
@@ -368,7 +392,8 @@ class CommandeController extends AbstractController
             $nbPersonnes,
             htmlspecialchars((string) $dateLivraison),
             htmlspecialchars((string) $adresse),
-            $prixTotal
+            $prixTotal,
+            htmlspecialchars($lienCommandes)
         );
 
         $this->expedierEmail(
@@ -388,6 +413,7 @@ class CommandeController extends AbstractController
         $numero = $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId());
         $prenom = $client->getPrenom() ?? 'Client';
         $detailsHtml = $this->construireDetailsStatutHtml($statut, $data);
+        $lienCommandes = self::FRONTEND_URL . '/mes-commandes';
 
         $corps = sprintf(
             '<h2>Bonjour %s,</h2>
@@ -395,14 +421,15 @@ class CommandeController extends AbstractController
             <p>Nouveau statut : <strong style="color: #c25e38;">%s</strong></p>
             %s
             <p>Retrouvez tous les détails de votre commande dans votre espace personnel :
-                <a href="http://localhost:4200/mes-commandes">Mes Commandes</a>.
+                <a href="%s">Mes Commandes</a>.
             </p>
             <br>
             <p>L\'équipe Vite &amp; Gourmand</p>',
             htmlspecialchars($prenom),
             htmlspecialchars($numero),
             htmlspecialchars($statut),
-            $detailsHtml
+            $detailsHtml,
+            htmlspecialchars($lienCommandes)
         );
 
         $this->expedierEmail(
@@ -414,18 +441,23 @@ class CommandeController extends AbstractController
 
     private function construireDetailsStatutHtml(string $statut, array $data): string
     {
-        if ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation'])) {
-            return sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']));
-        }
+        $html = '';
 
-        if ($statut === self::STATUT_RETOUR_MATERIEL) {
-            return '<p style="background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;">'
+        if ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation'])) {
+            $html = sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']));
+        } elseif ($statut === self::STATUT_RETOUR_MATERIEL) {
+            $html = '<p style="background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;">'
                 . '<strong>Rappel important :</strong> Merci de restituer le matériel prêté sous <strong>10 jours ouvrés</strong> '
                 . 'afin d\'éviter la facturation de 600 € de frais de non-restitution.'
                 . '</p>';
+        } elseif ($statut === self::STATUT_TERMINEE) {
+            $html = '<p style="background-color: #d1e7dd; padding: 10px; border-left: 4px solid #198754;">'
+                . 'Votre prestation est terminée ! Vous pouvez dès maintenant vous connecter à votre espace client '
+                . 'pour laisser une note (de 1 à 5) et un commentaire sur votre commande.'
+                . '</p>';
         }
 
-        return '';
+        return $html;
     }
 
     private function expedierEmail(string $destinataire, string $sujet, string $corpsHtml): void

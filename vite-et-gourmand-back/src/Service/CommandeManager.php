@@ -22,21 +22,18 @@ class CommandeManager
         $error = null;
         $nbPersonnes = (int) ($data['nbPersonnes'] ?? 0);
         $menu = !empty($data['menuId']) ? $this->menuRepository->find($data['menuId']) : null;
-        $nbMin = $menu?->getNbPersonnesMin() ?? 1;
-        $stockActuel = $menu?->getQuantiteStock() ?? 0;
+        $nbMin =$menu?->getNbPersonnesMin() ?? 1;
+        $stockActuel =$menu?->getQuantiteStock() ?? 0;
 
-        if (empty($data['menuId']) || $nbPersonnes <= 0) {
-            $error = 'Champs obligatoires manquants ou invalides (menuId, nbPersonnes).';
-        } elseif (!$menu || !$menu->isIsActif()) {
-            $error = 'Ce menu n\'est pas disponible.';
-        } elseif ($nbPersonnes < $nbMin) {
-            $error = sprintf(self::ERR_NB_PERSONNES_MIN, $nbMin);
-        } elseif ($stockActuel < $nbPersonnes) {
-            $error = sprintf('Stock insuffisant pour ce menu (restant : %d).', $stockActuel);
+        if (empty($data['menuId']) || $nbPersonnes <= 0) {$error = 'Champs obligatoires manquants ou invalides (menuId, nbPersonnes).';
+        } elseif (!$menu || !$menu->isIsActif()) {$error = 'Ce menu n\'est pas disponible.';
+        } elseif ($nbPersonnes <$nbMin) {
+            $error = sprintf(self::ERR_NB_PERSONNES_MIN,$nbMin);
+        } elseif ($stockActuel <$nbPersonnes) {
+            $error = sprintf('Stock insuffisant pour ce menu (restant : \%d).',$stockActuel);
         } else {
-            foreach ($menu->getPlats() as $plat) {
-                if ($plat->isEnRupture()) {
-                    $error = sprintf('Le plat "%s" de ce menu est actuellement en rupture de stock.', $plat->getNom());
+            foreach ($menu->getPlats() as$plat) {
+                if ($plat->isEnRupture()) {$error = sprintf('Le plat "%s" de ce menu est actuellement en rupture de stock.', $plat->getNom());
                     break;
                 }
             }
@@ -45,38 +42,30 @@ class CommandeManager
         return $error;
     }
 
-    public function creerCommande(Utilisateur $user, Menu $menu, array $data): array
+    public function creerCommande(Utilisateur $user, Menu $menu, array$data): array
     {
-        $nbPersonnes = (int) $data['nbPersonnes'];
+        $nbPersonnes = (int)$data['nbPersonnes'];
         $adresse = trim($data['adresse'] ?? '');
 
-        if (!empty($adresse)) {
-            $user->setAdresse($adresse);
-            $this->em->persist($user);
-            $this->em->flush();
+        if (!empty($adresse)) {$user->setAdresse($adresse);$this->em->persist($user);$this->em->flush();
         }
 
-        $nbMin = $menu->getNbPersonnesMin() ?? 1;
-        $calculs = $this->calculerTotalCommande($menu, $nbPersonnes, $data);
+        $nbMin =$menu->getNbPersonnesMin() ?? 1;
+        $calculs = $this->calculerTotalCommande($menu, $nbPersonnes,$data);
 
-        $this->ajusterStockMenuEtPlats($menu, $nbPersonnes);
+        $this->ajusterStockMenuEtPlats($menu,$nbPersonnes);
 
-        $commande = new Commande();
-        $commande->setMenu($menu);
-        $commande->setUtilisateur($user);
-        $commande->setNumeroCommande('CMD-' . strtoupper(uniqid()));
+        $commande = new Commande();$commande->setMenu($menu);$commande->setUtilisateur($user);$commande->setNumeroCommande('CMD-' . strtoupper(uniqid()));
         $commande->setDateCommande(new \DateTimeImmutable());
         $commande->setNbPersonnes($nbPersonnes);
-        $commande->setPrixTotal((string) $calculs['total']);
-        $commande->setStatut('en_attente');
-        $commande->setDatePrevueLivraison(
+        $commande->setPrixTotal((string)$calculs['total']);
+        $commande->setStatut('en_attente');$commande->setDatePrevueLivraison(
             !empty($data['datePrevueLivraison'])
                 ? new \DateTime($data['datePrevueLivraison'])
                 : new \DateTime('+7 days')
         );
 
-        $this->em->persist($commande);
-        $this->em->flush();
+        $this->em->persist($commande);$this->em->flush();
 
         return [
             'message'             => 'Commande enregistrée avec succès.',
@@ -84,74 +73,71 @@ class CommandeManager
             'menu'                => $menu->getTitre(),
             'nbPersonnes'         => $nbPersonnes,
             'prixMenu'            => $calculs['sousTotal'],
-            'reduction10Pourcent' => ($nbPersonnes >= ($nbMin + 5)),
-            'fraisLivraison'      => $calculs['livraison'],
+            'reduction10Pourcent' => ($nbPersonnes >= ($nbMin + 5)), 'fraisLivraison'      =>$calculs['livraison'],
             'prixTotal'           => $calculs['total'],
             'statut'              => $commande->getStatut(),
             'stockRestant'        => $menu->getQuantiteStock(),
         ];
     }
 
-    public function appliquerModificationsClient(Commande $commande, array $data): ?string
+    public function appliquerModificationsClient(Commande $commande, array$data): ?string
     {
         $error = null;
-        $menu = $commande->getMenu();
-        $ancienNb = $commande->getNbPersonnes() ?? 1;
-        $nouveauNb = isset($data['nbPersonnes']) ? (int) $data['nbPersonnes'] : $ancienNb;
-        $nbMin = $menu?->getNbPersonnesMin() ?? 1;
-        $diff = $nouveauNb - $ancienNb;
+        $ancienMenu =$commande->getMenu();
+        $peutChangerMenu = ($commande->getStatut() === 'en_attente');
 
-        if (!$menu) {
-            $error = 'Menu associé introuvable.';
-        } elseif ($nouveauNb < $nbMin) {
-            $error = sprintf(self::ERR_NB_PERSONNES_MIN, $nbMin);
-        } elseif ($diff > 0 && ($menu->getQuantiteStock() ?? 0) < $diff) {
-            $error = sprintf('Stock insuffisant pour ajouter %d personne(s).', $diff);
-        } else {
-            $this->ajusterStockMenuEtPlats($menu, $diff);
-            $this->mettreAJourInfosLivraison($commande, $data);
-            $commande->setNbPersonnes($nouveauNb);
-            $commande->setPrixTotal((string) $this->calculerTotalCommande($menu, $nouveauNb, $data)['total']);
-        }
+        $nouveauMenu = ($peutChangerMenu && !empty($data['menuId']))
+            ? $this->menuRepository->find((int)$data['menuId'])
+            : $ancienMenu;
 
-        return $error;
-    }
-
-    public function appliquerModificationsStaff(Commande $commande, array $data): ?string
-    {
-        $error = null;
-        $ancienMenu = $commande->getMenu();
-        $nouveauMenu = !empty($data['menuId']) ? $this->menuRepository->find((int) $data['menuId']) : $ancienMenu;
-        $ancienNb = $commande->getNbPersonnes() ?? 1;
-        $nouveauNb = isset($data['nbPersonnes']) ? (int) $data['nbPersonnes'] : $ancienNb;
-        $nbMin = $nouveauMenu?->getNbPersonnesMin() ?? 1;
+        $ancienNb =$commande->getNbPersonnes() ?? 1;
+        $nouveauNb = isset($data['nbPersonnes']) ? (int) $data['nbPersonnes'] :$ancienNb;
+        $nbMin =$nouveauMenu?->getNbPersonnesMin() ?? 1;
         $memeMenu = $ancienMenu?->getId() === $nouveauMenu?->getId();
-        $besoinStock = $memeMenu ? ($nouveauNb - $ancienNb) : $nouveauNb;
+        $besoinStock = $memeMenu ? ($nouveauNb - $ancienNb) :$nouveauNb;
 
-        if (!$nouveauMenu) {
-            $error = 'Menu sélectionné introuvable.';
-        } elseif ($nouveauNb < $nbMin) {
-            $error = sprintf(self::ERR_NB_PERSONNES_MIN, $nbMin);
-        } elseif ($besoinStock > 0 && ($nouveauMenu->getQuantiteStock() ?? 0) < $besoinStock) {
-            $error = sprintf('Stock insuffisant pour ce menu (disponible : %d).', $nouveauMenu->getQuantiteStock() ?? 0);
+        if (!$nouveauMenu) {$error = 'Menu associé introuvable.';
+        } elseif (!$peutChangerMenu && !empty($data['menuId']) && (int) $data['menuId'] !==$ancienMenu?->getId()) {
+            $error = 'Le menu ne peut plus être modifié une fois la commande acceptée.';
+        } elseif ($nouveauNb <$nbMin) {
+            $error = sprintf(self::ERR_NB_PERSONNES_MIN,$nbMin);
+        } elseif ($besoinStock > 0 && ($nouveauMenu->getQuantiteStock() ?? 0) <$besoinStock) {
+            $error = sprintf('Stock insuffisant pour ce menu (disponible : \%d).',$nouveauMenu->getQuantiteStock() ?? 0);
         } else {
-            $this->appliquerChangementMenuEtStock($commande, $ancienMenu, $nouveauMenu, $ancienNb, $nouveauNb);
-            $this->mettreAJourInfosLivraison($commande, $data);
-            $commande->setNbPersonnes($nouveauNb);
-            $commande->setPrixTotal((string) $this->calculerTotalCommande($nouveauMenu, $nouveauNb, $data)['total']);
+            $this->appliquerChangementMenuEtStock($commande, $ancienMenu,$nouveauMenu, $ancienNb,$nouveauNb);
+            $this->mettreAJourInfosLivraison($commande, $data);$commande->setNbPersonnes($nouveauNb);$commande->setPrixTotal((string) $this->calculerTotalCommande($nouveauMenu, $nouveauNb,$data)['total']);
         }
 
         return $error;
     }
 
-    public function ajusterStockMenuEtPlats(Menu $menu, int $deltaPersonnes): void
+    public function appliquerModificationsStaff(Commande $commande, array$data): ?string
     {
-        if ($deltaPersonnes === 0) {
-            return;
+        $error = null;
+        $ancienMenu = $commande->getMenu();$nouveauMenu = !empty($data['menuId']) ?$this->menuRepository->find((int) $data['menuId']) :$ancienMenu;
+        $ancienNb =$commande->getNbPersonnes() ?? 1;
+        $nouveauNb = isset($data['nbPersonnes']) ? (int) $data['nbPersonnes'] :$ancienNb;
+        $nbMin =$nouveauMenu?->getNbPersonnesMin() ?? 1;
+        $memeMenu = $ancienMenu?->getId() === $nouveauMenu?->getId();
+        $besoinStock = $memeMenu ? ($nouveauNb - $ancienNb) :$nouveauNb;
+
+        if (!$nouveauMenu) {$error = 'Menu sélectionné introuvable.';
+        } elseif ($nouveauNb <$nbMin) {
+            $error = sprintf(self::ERR_NB_PERSONNES_MIN,$nbMin);
+        } elseif ($besoinStock > 0 && ($nouveauMenu->getQuantiteStock() ?? 0) <$besoinStock) {
+            $error = sprintf('Stock insuffisant pour ce menu (disponible : \%d).',$nouveauMenu->getQuantiteStock() ?? 0);
+        } else {
+            $this->appliquerChangementMenuEtStock($commande, $ancienMenu,$nouveauMenu, $ancienNb,$nouveauNb);
+            $this->mettreAJourInfosLivraison($commande, $data);$commande->setNbPersonnes($nouveauNb);$commande->setPrixTotal((string) $this->calculerTotalCommande($nouveauMenu, $nouveauNb,$data)['total']);
         }
-        $menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 0) - $deltaPersonnes));
-        foreach ($menu->getPlats() as $plat) {
-            $plat->setStock(max(0, $plat->getStock() - $deltaPersonnes));
+
+        return $error;
+    }
+
+    public function ajusterStockMenuEtPlats(Menu $menu, int$deltaPersonnes): void
+    {
+        if ($deltaPersonnes === 0) { return; }$menu->setQuantiteStock(max(0, ($menu->getQuantiteStock() ?? 0) -$deltaPersonnes));
+        foreach ($menu->getPlats() as $plat) {$plat->setStock(max(0, $plat->getStock() -$deltaPersonnes));
         }
     }
 
@@ -163,19 +149,18 @@ class CommandeManager
         int $nouveauNb
     ): void {
         if ($ancienMenu?->getId() === $nouveauMenu->getId()) {
-            $this->ajusterStockMenuEtPlats($nouveauMenu, $nouveauNb - $ancienNb);
+            $this->ajusterStockMenuEtPlats($nouveauMenu, $nouveauNb -$ancienNb);
             return;
         }
-        if ($ancienMenu) {
-            $this->ajusterStockMenuEtPlats($ancienMenu, -$ancienNb);
+        if ($ancienMenu) {$this->ajusterStockMenuEtPlats($ancienMenu, -$ancienNb);
         }
-        $this->ajusterStockMenuEtPlats($nouveauMenu, $nouveauNb);
+        $this->ajusterStockMenuEtPlats($nouveauMenu,$nouveauNb);
         $commande->setMenu($nouveauMenu);
     }
 
-    private function mettreAJourInfosLivraison(Commande $commande, array $data): void
+    private function mettreAJourInfosLivraison(Commande $commande, array$data): void
     {
-        $client = $commande->getUtilisateur();
+        $client =$commande->getUtilisateur();
         if ($client && !empty($data['adresse'])) {
             $client->setAdresse(trim($data['adresse']));
         }
@@ -195,9 +180,10 @@ class CommandeManager
 
         $ville = trim($data['ville'] ?? 'Bordeaux');
         $distanceKm = (float) ($data['distanceKm'] ?? 0.0);
-        $fraisLivraison = (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0)
-            ? round(5.0 + (0.59 * max(0.0, $distanceKm)), 2)
-            : 0.0;
+        $fraisLivraison = 0.0;
+        if (strcasecmp($ville, 'bordeaux') !== 0 || $distanceKm > 0) {
+            $fraisLivraison = round(5.0 + (0.59 * max(0.0, $distanceKm)), 2);
+        }
 
         return [
             'sousTotal' => $sousTotalMenu,
