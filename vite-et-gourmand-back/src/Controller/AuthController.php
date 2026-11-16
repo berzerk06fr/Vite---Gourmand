@@ -71,6 +71,62 @@ class AuthController extends AbstractController
         ]);
     }
 
+    #[Route('/api/me', name: 'api_me_update', methods: ['PUT'])]
+    public function updateMe(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse {
+        /** @var \App\Entity\Utilisateur|null $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['error' => 'Non authentifié.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $nom = trim((string) ($data['nom'] ?? $user->getNom()));
+        $prenom = trim((string) ($data['prenom'] ?? $user->getPrenom()));
+        $telephone = trim((string) ($data['telephone'] ?? ''));
+        $adresse = trim((string) ($data['adresse'] ?? ''));
+        $newPassword = (string) ($data['newPassword'] ?? '');
+
+        $error = null;
+        if ($nom === '' || $prenom === '') {
+            $error = 'Le nom et le prénom sont obligatoires.';
+        } elseif ($newPassword !== '' && !$this->isPasswordStrong($newPassword)) {
+            $error = 'Le nouveau mot de passe doit contenir au moins 10 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
+        }
+
+        if ($error !== null) {
+            return $this->json(['error' => $error], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user->setNom($nom);
+        $user->setPrenom($prenom);
+        $user->setTelephone($telephone !== '' ? $telephone : null);
+        $user->setAdresse($adresse !== '' ? $adresse : null);
+
+        if ($newPassword !== '') {
+            $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Profil mis à jour avec succès.',
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getUserIdentifier(),
+                'nom' => $user->getNom(),
+                'prenom' => $user->getPrenom(),
+                'telephone' => $user->getTelephone(),
+                'adresse' => $user->getAdresse(),
+                'roles' => $user->getRoles(),
+            ]
+        ], Response::HTTP_OK);
+    }
+
     #[Route('/api/forgot-password', name: 'api_forgot_password', methods: ['POST'])]
     public function forgotPassword(Request $request, EntityManagerInterface $em): JsonResponse
     {
