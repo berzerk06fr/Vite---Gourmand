@@ -23,17 +23,14 @@ class StatistiqueController extends AbstractController
         private readonly MongoStatistiquesService $mongoService
     ) {}
 
-    #[Route('', name: 'index', methods: ['GET', 'OPTIONS'])]
+    #[Route('', name: 'index', methods: ['GET'])]
     public function index(Request $request): JsonResponse
     {
-        $headers = [
-            'Access-Control-Allow-Origin'  => 'http://localhost:4200',
-            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Content-Type, Authorization',
-        ];
-
-        if ($request->getMethod() === 'OPTIONS') {
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT, $headers);
+        if (!$this->getUser() || !$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(
+                ['error' => 'Accès réservé uniquement à l\'administrateur.'],
+                Response::HTTP_FORBIDDEN
+            );
         }
 
         try {
@@ -44,16 +41,26 @@ class StatistiqueController extends AbstractController
             $indicateurs = $this->mongoService->getIndicateursGlobaux($menuTitre, $dateDebut, $dateFin);
             $ventesParMenu = $this->mongoService->getStatistiquesVentes($menuTitre, $dateDebut, $dateFin);
             $ventesComparatives = $this->mongoService->getStatistiquesVentes(null, $dateDebut, $dateFin);
+            $source = 'mongodb';
 
-            // Si MongoDB n'a pas encore de données synchronisées, on calcule depuis MySQL avec les mêmes filtres
+            // Si la collection MongoDB est encore vide, on initialise MongoDB depuis MySQL puis on relit MongoDB
             if (empty($ventesComparatives) && $indicateurs['nbCommandes'] === 0) {
-                $fallback = $this->calculerDepuisMysql($menuTitre, $dateDebut, $dateFin);
-                $indicateurs = $fallback['indicateurs'];
-                $ventesParMenu = $fallback['ventesParMenu'];
-                $ventesComparatives = $fallback['ventesComparatives'];
+                $nbSynchronisees = $this->initialiserMongoDepuisMysql();
+                if ($nbSynchronisees > 0) {
+                    $indicateurs = $this->mongoService->getIndicateursGlobaux($menuTitre, $dateDebut, $dateFin);
+                    $ventesParMenu = $this->mongoService->getStatistiquesVentes($menuTitre, $dateDebut, $dateFin);
+                    $ventesComparatives = $this->mongoService->getStatistiquesVentes(null, $dateDebut, $dateFin);
+                } else {
+                    $fallback = $this->calculerDepuisMysql($menuTitre, $dateDebut, $dateFin);
+                    $indicateurs = $fallback['indicateurs'];
+                    $ventesParMenu = $fallback['ventesParMenu'];
+                    $ventesComparatives = $fallback['ventesComparatives'];
+                    $source = 'mysql_fallback';
+                }
             }
 
-            return new JsonResponse([
+            return $this->json([
+                'source'             => $source,
                 'indicateurs'        => $indicateurs,
                 'ventesParMenu'      => $ventesParMenu,
                 'ventesComparatives' => $ventesComparatives,
@@ -62,14 +69,45 @@ class StatistiqueController extends AbstractController
                     'dateDebut' => $dateDebut,
                     'dateFin'   => $dateFin,
                 ],
-            ], Response::HTTP_OK, $headers);
-
+            ], Response::HTTP_OK);
         } catch (\Throwable $e) {
-            return new JsonResponse([
+            return $this->json([
                 'error'   => 'Erreur serveur statistiques',
                 'details' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR, $headers);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private function initialiserMongoDepuisMysql(): int
+    {
+        $compteur = 0;
+
+        foreach ($this->commandeRepository->findAll() as $cmd) {
+            $statut = mb_strtolower(trim($cmd->getStatut() ?? ''));
+            if (!in_array($statut, self::STATUTS_VALIDES, true)) {
+                continue;
+            }
+
+            $menu = $cmd->getMenu();
+            $dateCmd = $cmd->getDateCommande() ?? $cmd->getDatePrevueLivraison() ?? new \DateTimeImmutable();
+
+            $ok = $this->mongoService->synchroniserCommande([
+                'id'             => $cmd->getId(),
+                'numeroCommande' => $cmd->getNumeroCommande() ?? ('CMD-' . $cmd->getId()),
+                'menuId'         => $menu ? (int) $menu->getId() : 0,
+                'menuTitre'      => $menu?->getTitre() ?? 'Menu traiteur',
+                'prixTotal'      => (float) ($cmd->getPrixTotal() ?? 0),
+                'nbPersonnes'    => (int) ($cmd->getNbPersonnes() ?? 1),
+                'statut'         => $statut,
+                'dateCommande'   => $dateCmd->format('Y-m-d'),
+            ]);
+
+            if ($ok) {
+                $compteur++;
+            }
+        }
+
+        return $compteur;
     }
 
     private function calculerDepuisMysql(?string $menuTitre, ?string $dateDebut, ?string $dateFin): array
@@ -80,7 +118,7 @@ class StatistiqueController extends AbstractController
         $ventesMap = [];
 
         foreach ($this->commandeRepository->findAll() as $cmd) {
-            if (!$this->estCommandeEligble($cmd, $dateDebut, $dateFin)) {
+            if (!$this->estCommandeEligible($cmd, $dateDebut, $dateFin)) {
                 continue;
             }
 
@@ -106,10 +144,10 @@ class StatistiqueController extends AbstractController
         }
 
         $ventesComparatives = array_values($ventesMap);
-        usort($ventesComparatives, fn(array $a, array $b) => $b['totalCommandes'] <=> $a['totalCommandes']);
+        usort($ventesComparatives, fn (array $a, array $b) => $b['totalCommandes'] <=> $a['totalCommandes']);
 
         $ventesParMenu = $menuTitre !== null
-            ? array_values(array_filter($ventesComparatives, fn(array $item) => $item['_id'] === $menuTitre))
+            ? array_values(array_filter($ventesComparatives, fn (array $item) => $item['_id'] === $menuTitre))
             : $ventesComparatives;
 
         return [
@@ -123,21 +161,20 @@ class StatistiqueController extends AbstractController
         ];
     }
 
-    private function estCommandeEligble(Commande $cmd, ?string $dateDebut, ?string $dateFin): bool
+    private function estCommandeEligible(Commande $cmd, ?string $dateDebut, ?string $dateFin): bool
     {
         $statut = mb_strtolower(trim($cmd->getStatut() ?? ''));
+        $dateCmd = ($cmd->getDateCommande() ?? $cmd->getDatePrevueLivraison())?->format('Y-m-d');
+
         if (!in_array($statut, self::STATUTS_VALIDES, true)) {
             return false;
         }
 
-        $dateCmd = ($cmd->getDateCommande() ?? $cmd->getDatePrevueLivraison())?->format('Y-m-d');
         if ($dateCmd === null) {
             return $dateDebut === null && $dateFin === null;
         }
 
-        $apresDebut = $dateDebut === null || $dateCmd >= $dateDebut;
-        $avantFin = $dateFin === null || $dateCmd <= $dateFin;
-
-        return $apresDebut && $avantFin;
+        return ($dateDebut === null || $dateCmd >= $dateDebut)
+            && ($dateFin === null || $dateCmd <= $dateFin);
     }
 }
