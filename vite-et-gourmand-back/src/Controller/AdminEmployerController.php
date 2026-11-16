@@ -20,6 +20,7 @@ class AdminEmployerController extends AbstractController
     private const ERR_ACCES_ADMIN = 'Accès réservé à l\'administrateur.';
     private const ROLE_ADMIN = 'ROLE_ADMIN';
     private const ROLE_EMPLOYE = 'ROLE_EMPLOYE';
+    private const ROLE_INACTIF = 'ROLE_INACTIF';
     private const EXPEDITEUR_EMAIL = 'vite-et-gourmand-api@alwaysdata.net';
 
     public function __construct(
@@ -73,24 +74,29 @@ class AdminEmployerController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    #[Route('/{id}/desactiver', name: 'desactiver', requirements: ['id' => '\d+'], methods: ['PATCH'])]
     #[Route('/{id}', name: 'delete', requirements: ['id' => '\d+'], methods: ['DELETE'])]
-    public function delete(int $id): JsonResponse
+    public function desactiver(int $id): JsonResponse
     {
         if (!$this->isGranted(self::ROLE_ADMIN)) {
             return $this->json(['error' => self::ERR_ACCES_ADMIN], Response::HTTP_FORBIDDEN);
         }
 
         $utilisateur = $this->utilisateurRepository->find($id);
-        $erreurSuppression = $this->verifierSuppressionAutorisee($utilisateur);
+        $erreurDesactivation = $this->verifierDesactivationAutorisee($utilisateur);
 
-        if ($erreurSuppression !== null) {
-            return $this->json(['error' => $erreurSuppression['message']], $erreurSuppression['code']);
+        if ($erreurDesactivation !== null) {
+            return $this->json(['error' => $erreurDesactivation['message']], $erreurDesactivation['code']);
         }
 
-        $this->em->remove($utilisateur);
+        $utilisateur->setRoles([self::ROLE_INACTIF]);
+        $utilisateur->setPassword($this->passwordHasher->hashPassword($utilisateur, bin2hex(random_bytes(24))));
+        $utilisateur->setResetToken(null);
+        $utilisateur->setResetTokenExpiresAt(null);
+
         $this->em->flush();
 
-        return $this->json(['message' => 'Accès employé supprimé.'], Response::HTTP_OK);
+        return $this->json(['message' => 'Compte employé désactivé avec succès.'], Response::HTTP_OK);
     }
 
     private function validerCreationEmploye(array $data): ?array
@@ -142,7 +148,8 @@ class AdminEmployerController extends AbstractController
             return;
         }
 
-        $lienCreationMdp = 'http://localhost:4200/reinitialiser-mot-de-passe?token=' . urlencode($token);
+        $frontendUrl = rtrim($_ENV['FRONTEND_URL'] ?? $_SERVER['FRONTEND_URL'] ?? 'http://localhost:4200', '/');
+        $lienCreationMdp = $frontendUrl . '/reinitialiser-mot-de-passe?token=' . urlencode($token);
         $prenom = $employe->getPrenom() ?? 'Collaborateur';
 
         $corps = sprintf(
@@ -174,13 +181,13 @@ class AdminEmployerController extends AbstractController
         }
     }
 
-    private function verifierSuppressionAutorisee(?Utilisateur $utilisateur): ?array
+    private function verifierDesactivationAutorisee(?Utilisateur $utilisateur): ?array
     {
         if (!$utilisateur) {
             return ['message' => 'Compte introuvable.', 'code' => Response::HTTP_NOT_FOUND];
         }
         if (in_array(self::ROLE_ADMIN, $utilisateur->getRoles(), true)) {
-            return ['message' => 'Impossible de supprimer un compte administrateur.', 'code' => Response::HTTP_BAD_REQUEST];
+            return ['message' => 'Impossible de désactiver un compte administrateur.', 'code' => Response::HTTP_BAD_REQUEST];
         }
 
         return null;
@@ -195,6 +202,7 @@ class AdminEmployerController extends AbstractController
             'prenom'    => $u->getPrenom(),
             'telephone' => $u->getTelephone(),
             'roles'     => $u->getRoles(),
+            'actif'     => !in_array(self::ROLE_INACTIF, $u->getRoles(), true),
         ];
     }
 }
