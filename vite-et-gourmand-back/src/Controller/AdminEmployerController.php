@@ -9,6 +9,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -18,11 +20,13 @@ class AdminEmployerController extends AbstractController
     private const ERR_ACCES_ADMIN = 'Accès réservé à l\'administrateur.';
     private const ROLE_ADMIN = 'ROLE_ADMIN';
     private const ROLE_EMPLOYE = 'ROLE_EMPLOYE';
+    private const EXPEDITEUR_EMAIL = 'vite-et-gourmand-api@alwaysdata.net';
 
     public function __construct(
         private readonly UtilisateurRepository $utilisateurRepository,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly EntityManagerInterface $em
+        private readonly EntityManagerInterface $em,
+        private readonly MailerInterface $mailer
     ) {}
 
     #[Route('', name: 'list', methods: ['GET'])]
@@ -59,10 +63,12 @@ class AdminEmployerController extends AbstractController
             return $this->json(['error' => $validationError['message']], $validationError['code']);
         }
 
-        $employe = $this->enregistrerNouvelEmploye($data);
+        $token = bin2hex(random_bytes(16));
+        $employe = $this->enregistrerNouvelEmploye($data, $token);
+        $this->envoyerEmailActivationEmploye($employe, $token);
 
         return $this->json([
-            'message' => 'Compte employé créé avec succès.',
+            'message' => 'Compte employé créé avec succès. Un e-mail d\'activation lui a été envoyé.',
             'employe' => $this->formatUtilisateur($employe),
         ], Response::HTTP_CREATED);
     }
@@ -91,13 +97,13 @@ class AdminEmployerController extends AbstractController
     {
         $erreur = null;
         $email = strtolower(trim($data['email'] ?? ''));
-        $password = $data['password'] ?? '';
+        $password = (string) ($data['password'] ?? '');
         $nom = trim($data['nom'] ?? '');
         $prenom = trim($data['prenom'] ?? '');
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || empty($nom) || empty($prenom)) {
             $erreur = ['message' => 'Email valide, nom et prénom sont obligatoires.', 'code' => Response::HTTP_BAD_REQUEST];
-        } elseif (strlen($password) < 8) {
+        } elseif ($password !== '' && strlen($password) < 8) {
             $erreur = ['message' => 'Le mot de passe provisoire doit contenir au moins 8 caractères.', 'code' => Response::HTTP_BAD_REQUEST];
         } elseif ($this->utilisateurRepository->findOneBy(['email' => $email])) {
             $erreur = ['message' => 'Un compte existe déjà avec cette adresse e-mail.', 'code' => Response::HTTP_CONFLICT];
@@ -106,8 +112,12 @@ class AdminEmployerController extends AbstractController
         return $erreur;
     }
 
-    private function enregistrerNouvelEmploye(array $data): Utilisateur
+    private function enregistrerNouvelEmploye(array $data, string $token): Utilisateur
     {
+        $motDePasseInitial = !empty($data['password'])
+            ? (string) $data['password']
+            : bin2hex(random_bytes(16));
+
         $employe = new Utilisateur();
         $employe->setEmail(strtolower(trim($data['email'])));
         $employe->setNom(trim($data['nom']));
@@ -115,12 +125,53 @@ class AdminEmployerController extends AbstractController
         $employe->setTelephone(trim($data['telephone'] ?? ''));
         $employe->setAdresse(trim($data['adresse'] ?? 'Bordeaux'));
         $employe->setRoles([self::ROLE_EMPLOYE]);
-        $employe->setPassword($this->passwordHasher->hashPassword($employe, $data['password']));
+        $employe->setPassword($this->passwordHasher->hashPassword($employe, $motDePasseInitial));
+        $employe->setResetToken($token);
+        $employe->setResetTokenExpiresAt(new \DateTimeImmutable('+24 hours'));
 
         $this->em->persist($employe);
         $this->em->flush();
 
         return $employe;
+    }
+
+    private function envoyerEmailActivationEmploye(Utilisateur $employe, string $token): void
+    {
+        $destinataire = $employe->getEmail();
+        if (empty($destinataire)) {
+            return;
+        }
+
+        $lienCreationMdp = 'http://localhost:4200/reinitialiser-mot-de-passe?token=' . urlencode($token);
+        $prenom = $employe->getPrenom() ?? 'Collaborateur';
+
+        $corps = sprintf(
+            '<h2>Bienvenue dans l\'équipe Vite &amp; Gourmand, %s !</h2>
+            <p>Votre compte collaborateur vient d\'être créé par l\'administrateur.</p>
+            <p><strong>Identifiant de connexion :</strong> %s</p>
+            <p>Pour des raisons de sécurité, aucun mot de passe n\'est transmis par e-mail. Cliquez sur le bouton ci-dessous pour définir votre mot de passe personnel (valide pendant 24 heures) :</p>
+            <p style="margin: 24px 0;">
+                <a href="%s" style="background-color: #c25e38; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                    Créer mon mot de passe
+                </a>
+            </p>
+            <p>À très vite,<br>Julie &amp; José — Vite &amp; Gourmand</p>',
+            htmlspecialchars($prenom),
+            htmlspecialchars($destinataire),
+            htmlspecialchars($lienCreationMdp)
+        );
+
+        try {
+            $email = (new Email())
+                ->from(self::EXPEDITEUR_EMAIL)
+                ->to($destinataire)
+                ->subject('Vite & Gourmand : Activation de votre compte employé')
+                ->html($corps);
+
+            $this->mailer->send($email);
+        } catch (\Throwable $exception) {
+            error_log('Erreur envoi e-mail activation employé : ' . $exception->getMessage());
+        }
     }
 
     private function verifierSuppressionAutorisee(?Utilisateur $utilisateur): ?array

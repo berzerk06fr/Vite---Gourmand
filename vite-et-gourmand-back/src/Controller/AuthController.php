@@ -141,7 +141,7 @@ class AuthController extends AbstractController
         $devResetUrl = null;
 
         if ($user) {
-            $token = bin2hex(random_bytes(32));
+            $token = bin2hex(random_bytes(16));
             $user->setResetToken($token);
             $user->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
             $em->flush();
@@ -178,8 +178,10 @@ class AuthController extends AbstractController
         }
 
         $user = $em->getRepository(Utilisateur::class)->findOneBy(['resetToken' => $token]);
-        if (!$user || $user->getResetTokenExpiresAt() === null || $user->getResetTokenExpiresAt() < new \DateTimeImmutable()) {
-            return $this->json(['error' => 'Ce lien de réinitialisation est invalide ou a expiré.'], Response::HTTP_BAD_REQUEST);
+        $expiresAt = $user?->getResetTokenExpiresAt();
+
+        if (!$user || ($expiresAt !== null && $expiresAt->getTimestamp() < time())) {
+            return $this->json(['error' => 'Ce lien de réinitialisation est invalide, a déjà été utilisé ou a expiré.'], Response::HTTP_BAD_REQUEST);
         }
 
         $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
