@@ -22,9 +22,11 @@ class CommandeController extends AbstractController
 {
     private const STATUT_ANNULEE = 'annulée';
     private const STATUT_EN_ATTENTE = 'en_attente';
+    private const STATUT_RETOUR_MATERIEL = 'en attente du retour de matériel';
     private const DEFAULT_MENU_TITRE = 'Menu traiteur';
     private const ERR_NON_AUTHENTIFIE = 'Non authentifié.';
     private const ERR_COMMANDE_INTROUVABLE = 'Commande introuvable.';
+    private const EXPEDITEUR_EMAIL = 'vite-et-gourmand-api@alwaysdata.net';
 
     private const STATUTS_AUTORISES = [
         self::STATUT_EN_ATTENTE,
@@ -32,7 +34,7 @@ class CommandeController extends AbstractController
         'en préparation',
         'en cours de livraison',
         'livré',
-        'en attente du retour de matériel',
+        self::STATUT_RETOUR_MATERIEL,
         'terminée',
         self::STATUT_ANNULEE,
     ];
@@ -83,6 +85,8 @@ class CommandeController extends AbstractController
         $menu = $this->menuRepository->find($data['menuId']);
         $result = $this->commandeManager->creerCommande($user, $menu, $data);
 
+        $this->envoyerRecapitulatifCommandeClient($user, $menu?->getTitre() ?? self::DEFAULT_MENU_TITRE, $data, $result);
+
         return $this->json($result, Response::HTTP_CREATED);
     }
 
@@ -131,6 +135,10 @@ class CommandeController extends AbstractController
 
         $commande->setStatut(self::STATUT_ANNULEE);
         $this->em->flush();
+
+        $this->envoyerNotificationStatutClient($commande, self::STATUT_ANNULEE, [
+            'motifAnnulation' => 'Annulation effectuée depuis votre espace client.',
+        ]);
 
         return $this->json([
             'message' => 'Votre commande a bien été annulée.',
@@ -314,6 +322,58 @@ class CommandeController extends AbstractController
         return $response;
     }
 
+    private function envoyerRecapitulatifCommandeClient(
+        Utilisateur $client,
+        string $menuTitre,
+        array $requestData,
+        array $result
+    ): void {
+        if (empty($client->getEmail())) {
+            return;
+        }
+
+        $numero = $result['numeroCommande'] ?? ('CMD-' . ($result['id'] ?? ''));
+        $nbPersonnes = (int) ($result['nbPersonnes'] ?? $requestData['nbPersonnes'] ?? 1);
+        $prixTotal = number_format((float) ($result['prixTotal'] ?? 0), 2, ',', ' ');
+        $dateLivraison = $requestData['datePrevueLivraison'] ?? $requestData['dateLivraison'] ?? 'À confirmer';
+        $adresse = $requestData['adresseLivraison'] ?? $client->getAdresse() ?? 'Adresse enregistrée sur votre profil';
+        $prenom = $client->getPrenom() ?? 'Client';
+
+        $corps = sprintf(
+            '<h2>Bonjour %s,</h2>
+            <p>Nous vous confirmons la bonne prise en compte de votre commande <strong>%s</strong> chez <strong>Vite &amp; Gourmand</strong>.</p>
+            <h3>Récapitulatif de votre commande :</h3>
+            <ul>
+                <li><strong>Numéro de commande :</strong> %s</li>
+                <li><strong>Formule choisie :</strong> %s</li>
+                <li><strong>Nombre de convives :</strong> %d personnes</li>
+                <li><strong>Date et heure de livraison souhaitées :</strong> %s</li>
+                <li><strong>Adresse de livraison :</strong> %s</li>
+                <li><strong>Montant total TTC :</strong> %s €</li>
+            </ul>
+            <p>Votre commande est actuellement <strong>en attente de validation</strong> par notre équipe.</p>
+            <p>Vous pouvez la suivre, la modifier ou l\'annuler tant qu\'elle n\'a pas été acceptée depuis votre espace personnel :
+                <a href="http://localhost:4200/mes-commandes">Mes Commandes</a>.
+            </p>
+            <br>
+            <p>Merci pour votre confiance,<br>L\'équipe Vite &amp; Gourmand</p>',
+            htmlspecialchars($prenom),
+            htmlspecialchars($numero),
+            htmlspecialchars($numero),
+            htmlspecialchars($menuTitre),
+            $nbPersonnes,
+            htmlspecialchars((string) $dateLivraison),
+            htmlspecialchars((string) $adresse),
+            $prixTotal
+        );
+
+        $this->expedierEmail(
+            $client->getEmail(),
+            sprintf('Vite & Gourmand : Confirmation de votre commande %s', $numero),
+            $corps
+        );
+    }
+
     private function envoyerNotificationStatutClient(Commande $commande, string $statut, array $data): void
     {
         $client = $commande->getUtilisateur();
@@ -322,12 +382,11 @@ class CommandeController extends AbstractController
         }
 
         $numero = $commande->getNumeroCommande() ?? ('CMD-' . $commande->getId());
-        $motifHtml = ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation']))
-            ? sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']))
-            : '';
+        $prenom = $client->getPrenom() ?? 'Client';
+        $detailsHtml = $this->construireDetailsStatutHtml($statut, $data);
 
         $corps = sprintf(
-            '<h2>Bonjour,</h2>
+            '<h2>Bonjour %s,</h2>
             <p>Le statut de votre commande <strong>%s</strong> a évolué.</p>
             <p>Nouveau statut : <strong style="color: #c25e38;">%s</strong></p>
             %s
@@ -335,18 +394,44 @@ class CommandeController extends AbstractController
                 <a href="http://localhost:4200/mes-commandes">Mes Commandes</a>.
             </p>
             <br>
-            <p>L\'équipe Vite & Gourmand</p>',
+            <p>L\'équipe Vite &amp; Gourmand</p>',
+            htmlspecialchars($prenom),
             htmlspecialchars($numero),
             htmlspecialchars($statut),
-            $motifHtml
+            $detailsHtml
         );
 
+        $this->expedierEmail(
+            $client->getEmail(),
+            sprintf('Vite & Gourmand : Suivi de votre commande %s (%s)', $numero, $statut),
+            $corps
+        );
+    }
+
+    private function construireDetailsStatutHtml(string $statut, array $data): string
+    {
+        if ($statut === self::STATUT_ANNULEE && !empty($data['motifAnnulation'])) {
+            return sprintf('<p><strong>Motif :</strong> %s</p>', htmlspecialchars($data['motifAnnulation']));
+        }
+
+        if ($statut === self::STATUT_RETOUR_MATERIEL) {
+            return '<p style="background-color: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;">'
+                . '<strong>Rappel important :</strong> Merci de restituer le matériel prêté sous <strong>10 jours ouvrés</strong> '
+                . 'afin d\'éviter la facturation de 600 € de frais de non-restitution.'
+                . '</p>';
+        }
+
+        return '';
+    }
+
+    private function expedierEmail(string $destinataire, string $sujet, string $corpsHtml): void
+    {
         try {
             $email = (new Email())
-                ->from('contact@vite-et-gourmand.fr')
-                ->to($client->getEmail())
-                ->subject(sprintf('Vite & Gourmand : Suivi de votre commande %s', $numero))
-                ->html($corps);
+                ->from(self::EXPEDITEUR_EMAIL)
+                ->to($destinataire)
+                ->subject($sujet)
+                ->html($corpsHtml);
 
             $this->mailer->send($email);
         } catch (\Throwable $exception) {
