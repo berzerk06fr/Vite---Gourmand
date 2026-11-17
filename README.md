@@ -19,13 +19,27 @@ Elle permet de digitaliser l'activité du traiteur bordelais **Vite & Gourmand**
 ## Architecture du Dépôt
 
 ```text
-Vite et Gourmand/
-├── database/                  # Scripts SQL (DDL/DML) et seed NoSQL (seed.mjs)
-├── Documents/                 # Livrables ECF (UML, Charte graphique, Maquettes, Documentation)
-├── vite-et-gourmand-back/     # API REST Symfony
-├── vite-et-gourmand-frontend/ # Application client Angular
-├── docker-compose.yml         # Conteneurs MongoDB 6.0 & Mongo Express
-└── README.md                  # Documentation d'installation et d'utilisation
+Vite---Gourmand/
+├── database/                      # Scripts de bases de données
+│   ├── schema.sql                 # Structure relationnelle MySQL (DDL)
+│   ├── data.sql                   # Jeu de données de démonstration (DML)
+│   └── seed.mjs                   # Script d'initialisation NoSQL (MongoDB)
+├── Documents/                     # Livrables ECF (UML, Charte graphique RGAA, Maquettes, Documentation, Manuel d'utilisation)
+├── vite-et-gourmand-back/         # API REST Symfony 7
+│   ├── config/                    # Configuration des bundles, sécurité et CORS
+│   ├── src/
+│   │   ├── Controller/            # Endpoints API REST (Auth, Menus, Commandes, Avis, Admin, Stats)
+│   │   ├── Entity/                # Modèles relationnels Doctrine (MySQL)
+│   │   ├── Repository/            # Requêtes et accès aux données
+│   │   └── Service/               # Logique métier (tarification, remises, livraison, NoSQL, Mailer)
+│   └── .env                       # Variables d'environnement par défaut
+├── vite-et-gourmand-frontend/     # Application Single Page Angular
+│   └── src/app/
+│       ├── core/                  # Services API, intercepteurs JWT et guards par rôle
+│       ├── features/              # Pages et parcours métiers (Catalogue, Commande, Client, Employé, Admin)
+│       └── shared/                # Composants réutilisables (Header, Footer dynamique, modales)
+├── docker-compose.yml             # Conteneurs MongoDB 6.0 & Mongo Express
+└── README.md                      # Documentation d'installation et d'utilisation
 ```
 
 ## Installation et Lancement en Local
@@ -34,7 +48,7 @@ Vite et Gourmand/
 
 ```bash
 git clone https://github.com/berzerk06fr/Vite---Gourmand.git
-cd "Vite et Gourmand"
+cd Vite---Gourmand
 ```
 
 ### 2. Démarrer MongoDB via Docker
@@ -58,8 +72,17 @@ cp .env .env.local
 Renseigner `DATABASE_URL` (MySQL/MariaDB) et `MONGODB_URL=mongodb://127.0.0.1:27017` dans `.env.local`, puis initialiser la base :
 
 ```bash
+# Création de la base de données MySQL
 php bin/console doctrine:database:create
+
+# Option 1 : Via les migrations Doctrine
 php bin/console doctrine:migrations:migrate
+
+# Option 2 : Import direct de la structure et du jeu de données de démonstration
+mysql -u root -p vite_et_gourmand < ../database/schema.sql
+mysql -u root -p vite_et_gourmand < ../database/data.sql
+
+# Démarrer le serveur de développement Symfony
 php -S 127.0.0.1:8000 -t public
 ```
 
