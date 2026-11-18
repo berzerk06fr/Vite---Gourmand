@@ -19,27 +19,23 @@ Elle permet de digitaliser l'activité du traiteur bordelais **Vite & Gourmand**
 ## Architecture du Dépôt
 
 ```text
-Vite---Gourmand/
-├── database/                      # Scripts de bases de données
-│   ├── schema.sql                 # Structure relationnelle MySQL (DDL)
-│   ├── data.sql                   # Jeu de données de démonstration (DML)
-│   └── seed.mjs                   # Script d'initialisation NoSQL (MongoDB)
-├── Documents/                     # Livrables ECF (UML, Charte graphique RGAA, Maquettes, Documentation, Manuel d'utilisation)
-├── vite-et-gourmand-back/         # API REST Symfony 7
-│   ├── config/                    # Configuration des bundles, sécurité et CORS
-│   ├── src/
-│   │   ├── Controller/            # Endpoints API REST (Auth, Menus, Commandes, Avis, Admin, Stats)
-│   │   ├── Entity/                # Modèles relationnels Doctrine (MySQL)
-│   │   ├── Repository/            # Requêtes et accès aux données
-│   │   └── Service/               # Logique métier (tarification, remises, livraison, NoSQL, Mailer)
-│   └── .env                       # Variables d'environnement par défaut
-├── vite-et-gourmand-frontend/     # Application Single Page Angular
-│   └── src/app/
-│       ├── core/                  # Services API, intercepteurs JWT et guards par rôle
-│       ├── features/              # Pages et parcours métiers (Catalogue, Commande, Client, Employé, Admin)
-│       └── shared/                # Composants réutilisables (Header, Footer dynamique, modales)
-├── docker-compose.yml             # Conteneurs MongoDB 6.0 & Mongo Express
-└── README.md                      # Documentation d'installation et d'utilisation
+Vite-et-Gourmand/
+├── database/                                     # Scripts d'initialisation SQL et NoSQL
+├── Documents/                                    # Livrables documentaires et conception
+│   ├── Diagrammes/                               # Diagrammes UML (Cas d'utilisation, Séquences) & MCD
+│   ├── Maquettage/                               # Conception graphique et ergonomie
+│   │   ├── 01_Wireframes/                        # Zonings Desktop & Mobile
+│   │   └── 02_Mockups/                           # Maquettes haute-fidélité Desktop & Mobile
+│   ├── Charte Graphique.pdf                      # Identité visuelle initiale
+│   ├── Charte Graphique suite audit RGAA.png      # Charte graphique adaptée (contrastes & accessibilité)
+│   ├── Documentation Technique Vite et Gourmand.md
+│   ├── Gestion de Projet Vite et Gourmand.md
+│   └── Manuel Utilisation Vite et Gourmand.pdf   # Guide utilisateur complet (Client, Employé, Admin)
+├── vite-et-gourmand-back/                        # API REST Symfony 7 (PHP 8)
+├── vite-et-gourmand-frontend/                    # Application cliente Angular (TypeScript)
+├── .gitignore
+├── docker-compose.yml                            # Environnement local MongoDB & Mongo Express
+└── README.md
 ```
 
 ## Installation et Lancement en Local
