@@ -17,6 +17,10 @@ export interface CommandeItem {
   client?: {
     id: number;
     email: string;
+    nom?: string;
+    prenom?: string;
+    telephone?: string;
+    adresse?: string;
   } | null;
   menu?: {
     id: number;

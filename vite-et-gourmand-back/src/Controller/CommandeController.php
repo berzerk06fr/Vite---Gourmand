@@ -237,7 +237,14 @@ class CommandeController extends AbstractController
             'ville'               => 'Bordeaux',
             'dateCommande'        => $cmd->getDateCommande()?->format('d/m/Y H:i'),
             'datePrevueLivraison' => $cmd->getDatePrevueLivraison()?->format('Y-m-d\TH:i'),
-            'client'              => $client ? ['id' => $client->getId(), 'email' => $clientEmail] : null,
+            'client'              => $client ? [
+                'id'        => $client->getId(),
+                'email'     => $clientEmail,
+                'nom'       => $client->getNom() ?? '',
+                'prenom'    => $client->getPrenom() ?? '',
+                'telephone' => $client->getTelephone() ?? '',
+                'adresse'   => $client->getAdresse() ?? '',
+            ] : null,
             'menu'                => $menu
                 ? ['id' => $menu->getId(), 'titre' => $menu->getTitre() ?? 'Menu sans titre']
                 : ['id' => 0, 'titre' => self::DEFAULT_MENU_TITRE],
