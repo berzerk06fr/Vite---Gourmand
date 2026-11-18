@@ -50,7 +50,6 @@ export class GestionFooterComponent implements OnInit {
         this.messageSucces.set('Les informations du bas de page ont bien été mises à jour.');
       },
       error: (err) => {
-        console.error('Erreur sauvegarde footer', err);
         this.isSaving.set(false);
         this.messageErreur.set('Une erreur est survenue lors de l’enregistrement. Vérifiez vos droits.');
       }

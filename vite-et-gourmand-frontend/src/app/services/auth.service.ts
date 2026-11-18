@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse, RegisterPayload, User } from '../models/user.model';
 
@@ -33,28 +33,28 @@ export class AuthService {
     }
   }
 
-  register(data: RegisterPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+  register(data: RegisterPayload): Observable<{ message: string; user?: User }> {
+    return this.http.post<{ message: string; user?: User }>(`${this.apiUrl}/register`, data);
   }
 
   login(credentials: { email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login_check`, credentials).pipe(
-      tap(res => {
+      switchMap((res) => {
         localStorage.setItem(this.TOKEN_KEY, res.token);
-        this.loadCurrentUser().subscribe();
+        return this.loadCurrentUser().pipe(map(() => res));
       })
     );
   }
 
   loadCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`).pipe(
-      tap(user => this.currentUserSubject.next(user))
+      tap((user) => this.currentUserSubject.next(user))
     );
   }
 
   updateProfile(data: UpdateProfilePayload): Observable<{ message: string; user: User }> {
     return this.http.put<{ message: string; user: User }>(`${this.apiUrl}/me`, data).pipe(
-      tap(res => {
+      tap((res) => {
         if (res.user) {
           this.currentUserSubject.next(res.user);
         }

@@ -54,7 +54,6 @@
 
           @if (currentUser(); as user) {
             <!-- Accès Staff (Employé & Admin) -->
-            <!-- Accès Staff (Employé & Admin) -->
             @if (user.roles.includes('ROLE_ADMIN') || user.roles.includes('ROLE_EMPLOYE')) {
               <li class="nav-item d-none d-xl-flex align-items-center mx-1" aria-hidden="true">
                 <span class="vr" style="height: 20px;"></span>

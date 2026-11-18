@@ -41,16 +41,16 @@ export class RegisterComponent {
     this.errorMessage.set(null);
 
     const payload = {
-      nom: this.nom,
-      prenom: this.prenom,
-      email: this.email,
-      password: this.password,
-      telephone: this.gsm,
-      adressePostale: this.adressePostale,
-      adresse: this.adressePostale,
-      cp: this.codePostal,
-      codePostal: this.codePostal,
-      ville: this.ville
+      nom: this.nom.trim(),
+      prenom: this.prenom.trim(),
+      email: this.email.trim(),
+      password: this.password.trim(),
+      telephone: this.gsm.trim(),
+      adressePostale: this.adressePostale.trim(),
+      adresse: this.adressePostale.trim(),
+      cp: this.codePostal.trim(),
+      codePostal: this.codePostal.trim(),
+      ville: this.ville.trim()
     };
 
     this.authService.register(payload).subscribe({
@@ -72,7 +72,6 @@ export class RegisterComponent {
     // Affiche le message renvoyé par Symfony ('Champs obligatoires manquants.', 'Cet email est déjà utilisé.', etc.)
     const backendMessage = err?.error?.error || 'Une erreur est survenue lors de l\'inscription.';
     this.errorMessage.set(backendMessage);
-    console.error('Erreur API Register :', err);
   }
 });
     

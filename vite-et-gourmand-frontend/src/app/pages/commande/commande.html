@@ -75,24 +75,7 @@
                     La livraison a lieu <strong>en dehors de Bordeaux</strong> (frais de 5 € + 0,59 €/km)
                   </label>
                 </div>
-              </div>
-              <div class="col-12 mt-3">
-              <div class="form-check p-3 bg-light rounded-2 border">
-                <input 
-                  class="form-check-input ms-0 me-2" 
-                  type="checkbox" 
-                  id="besoinMateriel"
-                  [ngModel]="besoinMateriel()" 
-                  (ngModelChange)="besoinMateriel.set($event)" 
-                  name="besoinMateriel">
-                <label class="form-check-label fw-semibold" for="besoinMateriel">
-                  Je souhaite bénéficier du prêt de matériel pour ma prestation
-                </label>
-                <div class="form-text text-muted mt-1 small">
-                  En cas de prêt de matériel, une pénalité forfaitaire de <strong>600 €</strong> sera appliquée en cas de non-restitution dans les délais.
-                </div>
-              </div>
-            </div>
+              </div>            
               
               @if (isHorsBordeaux()) {
                 <div class="col-12 col-md-6 bg-light p-3 rounded-2">
@@ -108,6 +91,23 @@
                   <div class="form-text small">Frais calculés : {{ deliveryCost() }} €</div>
                 </div>
               }
+              <div class="col-12 mt-3">
+                <div class="form-check p-3 bg-light rounded-2 border">
+                  <input 
+                    class="form-check-input ms-0 me-2" 
+                    type="checkbox" 
+                    id="besoinMateriel"
+                    [ngModel]="besoinMateriel()" 
+                    (ngModelChange)="besoinMateriel.set($event)" 
+                    name="besoinMateriel">
+                  <label class="form-check-label fw-semibold" for="besoinMateriel">
+                    Je souhaite bénéficier du prêt de matériel pour ma prestation
+                  </label>
+                  <div class="form-text text-muted mt-1 small">
+                    En cas de prêt de matériel, une pénalité forfaitaire de <strong>600 €</strong> sera appliquée en cas de non-restitution dans les délais.
+                  </div>
+                </div>
+              </div>
 
               <div class="col-12 col-md-6">
                 <label for="datePrestation" class="form-label fw-semibold">Date de réception</label>

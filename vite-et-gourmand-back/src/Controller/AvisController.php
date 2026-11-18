@@ -68,7 +68,6 @@ class AvisController extends AbstractController
         $avis->setStatut('en_attente');
         $avis->setDateCreation(new \DateTimeImmutable());
 
-        // Rattachement optionnel à la commande du client
         if (!empty($data['commandeId'])) {
             $commande = $commandeRepository->find($data['commandeId']);
             if ($commande && $commande->getUtilisateur()?->getId() === $user->getId()) {
@@ -148,7 +147,6 @@ class AvisController extends AbstractController
         $commande = $a->getCommande();
         $menu = $commande?->getMenu();
 
-        // Affichage public convivial du prénom / pseudo
         $pseudo = 'Client anonyme';
         if ($user && $user->getUserIdentifier()) {
             $parts = explode('@', $user->getUserIdentifier());

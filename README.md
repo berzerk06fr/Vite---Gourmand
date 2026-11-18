@@ -20,22 +20,22 @@ Elle permet de digitaliser l'activité du traiteur bordelais **Vite & Gourmand**
 
 ```text
 Vite-et-Gourmand/
-├── database/                                     # Scripts d'initialisation SQL et NoSQL
-├── Documents/                                    # Livrables documentaires et conception
-│   ├── Diagrammes/                               # Diagrammes UML (Cas d'utilisation, Séquences) & MCD
-│   ├── Maquettage/                               # Conception graphique et ergonomie
-│   │   ├── 01_Wireframes/                        # Zonings Desktop & Mobile
-│   │   └── 02_Mockups/                           # Maquettes haute-fidélité Desktop & Mobile
-│   ├── Charte Graphique.pdf                      # Identité visuelle initiale
-│   ├── Charte Graphique suite audit RGAA.png      # Charte graphique adaptée (contrastes & accessibilité)
-│   ├── Documentation Technique Vite et Gourmand.md
-│   ├── Gestion de Projet Vite et Gourmand.md
-│   └── Manuel Utilisation Vite et Gourmand.pdf   # Guide utilisateur complet (Client, Employé, Admin)
-├── vite-et-gourmand-back/                        # API REST Symfony 7 (PHP 8)
-├── vite-et-gourmand-frontend/                    # Application cliente Angular (TypeScript)
-├── .gitignore
-├── docker-compose.yml                            # Environnement local MongoDB & Mongo Express
-└── README.md
+├── database/                                          # Scripts d'initialisation SQL et NoSQL
+├── Documents/                                         # Livrables documentaires et conception
+│   ├── Diagrammes/                                    # Diagrammes UML (Cas d'utilisation, Séquences) & MCD
+│   ├── Maquettage/                                    # Conception graphique et ergonomie
+│   │   ├── 01_Wireframes/                             # Zonings Desktop & Mobile
+│   │   ├── 02_Mockups/                                # Maquettes haute-fidélité Desktop & Mobile
+│   │   ├── Charte Graphique.pdf                       # Identité visuelle initiale
+│   │   └── Charte Graphique suite audit RGAA.png      # Charte graphique adaptée (contrastes & accessibilité)
+│   ├── Documentation Technique Vite et Gourmand.md    # Architecture technique, sécurité et choix technologiques
+│   ├── Gestion de Projet Vite et Gourmand.md          # Méthodologie Agile, Kanban Trello et workflow Git
+│   └── Manuel Utilisation Vite et Gourmand.pdf        # Guide utilisateur complet (Client, Employé, Admin)
+├── vite-et-gourmand-back/                             # API REST Symfony 7 (PHP 8)
+├── vite-et-gourmand-frontend/                         # Application cliente Angular (TypeScript)
+├── .gitignore                                         # Fichiers et dossiers exclus du versionnement Git
+├── docker-compose.yml                                 # Environnement local MongoDB & Mongo Express
+└── README.md                                          # Présentation du projet et guide d'installation
 ```
 
 ## Installation et Lancement en Local
@@ -110,6 +110,7 @@ Application accessible sur http://localhost:4200.
   - **Client** : historique des commandes, bon récapitulatif imprimable, modification/annulation et dépôt d'avis noté après prestation.
   - **Employé** : gestion CRUD des menus, plats, horaires, traitement des statuts de commandes et modération des avis.
   - **Administrateur (José)** : création/désactivation des comptes employés et tableau de bord décisionnel MongoDB (graphiques et chiffre d'affaires par menu/période).
+  
 ## Comptes de Démonstration (Environnement de Test)
 
 | Rôle | Identifiant (Email) | Mot de passe | Périmètre d'accès |

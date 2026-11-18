@@ -95,7 +95,6 @@ export class AdminStatistiquesComponent implements OnInit, OnDestroy {
         this.renderChart();
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des statistiques', err);
         this.errorMsg.set('Impossible de récupérer les statistiques analytiques MongoDB.');
         this.loading.set(false);
       }

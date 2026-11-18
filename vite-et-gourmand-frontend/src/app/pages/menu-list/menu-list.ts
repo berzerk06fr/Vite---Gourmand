@@ -166,7 +166,6 @@ export class MenuList implements OnInit {
     this.isLoading.set(true);
     this.http.get<any>(this.apiUrl).pipe(
       catchError((err) => {
-        console.warn('API indisponible ou erreur, bascule sur les mocks :', err);
         this.apiError.set('Mode démonstration : données locales');
         return of(MOCK_MENUS);
       })
