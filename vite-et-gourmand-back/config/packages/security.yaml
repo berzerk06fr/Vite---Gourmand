@@ -43,7 +43,7 @@ security:
         # Preflight CORS
         - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
 
-        # Routes publiques (authentification, inscription, mot de passe oublié, catalogue, avis validés, contact)
+        # Routes publiques (authentification, inscription, mot de passe oublié, catalogue, avis validés, contact, footer)
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS, methods: [POST] }
@@ -52,6 +52,7 @@ security:
         - { path: ^/api/avis$, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/contact$, roles: PUBLIC_ACCESS, methods: [POST] }
         - { path: ^/api/contact/destinataire$, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/footer, roles: PUBLIC_ACCESS, methods: [GET] }
 
         # Gestion du catalogue, des plats et upload photo (Employé & Admin)
         - { path: ^/api/menus, roles: ROLE_EMPLOYE, methods: [POST, PUT, PATCH, DELETE] }
