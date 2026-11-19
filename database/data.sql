@@ -1,4 +1,5 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET FOREIGN_KEY_CHECKS = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -76,9 +77,5 @@ INSERT INTO `utilisateur` (`id`, `email`, `roles`, `password`, `nom`, `prenom`, 
 (3, 'employe@employe.fr', '[\"ROLE_EMPLOYE\"]', '$2y$13$O81438bbY678bA3bIpqiruNbZPy5bTv9z9ym71/raNYUZrPGPtVqG', 'Cousin', 'Hubert', '0556000001', '12 Place de la Tour, 33000 Bordeaux', NULL, NULL),
 (4, 'josie@filledegourmand.fr', '[\"ROLE_INACTIF\"]', '$2y$13$umw5BMuUCAamVjOATpuCtumIbrNsd1QQUUz683hCCqHyysjGOh3wa', 'Gourmande', 'josi', '0636656565', 'Bordeaux', NULL, NULL);
 
+SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
