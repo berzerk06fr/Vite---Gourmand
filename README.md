@@ -78,6 +78,8 @@ php bin/console doctrine:migrations:migrate
 mysql -u root -p vite_et_gourmand < ../database/schema.sql
 mysql -u root -p vite_et_gourmand < ../database/data.sql
 
+# Note pour un import via phpMyAdmin :
+# Importer d'abord `schema.sql` puis `data.sql` (si besoin, décocher « Activer la vérification des clés étrangères » dans l'onglet Importer).
 # Démarrer le serveur de développement Symfony
 php -S 127.0.0.1:8000 -t public
 ```
