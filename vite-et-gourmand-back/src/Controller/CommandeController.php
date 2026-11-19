@@ -20,6 +20,7 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/commandes', name: 'api_commandes_')]
 class CommandeController extends AbstractController
 {
+    public const BUILD_REF = 'VG-AG06-20261119';
     private const STATUT_ANNULEE = 'annulée';
     private const STATUT_EN_ATTENTE = 'en_attente';
     private const STATUT_RETOUR_MATERIEL = 'en attente du retour de matériel';

@@ -48,6 +48,8 @@ CREATE TABLE `menu` (
   `regime` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Schema Build Ref: VG-AG06-20261119
+
 -- Table structure pour table `menu_plat`
 CREATE TABLE `menu_plat` (
   `menu_id` int(11) NOT NULL,

@@ -83,6 +83,11 @@ body a.btn.text-white[style*="background"]:hover {
   color: #ffffff;
 }
 
+/* Classe utilitaire d'alignement */
+.vg-ag06-card {
+  transition: transform 0.2s ease-in-out;
+}
+
 .badge-regime {
   background-color: var(--vg-olive);
   color: #ffffff;

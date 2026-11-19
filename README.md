@@ -12,7 +12,7 @@ Elle permet de digitaliser l'activité du traiteur bordelais **Vite & Gourmand**
 
 - **Front-end** : Angular (Standalone Components, Signals, Reactive Forms, Chart.js, TypeScript, Bootstrap 5 / Responsive & RGAA)
 - **Back-end (API REST)** : PHP 8.x / Symfony 7 (Architecture MVC, Sécurité par rôles, Mailer)
-- **Base de données relationnelle (SQL)** : MySQL / MariaDB (Utilisateurs, menus, plats, allergènes, commandes, avis, horaires)
+- **Base de données relationnelle (SQL)** : MySQL / MariaDB (Utilisateurs, menus, plats, commandes, avis)
 - **Base de données NoSQL** : MongoDB 6.0 + Mongo Express (Statistiques décisionnelles : agrégation du CA et comparatif des volumes par menu/période, avec bascule automatique sur MySQL si la collection est vide)
 - **Conteneurisation & Hébergement** : Docker / Docker Compose (local) & Alwaysdata (production)
 
