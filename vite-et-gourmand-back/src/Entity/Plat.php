@@ -28,6 +28,9 @@ class Plat
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $allergenes = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $image = null;
+
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $stock = 0;
 
@@ -88,6 +91,17 @@ class Plat
     public function setAllergenes(?string $allergenes): static
     {
         $this->allergenes = $allergenes;
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): static
+    {
+        $this->image = $image;
         return $this;
     }
 

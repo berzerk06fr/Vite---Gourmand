@@ -261,6 +261,10 @@ class MenuController extends AbstractController
         if (isset($data['allergenes'])) {
             $plat->setAllergenes(trim($data['allergenes']));
         }
+        if (array_key_exists('image', $data)) {
+            $urlImage = trim((string) $data['image']);
+            $plat->setImage($urlImage !== '' ? $urlImage : null);
+        }
         if (isset($data['stock'])) {
             $plat->setStock(max(0, (int) $data['stock']));
         }
@@ -330,6 +334,7 @@ class MenuController extends AbstractController
             'nom'           => $plat->getNom(),
             'description'   => $plat->getDescription(),
             'type'          => $plat->getType(),
+            'image'         => $plat->getImage(),
             'allergenes'    => $allergenesList,
             'allergenesRaw' => $rawAllergenes ?? '',
             'stock'         => $plat->getStock(),
@@ -343,16 +348,21 @@ class MenuController extends AbstractController
     {
         $platsData = [];
         $allergenesSet = [];
+        $imageUrl = $menu->getImage() ?: self::DEFAULT_IMAGE;
+        $galleryImages = [$imageUrl];
 
         foreach ($menu->getPlats() as $plat) {
             $formatted = $this->formatPlat($plat);
             $platsData[] = $formatted;
+
+            if (!empty($formatted['image']) && !in_array($formatted['image'], $galleryImages, true)) {
+                $galleryImages[] = $formatted['image'];
+            }
+
             foreach ($formatted['allergenes'] as $alg) {
                 $allergenesSet[] = $alg;
             }
         }
-
-        $imageUrl = $menu->getImage() ?: self::DEFAULT_IMAGE;
 
         return [
             'id'                => $menu->getId(),
@@ -369,7 +379,7 @@ class MenuController extends AbstractController
             'theme'             => $menu->getTheme() ?: 'Classique',
             'regime'            => $menu->getRegime() ?: 'Carnivore',
             'image'             => $imageUrl,
-            'images'            => [$imageUrl],
+            'images'            => $galleryImages,
             'plats'             => $platsData,
             'allergenes'        => array_values(array_unique($allergenesSet)),
         ];
