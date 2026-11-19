@@ -24,80 +24,158 @@
   }
 
   @if (!isLoading() && menu(); as item) {
+    <!-- Bannière titre du menu -->
+    <div class="text-center py-3 px-4 rounded-3 shadow-sm mb-4" style="background-color: #b5451b; color: #ffffff;">
+      <h1 class="h2 fw-bold mb-0 text-white">{{ item.titre }}</h1>
+    </div>
+
     <div class="row g-4 align-items-start">
-      <article class="col-12 col-md-7 col-lg-7">
-        <div class="card border-0 shadow-sm overflow-hidden mb-4">
-          @if (item.images && item.images.length > 0) {
-            <img [src]="item.images[0]" [alt]="item.titre" class="img-fluid w-100" style="max-height: 420px; object-fit: cover;">
+      <article class="col-12 col-lg-7">
+        <!-- Bloc Galerie & Pastilles Catégorie/Allergènes sans encadré -->
+        <div class="row g-3 mb-4 align-items-start">
+          <!-- Grande photo principale -->
+          <div class="col-12" [class.col-sm-7]="sideThumbnails().length > 0" [class.col-sm-9]="sideThumbnails().length === 0">
+            <div class="card border-0 shadow-sm overflow-hidden rounded-3">
+              @if (activeSlide(); as slide) {
+                <img
+                  [src]="slide.url"
+                  [alt]="slide.label"
+                  class="img-fluid w-100"
+                  style="height: 360px; object-fit: cover;">
+              }
+            </div>
+          </div>
+
+          <!-- Colonne des miniatures cliquables des plats -->
+          @if (sideThumbnails().length > 0) {
+            <div class="col-12 col-sm-2 d-flex flex-sm-column justify-content-start gap-2">
+              @for (thumb of sideThumbnails(); track thumb.index) {
+                <button
+                  type="button"
+                  (click)="selectImage(thumb.index)"
+                  class="btn p-0 rounded-3 overflow-hidden shadow-sm"
+                  [style.border]="selectedImageIndex() === thumb.index ? '2px solid #b5451b' : '2px solid transparent'"
+                  [attr.aria-label]="'Afficher ' + thumb.label"
+                  [title]="thumb.label">
+                  <img
+                    [src]="thumb.url"
+                    [alt]="thumb.label"
+                    class="img-fluid d-block"
+                    style="height: 82px; width: 82px; object-fit: cover;">
+                </button>
+              }
+            </div>
           }
+
+          <!-- Colonne Catégorie & Pastilles alignées à droite et bien espacées -->
+          <div class="col-12 col-sm-3 d-flex justify-content-center">
+            <div class="d-flex flex-column align-items-end gap-2">
+              <span class="bg-white border rounded-2 px-3 py-1 small fw-semibold text-dark shadow-sm mb-1">
+                Catégorie
+              </span>
+
+              <span class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                {{ item.theme }}
+              </span>
+              <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                {{ item.regime }}
+              </span>
+
+              @if (menuAllergenes().length > 0) {
+                @for (allergene of menuAllergenes(); track allergene) {
+                  <span class="badge rounded-pill px-2 py-1" style="background-color: #4b5940; color: #fff; font-size: 0.72rem;">
+                    {{ allergene }}
+                  </span>
+                }
+              }
+            </div>
+          </div>
         </div>
 
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <span class="badge bg-primary px-3 py-2 fs-6">{{ item.theme }}</span>
-          <span class="badge bg-success px-3 py-2 fs-6">{{ item.regime }}</span>
-          
-          <!-- Badge stock formule -->
+        <!-- Légende dynamique selon la photo sélectionnée & Stock -->
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+          <div class="flex-grow-1">
+            @if (activeSlide(); as slide) {
+              @if (slide.isMenuMain) {
+                <p class="lead text-secondary mb-0">{{ slide.caption }}</p>
+              } @else {
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                  @if (slide.badgeType) {
+                    <span class="badge text-white" style="background-color: #b5451b;">{{ slide.badgeType }}</span>
+                  }
+                  <h2 class="h5 fw-bold text-dark mb-0">{{ slide.label }}</h2>
+                </div>
+                <p class="text-secondary mb-1">{{ slide.caption }}</p>
+                @if (slide.allergenes && slide.allergenes.length > 0) {
+                  <p class="small fst-italic fw-semibold mb-0" style="color: #b5451b;">
+                    Allergènes : {{ slide.allergenes.join(', ') }}
+                  </p>
+                }
+              }
+            } @else {
+              <p class="lead text-secondary mb-0">{{ item.description }}</p>
+            }
+          </div>
+
           @if (item.quantiteStock !== undefined && item.quantiteStock <= 0) {
             <span class="badge bg-danger px-3 py-2 fs-6">Formule épuisée</span>
           } @else {
-            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
-              Stock restant : {{ item.quantiteStock ?? item.stockDisponible ?? 0 }} formules
+            <span class="badge bg-light text-dark border px-3 py-2">
+              Stock disponible : {{ item.quantiteStock ?? item.stockDisponible ?? 0 }}
             </span>
           }
         </div>
 
-        <h1 class="display-6 fw-bold mb-3">{{ item.titre }}</h1>
-        <p class="lead text-secondary mb-4">{{ item.description }}</p>
-
+        <!-- Conditions spécifiques -->
         <section class="card border-start border-4 border-warning bg-light p-3 mb-4 shadow-sm" aria-labelledby="conditions-heading">
           <h2 id="conditions-heading" class="h6 fw-bold text-uppercase text-dark mb-1 d-flex align-items-center gap-2">
             <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-            Conditions spécifiques de cette prestation
+            Conditions et impératifs de commande
           </h2>
           <p class="small text-muted mb-0">{{ item.conditions }}</p>
         </section>
 
+        <!-- Composition détaillée & Allergènes par plat -->
         <section class="mt-4" aria-labelledby="composition-heading">
           <h2 id="composition-heading" class="h4 fw-bold mb-3 pb-2 border-bottom">
             Composition de la formule
           </h2>
 
           @if (item.plats && item.plats.length > 0) {
-            <div class="d-flex flex-column gap-3">
-              @for (plat of item.plats; track plat.id) {
-                <div class="card border-0 bg-light p-3 shadow-none">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-secondary text-uppercase fw-semibold">{{ plat.type }}</span>
+            <div class="card border-0 rounded-3 p-4 shadow-sm" style="background-color: #e6e2da;">
+              <div class="d-flex flex-column gap-4">
+                @for (plat of item.plats; track plat.id) {
+                  <div class="border-bottom border-secondary-subtle pb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="small fw-semibold text-muted">{{ plat.type }}</span>
 
-                    <!-- US-12 : Badges de stock par plat -->
-                    @if (plat.isEnRupture || (plat.stock !== undefined && plat.stock <= 0)) {
-                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">
-                        <i class="bi bi-x-circle-fill me-1"></i> Rupture de stock
-                      </span>
-                    } @else if (plat.isStockFaible || (plat.stock !== undefined && plat.seuilAlerte !== undefined && plat.stock <= plat.seuilAlerte)) {
-                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">
-                        <i class="bi bi-exclamation-circle-fill me-1"></i> Plus que {{ plat.stock }} portions
-                      </span>
-                    }
-                  </div>
-
-                  <h3 class="h6 fw-bold mb-1 text-dark">{{ plat.nom }}</h3>
-                  @if (plat.description) {
-                    <p class="small text-muted mb-2">{{ plat.description }}</p>
-                  }
-
-                  @if (plat.allergenes && plat.allergenes.length > 0) {
-                    <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                      <span class="small fw-semibold text-danger"><i class="bi bi-shield-exclamation me-1"></i>Allergènes :</span>
-                      @for (allergene of plat.allergenes; track allergene) {
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small">
-                          {{ allergene }}
+                      @if (plat.isEnRupture || (plat.stock !== undefined && plat.stock <= 0)) {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">
+                          <i class="bi bi-x-circle-fill me-1"></i> Rupture de stock
+                        </span>
+                      } @else if (plat.isStockFaible || (plat.stock !== undefined && plat.seuilAlerte !== undefined && plat.stock <= plat.seuilAlerte)) {
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-semibold">
+                          <i class="bi bi-exclamation-circle-fill me-1"></i> Plus que {{ plat.stock }} portions
                         </span>
                       }
                     </div>
-                  }
-                </div>
-              }
+
+                    <h3 class="h5 fw-bold mb-1 text-dark">{{ plat.nom }}</h3>
+
+                    @if (plat.description) {
+                      <p class="small text-dark mb-2">{{ plat.description }}</p>
+                    }
+
+                    @if (extractPlatAllergenes(plat); as platAllergenes) {
+                      @if (platAllergenes.length > 0) {
+                        <p class="small fst-italic fw-semibold mb-0" style="color: #b5451b;">
+                          Présence d'allergènes : {{ platAllergenes.join(', ') }}.
+                        </p>
+                      }
+                    }
+                  </div>
+                }
+              </div>
             </div>
           } @else {
             <p class="text-muted small fst-italic">
@@ -107,7 +185,8 @@
         </section>
       </article>
 
-      <aside class="col-12 col-md-5 col-lg-5">
+      <!-- Colonne droite : Réservation -->
+      <aside class="col-12 col-lg-5">
         <div class="card shadow-sm border-0 p-4 sticky-top" style="top: 5rem;">
           <h2 class="h5 fw-bold mb-3">Réserver ce menu</h2>
 
@@ -130,7 +209,7 @@
               name="guests" 
               required>
             <div class="form-text small" [class.text-danger]="!isGuestCountValid()">
-              Minimum imposé pour cette formule : {{ item.nombrePersonneMin }} personnes.
+              Minimum imposé pour cette formule : {{ item.nombrePersonneMin }} personnes (soit {{ item.prixParPersonne * item.nombrePersonneMin }} € de base).
             </div>
           </div>
 
@@ -147,7 +226,6 @@
             {{ item.conditions }}
           </div>
 
-          <!-- US-12 : Message d'avertissement si commande impossible due aux stocks -->
           @if (isStockEpuise()) {
             <div class="alert alert-danger border-0 small py-2 px-3 mb-3" role="alert">
               <i class="bi bi-slash-circle-fill me-1"></i>
@@ -157,7 +235,7 @@
 
           <button 
             type="button" 
-            class="btn btn-primary w-100 py-3 fs-5 fw-semibold shadow-sm" 
+            class="btn btn-terracotta w-100 py-3 fs-5 fw-semibold shadow-sm" 
             [disabled]="!isGuestCountValid() || isStockEpuise()"
             (click)="goToOrder()">
             <i class="bi bi-cart-check me-2"></i>
@@ -203,4 +281,3 @@
     </div>
   </dialog>
 }
-

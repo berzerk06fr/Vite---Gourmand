@@ -102,17 +102,102 @@
                   placeholder="Ex: Commande 48h à l'avance" class="form-control">
               </div>
 
+              <!-- SÉLECTION DES PLATS TRIÉS PAR CATÉGORIE -->
               <div class="mb-3">
-                <span class="form-label d-block small fw-semibold">Plats inclus dans ce menu</span>
-                <div class="border rounded p-2 bg-light" style="max-height: 160px; overflow-y: auto;">
-                  @for (plat of plats; track plat.id) {
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
-                        [checked]="formMenu.platIds.includes(plat.id)"
-                        (change)="togglePlatDansMenu(plat.id)">
-                      <label class="form-check-label small" [for]="'plat_' + plat.id">
-                        {{ plat.nom }} <span class="text-muted">({{ plat.type }})</span>
-                      </label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="form-label small fw-semibold mb-0">Plats inclus dans ce menu</span>
+                  <span class="badge bg-secondary">{{ formMenu.platIds.length }} sélectionné(s)</span>
+                </div>
+
+                <div class="border rounded bg-white" style="max-height: 240px; overflow-y: auto;">
+                  
+                  <!-- ENTRÉES -->
+                  @if (entrees.length > 0) {
+                    <div>
+                      <div class="bg-light px-2 py-1 border-bottom small fw-bold text-uppercase text-secondary sticky-top">
+                        Entrées ({{ entrees.length }})
+                      </div>
+                      <div class="p-2">
+                        @for (plat of entrees; track plat.id) {
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
+                              [checked]="formMenu.platIds.includes(plat.id)"
+                              (change)="togglePlatDansMenu(plat.id)">
+                            <label class="form-check-label small" [for]="'plat_' + plat.id">
+                              {{ plat.nom }}
+                            </label>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- PLATS PRINCIPAUX -->
+                  @if (platsPrincipaux.length > 0) {
+                    <div>
+                      <div class="bg-light px-2 py-1 border-top border-bottom small fw-bold text-uppercase text-secondary sticky-top">
+                        Plats principaux ({{ platsPrincipaux.length }})
+                      </div>
+                      <div class="p-2">
+                        @for (plat of platsPrincipaux; track plat.id) {
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
+                              [checked]="formMenu.platIds.includes(plat.id)"
+                              (change)="togglePlatDansMenu(plat.id)">
+                            <label class="form-check-label small" [for]="'plat_' + plat.id">
+                              {{ plat.nom }}
+                            </label>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- DESSERTS -->
+                  @if (desserts.length > 0) {
+                    <div>
+                      <div class="bg-light px-2 py-1 border-top border-bottom small fw-bold text-uppercase text-secondary sticky-top">
+                        Desserts ({{ desserts.length }})
+                      </div>
+                      <div class="p-2">
+                        @for (plat of desserts; track plat.id) {
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
+                              [checked]="formMenu.platIds.includes(plat.id)"
+                              (change)="togglePlatDansMenu(plat.id)">
+                            <label class="form-check-label small" [for]="'plat_' + plat.id">
+                              {{ plat.nom }}
+                            </label>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- BOISSONS -->
+                  @if (boissons.length > 0) {
+                    <div>
+                      <div class="bg-light px-2 py-1 border-top border-bottom small fw-bold text-uppercase text-secondary sticky-top">
+                        Boissons ({{ boissons.length }})
+                      </div>
+                      <div class="p-2">
+                        @for (plat of boissons; track plat.id) {
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" [id]="'plat_' + plat.id"
+                              [checked]="formMenu.platIds.includes(plat.id)"
+                              (change)="togglePlatDansMenu(plat.id)">
+                            <label class="form-check-label small" [for]="'plat_' + plat.id">
+                              {{ plat.nom }}
+                            </label>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (plats.length === 0) {
+                    <div class="p-3 text-center text-muted small">
+                      Aucun plat disponible dans le catalogue.
                     </div>
                   }
                 </div>
@@ -198,6 +283,12 @@
               </div>
 
               <div class="mb-3">
+                <label for="platDesc" class="form-label small fw-semibold">Descriptif du plat</label>
+                <textarea id="platDesc" [(ngModel)]="formPlat.description" name="platDescription" rows="2"
+                  placeholder="Décrivez les saveurs, la cuisson ou les accompagnements..." class="form-control"></textarea>
+              </div>
+
+              <div class="mb-3">
                 <label for="platType" class="form-label small fw-semibold">Catégorie *</label>
                 <select id="platType" [(ngModel)]="formPlat.type" name="type" class="form-select">
                   <option value="Entrée">Entrée</option>
@@ -211,6 +302,21 @@
                 <label for="platAllergenes" class="form-label small fw-semibold">Allergènes (séparés par virgule)</label>
                 <input id="platAllergenes" type="text" [(ngModel)]="formPlat.allergenes" name="allergenes"
                   placeholder="Ex: Gluten, Lactose" class="form-control">
+              </div>
+
+              <div class="mb-3">
+                <label for="platPhotoFile" class="form-label small fw-semibold">Photo du plat (fichier ou lien URL)</label>
+                <input id="platPhotoFile" type="file" accept="image/*"
+                  (change)="onPlatFileSelected($event)" class="form-control form-control-sm mb-2">
+                <label for="platPhotoUrl" class="visually-hidden">URL de l'image du plat</label>
+                <input id="platPhotoUrl" type="url" [(ngModel)]="formPlat.image" name="platImage"
+                  placeholder="Ou collez une URL d'image (https://...)" class="form-control form-control-sm">
+                @if (uploadPlatEnCours) {
+                  <div class="small text-muted mt-1">Téléversement en cours...</div>
+                }
+                @if (formPlat.image) {
+                  <img [src]="formPlat.image" alt="Aperçu du plat" class="img-thumbnail mt-2" style="max-height: 110px; object-fit: cover;">
+                }
               </div>
 
               <div class="row g-2 mb-4">
@@ -244,32 +350,41 @@
           @for (plat of plats; track plat.id) {
             <div class="card shadow-sm border-0">
               <div class="card-body d-flex flex-column flex-sm-row justify-content-between gap-3">
-                <div>
-                  <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                    <h3 class="h6 fw-bold mb-0">{{ plat.nom }}</h3>
-                    <span class="badge bg-light text-dark border">{{ plat.type }}</span>
-                    @if (plat.isEnRupture) {
-                      <span class="badge bg-danger">Rupture (0)</span>
-                    } @else if (plat.isStockFaible) {
-                      <span class="badge bg-warning text-dark">Stock faible ({{ plat.stock }})</span>
-                    } @else {
-                      <span class="badge bg-success">{{ plat.stock }} unités</span>
-                    }
-                  </div>
-
-                  @if (plat.allergenesRaw) {
-                    <p class="text-muted small mb-2">
-                      <strong>Allergènes :</strong> {{ plat.allergenesRaw }}
-                    </p>
-                  } @else {
-                    <p class="text-muted small mb-2">Aucun allergène déclaré</p>
+                <div class="d-flex gap-3">
+                  @if (plat.image) {
+                    <img [src]="plat.image" [alt]="plat.nom" class="rounded" style="width: 90px; height: 90px; object-fit: cover;">
                   }
+                  <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                      <h3 class="h6 fw-bold mb-0">{{ plat.nom }}</h3>
+                      <span class="badge bg-light text-dark border">{{ plat.type }}</span>
+                      @if (plat.isEnRupture) {
+                        <span class="badge bg-danger">Rupture (0)</span>
+                      } @else if (plat.isStockFaible) {
+                        <span class="badge bg-warning text-dark">Stock faible ({{ plat.stock }})</span>
+                      } @else {
+                        <span class="badge bg-success">{{ plat.stock }} unités</span>
+                      }
+                    </div>
 
-                  <div class="d-flex flex-wrap gap-3 small fw-semibold text-dark">
-                    <span [class]="plat.isEnRupture || plat.isStockFaible ? 'text-danger' : ''">
-                      Stock : {{ plat.stock }}
-                    </span>
-                    <span class="text-muted">Seuil d'alerte : {{ plat.seuilAlerte }}</span>
+                    @if (plat.description) {
+                      <p class="text-muted small mb-1">{{ plat.description }}</p>
+                    }
+
+                    @if (plat.allergenesRaw) {
+                      <p class="text-muted small mb-2">
+                        <strong>Allergènes :</strong> {{ plat.allergenesRaw }}
+                      </p>
+                    } @else {
+                      <p class="text-muted small mb-2">Aucun allergène déclaré</p>
+                    }
+
+                    <div class="d-flex flex-wrap gap-3 small fw-semibold text-dark">
+                      <span [class]="plat.isEnRupture || plat.isStockFaible ? 'text-danger' : ''">
+                        Stock : {{ plat.stock }}
+                      </span>
+                      <span class="text-muted">Seuil d'alerte : {{ plat.seuilAlerte }}</span>
+                    </div>
                   </div>
                 </div>
 

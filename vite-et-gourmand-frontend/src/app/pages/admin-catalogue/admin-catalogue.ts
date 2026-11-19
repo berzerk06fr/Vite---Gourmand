@@ -18,6 +18,7 @@ export class AdminCatalogueComponent implements OnInit {
   plats: any[] = [];
   chargement = false;
   uploadEnCours = false;
+  uploadPlatEnCours = false;
   messageSucces = '';
   messageErreur = '';
 
@@ -44,9 +45,36 @@ export class AdminCatalogueComponent implements OnInit {
     description: '',
     type: 'Plat principal',
     allergenes: '',
+    image: '',
     stock: 15,
     seuilAlerte: 5
   };
+
+  // --- GETTERS POUR TRIER LES PLATS PAR CATÉGORIE ---
+
+  get entrees(): any[] {
+    return this.plats
+      .filter((p) => p.type === 'Entrée')
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }
+
+  get platsPrincipaux(): any[] {
+    return this.plats
+      .filter((p) => p.type === 'Plat principal' || p.type === 'Plat')
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }
+
+  get desserts(): any[] {
+    return this.plats
+      .filter((p) => p.type === 'Dessert')
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }
+
+  get boissons(): any[] {
+    return this.plats
+      .filter((p) => p.type === 'Boisson')
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+  }
 
   ngOnInit(): void {
     this.chargerDonnees();
@@ -98,7 +126,7 @@ export class AdminCatalogueComponent implements OnInit {
       next: (res) => {
         this.formMenu.image = res.url;
         this.uploadEnCours = false;
-        this.afficherSucces('Photo téléversée avec succès.');
+        this.afficherSucces('Photo du menu téléversée avec succès.');
       },
       error: (err) => {
         this.uploadEnCours = false;
@@ -179,7 +207,30 @@ export class AdminCatalogueComponent implements OnInit {
     });
   }
 
-  // --- GESTION DES PLATS & STOCKS ---
+  // --- GESTION DES PLATS, PHOTOS & STOCKS ---
+
+  onPlatFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', input.files[0]);
+
+    this.uploadPlatEnCours = true;
+    this.http.post<{ url: string }>(`${this.apiUrl}/upload-image`, formData, { headers: this.getHeaders(false) }).subscribe({
+      next: (res) => {
+        this.formPlat.image = res.url;
+        this.uploadPlatEnCours = false;
+        this.afficherSucces('Photo du plat téléversée avec succès.');
+      },
+      error: (err) => {
+        this.uploadPlatEnCours = false;
+        this.afficherErreur(err.error?.error || 'Erreur lors de l\'envoi de la photo du plat.');
+      }
+    });
+  }
 
   editerPlat(plat: any): void {
     this.platEnEditionId = plat.id;
@@ -188,6 +239,7 @@ export class AdminCatalogueComponent implements OnInit {
       description: plat.description || '',
       type: plat.type,
       allergenes: plat.allergenesRaw || '',
+      image: plat.image || '',
       stock: plat.stock,
       seuilAlerte: plat.seuilAlerte
     };
@@ -201,6 +253,7 @@ export class AdminCatalogueComponent implements OnInit {
       description: '',
       type: 'Plat principal',
       allergenes: '',
+      image: '',
       stock: 15,
       seuilAlerte: 5
     };
